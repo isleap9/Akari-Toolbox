@@ -12,7 +12,7 @@ Requirements for initial release: a feature-parity WinUI 3 MVVM port of AkariOS 
 - [x] **APP-01**: App requests and runs under administrator elevation on launch (`requireAdministrator`), matching the predecessor's privilege model
 - [x] **APP-02**: App identity (namespace, assembly name, manifest identity, icon, branding) reflects the "Akari Toolbox" rebrand
 - [ ] **APP-03**: App uses native WinUI 3 Fluent 2 controls and the framework's Mica backdrop/theming — no WPF-UI custom theme (`Themes/Colors.xaml`, `Themes/Controls.xaml`) is carried over
-- [ ] **APP-04**: File/folder picker operations work correctly while the app runs elevated (replacing the framework's default picker if it crashes under `requireAdministrator`)
+- [x] **APP-04**: File/folder picker operations work correctly while the app runs elevated (replacing the framework's default picker if it crashes under `requireAdministrator`)
 - [ ] **APP-05**: Background operations (PowerShell output streaming, download progress) update the UI without cross-thread crashes
 
 ### Home
@@ -84,7 +84,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | APP-01 | Phase 1 | Complete |
 | APP-02 | Phase 1 | Complete |
 | APP-03 | Phase 1 | Pending |
-| APP-04 | Phase 1 | Pending |
+| APP-04 | Phase 1 | Complete |
 | APP-05 | Phase 1 | Pending |
 | HOME-01 | Phase 1 | Complete |
 | TWEAKS-01 | Phase 1 | Pending |

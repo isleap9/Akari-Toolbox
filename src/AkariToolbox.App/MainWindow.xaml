@@ -80,10 +80,24 @@
                 <Expander
                     Grid.Row="2"
                     x:Name="LogDockExpander"
-                    Header="Log"
                     IsExpanded="True"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Stretch">
+                    <Expander.Header>
+                        <Grid HorizontalAlignment="Stretch">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Log" VerticalAlignment="Center" />
+                            <!-- TEMPORARY: D-13 debug smoke test — remove once Phase 4 wires a real picker consumer -->
+                            <Button
+                                Grid.Column="1"
+                                x:Name="PickerSmokeTestButton"
+                                Content="Picker smoke test (temporary, remove in Phase 4)"
+                                Click="OnPickerSmokeTestClick" />
+                        </Grid>
+                    </Expander.Header>
                     <ListView
                         x:Name="LogListView"
                         ItemsSource="{x:Bind LogConsole.Lines}"
