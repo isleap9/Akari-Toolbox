@@ -79,34 +79,32 @@ Explicitly excluded. Documented to prevent scope creep.
 
 ## Traceability
 
-Populated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| APP-01 | TBD | Pending |
-| APP-02 | TBD | Pending |
-| APP-03 | TBD | Pending |
-| APP-04 | TBD | Pending |
-| APP-05 | TBD | Pending |
-| HOME-01 | TBD | Pending |
-| TWEAKS-01 | TBD | Pending |
-| TWEAKS-02 | TBD | Pending |
-| TWEAKS-03 | TBD | Pending |
-| GAMING-01 | TBD | Pending |
-| GAMING-02 | TBD | Pending |
-| DEBLOAT-01 | TBD | Pending |
-| DEBLOAT-02 | TBD | Pending |
-| DEBLOAT-03 | TBD | Pending |
-| DOWNLOADS-01 | TBD | Pending |
-| DOWNLOADS-02 | TBD | Pending |
-| MISC-01 | TBD | Pending |
-| MISC-02 | TBD | Pending |
+| APP-01 | Phase 1 | Pending |
+| APP-02 | Phase 1 | Pending |
+| APP-03 | Phase 1 | Pending |
+| APP-04 | Phase 1 | Pending |
+| APP-05 | Phase 1 | Pending |
+| HOME-01 | Phase 1 | Pending |
+| TWEAKS-01 | Phase 1 | Pending |
+| TWEAKS-02 | Phase 1 | Pending |
+| TWEAKS-03 | Phase 1 | Pending |
+| GAMING-01 | Phase 2 | Pending |
+| GAMING-02 | Phase 2 | Pending |
+| DEBLOAT-01 | Phase 3 | Pending |
+| DEBLOAT-02 | Phase 3 | Pending |
+| DEBLOAT-03 | Phase 3 | Pending |
+| DOWNLOADS-01 | Phase 4 | Pending |
+| DOWNLOADS-02 | Phase 4 | Pending |
+| MISC-01 | Phase 4 | Pending |
+| MISC-02 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 18 total
-- Mapped to phases: 0 (pending roadmap creation)
-- Unmapped: 18 ⚠️ (expected prior to roadmap)
+- Mapped to phases: 18 (100%)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-08-31*
-*Last updated: 2026-08-31 after initial definition*
+*Last updated: 2026-08-31 after roadmap creation*
