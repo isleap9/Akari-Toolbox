@@ -60,6 +60,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <Frame x:Name="ContentFrame" />
@@ -72,6 +73,23 @@
                     Severity="{x:Bind InfoBar.Severity}"
                     IsClosable="{x:Bind InfoBar.IsClosable}"
                     IsOpen="{x:Bind InfoBar.IsOpen, Mode=TwoWay}" />
+
+                <!-- Collapsible, in-memory-only log dock (D-05/D-06/D-07/D-08, APP-05).
+                     Visible/expanded by default; user can collapse via the Expander's
+                     own chevron toggle. No log file, no persistence across restarts. -->
+                <Expander
+                    Grid.Row="2"
+                    x:Name="LogDockExpander"
+                    Header="Log"
+                    IsExpanded="True"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch">
+                    <ListView
+                        x:Name="LogListView"
+                        ItemsSource="{x:Bind LogConsole.Lines}"
+                        Height="160"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto" />
+                </Expander>
             </Grid>
         </NavigationView>
     </Grid>

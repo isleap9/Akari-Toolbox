@@ -24,7 +24,8 @@ public sealed partial class MainWindow : Window
         INavigationService navigation,
         IInfoBarService infoBar,
         IThemeService theme,
-        IMessenger messenger)
+        IMessenger messenger,
+        ILogConsoleService logConsole)
     {
         InitializeComponent();
 
@@ -32,6 +33,7 @@ public sealed partial class MainWindow : Window
         InfoBar = infoBar;
         _theme = theme;
         _messenger = messenger;
+        LogConsole = logConsole;
 
         Title = App.AppName;
 
@@ -53,6 +55,9 @@ public sealed partial class MainWindow : Window
 
     /// <summary>Global info-bar state bound by the shell.</summary>
     public IInfoBarService InfoBar { get; }
+
+    /// <summary>Collapsible, in-memory log dock bound by the shell (D-05/D-06/D-07/D-08).</summary>
+    public ILogConsoleService LogConsole { get; }
 
     /// <summary>App name shown in the custom title bar.</summary>
     public string AppTitle => App.AppName;
