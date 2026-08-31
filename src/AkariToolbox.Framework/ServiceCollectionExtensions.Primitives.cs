@@ -25,6 +25,8 @@ public static class AkariPrimitivesServiceCollectionExtensions
 
         services.AddSingleton<IWindowsServiceController, WindowsServiceController>();
 
+        services.AddSingleton<IScriptRunner, ScriptRunner>();
+
         return services;
     }
 }

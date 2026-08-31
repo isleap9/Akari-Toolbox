@@ -1,8 +1,8 @@
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using Microsoft.UI.Dispatching;
 using AkariToolbox.App.Models;
 using AkariToolbox.App.Services;
+using AkariToolbox.Framework.Services;
 using AkariToolbox.Framework.Threading;
 using AkariToolbox.Framework.ViewModels;
 
@@ -17,11 +17,13 @@ namespace AkariToolbox.App.ViewModels;
 public partial class AkariOSTweaksViewModel : ViewModelBase
 {
     private readonly ITweakCatalog _catalog;
+    private readonly ILogConsoleService _log;
     private readonly DispatcherQueue _dispatcher;
 
-    public AkariOSTweaksViewModel(ITweakCatalog catalog)
+    public AkariOSTweaksViewModel(ITweakCatalog catalog, ILogConsoleService log)
     {
         _catalog = catalog;
+        _log = log;
         _dispatcher = DispatcherQueue.GetForCurrentThread();
         Title = "Akari OS Tweaks";
 
@@ -51,7 +53,7 @@ public partial class AkariOSTweaksViewModel : ViewModelBase
                     }
                     else
                     {
-                        Debug.WriteLine($"[AkariOSTweaksViewModel] GetStateAsync('{handler.Key}') failed: {task.Exception?.GetBaseException().Message}");
+                        _log.Log($"[TWEAK ERROR] {handler.Key}: {task.Exception?.GetBaseException().Message}");
                     }
                 },
                 TaskScheduler.Default);
@@ -69,13 +71,13 @@ public partial class AkariOSTweaksViewModel : ViewModelBase
 
         // Fire-and-forget: the catalog serializes per-key internally and the toggle
         // already reflects the user's intent. Failures are logged, never swallowed
-        // silently (a future plan wires ILogConsoleService into this catch).
+        // silently.
         _ = _catalog.SetStateAsync(item.Key, item.IsOn).ContinueWith(
             task =>
             {
                 if (task.IsFaulted)
                 {
-                    Debug.WriteLine($"[AkariOSTweaksViewModel] SetStateAsync('{item.Key}', {item.IsOn}) failed: {task.Exception?.GetBaseException().Message}");
+                    _log.Log($"[TWEAK ERROR] {item.Key}: {task.Exception?.GetBaseException().Message}");
                 }
             },
             TaskScheduler.Default);
