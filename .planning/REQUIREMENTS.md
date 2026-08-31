@@ -9,15 +9,15 @@ Requirements for initial release: a feature-parity WinUI 3 MVVM port of AkariOS 
 
 ### App
 
-- [ ] **APP-01**: App requests and runs under administrator elevation on launch (`requireAdministrator`), matching the predecessor's privilege model
-- [ ] **APP-02**: App identity (namespace, assembly name, manifest identity, icon, branding) reflects the "Akari Toolbox" rebrand
+- [x] **APP-01**: App requests and runs under administrator elevation on launch (`requireAdministrator`), matching the predecessor's privilege model
+- [x] **APP-02**: App identity (namespace, assembly name, manifest identity, icon, branding) reflects the "Akari Toolbox" rebrand
 - [ ] **APP-03**: App uses native WinUI 3 Fluent 2 controls and the framework's Mica backdrop/theming — no WPF-UI custom theme (`Themes/Colors.xaml`, `Themes/Controls.xaml`) is carried over
 - [ ] **APP-04**: File/folder picker operations work correctly while the app runs elevated (replacing the framework's default picker if it crashes under `requireAdministrator`)
 - [ ] **APP-05**: Background operations (PowerShell output streaming, download progress) update the UI without cross-thread crashes
 
 ### Home
 
-- [ ] **HOME-01**: User sees a home/dashboard landing page on launch listing the available tool categories
+- [x] **HOME-01**: User sees a home/dashboard landing page on launch listing the available tool categories
 
 ### Tweaks
 
@@ -81,12 +81,12 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| APP-01 | Phase 1 | Pending |
-| APP-02 | Phase 1 | Pending |
+| APP-01 | Phase 1 | Complete |
+| APP-02 | Phase 1 | Complete |
 | APP-03 | Phase 1 | Pending |
 | APP-04 | Phase 1 | Pending |
 | APP-05 | Phase 1 | Pending |
-| HOME-01 | Phase 1 | Pending |
+| HOME-01 | Phase 1 | Complete |
 | TWEAKS-01 | Phase 1 | Pending |
 | TWEAKS-02 | Phase 1 | Pending |
 | TWEAKS-03 | Phase 1 | Pending |
@@ -101,6 +101,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | MISC-02 | Phase 4 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 18 total
 - Mapped to phases: 18 (100%)
 - Unmapped: 0
