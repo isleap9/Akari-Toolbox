@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AkariToolbox.Framework\AkariToolbox.Framework.csproj" />
+    <ProjectReference Include="..\AkariToolbox.App\AkariToolbox.App.csproj" />
   </ItemGroup>
 
   <ItemGroup>
