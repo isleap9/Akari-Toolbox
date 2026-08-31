@@ -30,7 +30,15 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can view all 32 Akari OS Tweaks as toggles reflecting actual current system state, and turning a tweak off restores the real prior state the app recorded before mutating it (not a hardcoded default)
   4. User can complete the two-phase guided Defender-disable workflow (tamper protection phase, then real-time protection phase) with explicit warnings at each phase, ported as a direct carry-over of the predecessor's existing logic
   5. The app shell uses native WinUI 3 Fluent 2 controls and Mica backdrop/theming (no WPF-UI theme carried over), background operations (tweak state reads, async callbacks) update the UI without cross-thread crashes, and file/folder picker operations work correctly while the app runs elevated
-**Plans**: TBD
+**Plans:** 7 plans
+Plans:
+- [ ] 01-01-PLAN.md — Walking Skeleton tracer: copy/rename framework solution, elevate, wire WiFi tweak end-to-end; full Home dashboard + nav sidebar
+- [ ] 01-02-PLAN.md — System primitives: ILogConsoleService (collapsible dock), IWindowsServiceController, IScriptRunner
+- [ ] 01-03-PLAN.md — Elevation-safe file/folder picker (Microsoft.Windows.Storage.Pickers) + debug smoke test
+- [ ] 01-04-PLAN.md — 22 registry-only tweak handlers (batches A/B)
+- [ ] 01-05-PLAN.md — 8 service-backed + bcdedit/DISM-hybrid tweak handlers
+- [ ] 01-06-PLAN.md — Defender two-phase disable workflow (byte-for-byte port) + minimal PostInstallService
+- [ ] 01-07-PLAN.md — Final integration: ordering regression test, error resilience, full 32-tweak verification pass
 **UI hint**: yes
 
 ### Phase 2: Gaming Tweaks
@@ -77,7 +85,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Akari OS Tweaks | 0/TBD | Not started | - |
+| 1. Foundation & Akari OS Tweaks | 0/7 | Planned | - |
 | 2. Gaming Tweaks | 0/TBD | Not started | - |
 | 3. Debloat | 0/TBD | Not started | - |
 | 4. Downloads & Misc | 0/TBD | Not started | - |
