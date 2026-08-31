@@ -457,20 +457,16 @@ public sealed record NavigationItem(string Label, string Glyph, Type PageType, b
 
 ## Open Questions
 
-1. **How should `dep` (pure `bcdedit`, zero registry footprint) report its live state?**
+All three resolved during resume-session research review (2026-08-31) — see CONTEXT.md D-12/D-13/D-14.
+
+1. **How should `dep` (pure `bcdedit`, zero registry footprint) report its live state?** — **RESOLVED (D-12):** spawn `bcdedit /enum {current}` and parse the NX line on page load. Strict D-03 compliance chosen over a write-only exception.
    - What we know: `SetDepNx` (`TweakService.cs:215-228`) only ever calls `bcdedit /set NX AlwaysOff`/`/set NX OptIn` — no registry write exists to read back.
-   - What's unclear: whether a process-spawn-per-toggle-load (`bcdedit /enum {current}`, parse for the `nx` line) is acceptable UX (adds latency to page load, 1 of 32 tweaks) or whether this tweak should be treated as "write-only, always shows last-known state" as a documented exception to D-03 for this one tweak.
-   - Recommendation: raise with the user during plan review — this is the one tweak where strict D-03 compliance has a real cost/latency trade-off, and the user's D-03 decision text doesn't address process-based (non-registry) state.
 
-2. **Should the `Microsoft.Windows.Storage.Pickers`-based `IFilePickerService` implementation be built as part of Phase 1, given no Phase 1 page actually invokes a picker?**
-   - What we know: the phase goal explicitly lists "an elevation-safe file/folder picker" as one of the foundational pieces Phase 1 stands up (per the phase description provided), and APP-04 is in this phase's requirement list.
-   - What's unclear: without a consuming page (Downloads/Misc are Phase 4), how should this be verified/smoke-tested in Phase 1 — a throwaway debug menu item, a Settings-page "test picker" button, or is building-and-compiling (without a manual click-through) sufficient?
-   - Recommendation: the planner should add an explicit, minimal smoke-test surface (even a temporary button) so APP-04 has something concrete to verify against in Phase 1, rather than deferring all verification to Phase 4.
+2. **Should the `Microsoft.Windows.Storage.Pickers`-based `IFilePickerService` implementation be built as part of Phase 1, given no Phase 1 page actually invokes a picker?** — **RESOLVED (D-13):** yes, with a temporary debug smoke-test button (removed once Phase 4 wires a real consumer).
+   - What we know: the phase goal explicitly lists "an elevation-safe file/folder picker" as one of the foundational pieces Phase 1 stands up, and APP-04 is in this phase's requirement list.
 
-3. **Does `IRegistryService.OpenRealUserHive` need to handle the case where `explorer.exe` isn't running** (e.g. a server-core-like or Explorer-crashed state)?
-   - What we know: `CreateRealHkcuSubKey` (`TweakService.cs:145-155`) throws `InvalidOperationException("explorer.exe not found.")` if no explorer process exists — this is the predecessor's existing behavior (a hard failure, not a graceful fallback).
-   - What's unclear: whether Phase 1 should preserve this hard-failure behavior as-is (parity) or add a fallback (e.g. fall back to the elevated process's own `Registry.CurrentUser` with a logged warning).
-   - Recommendation: default to parity (preserve the hard failure) unless the user requests otherwise — consistent with the phase's general "port working logic, don't improve it beyond the explicitly requested D-03/D-04 fixes" posture.
+3. **Does `IRegistryService.OpenRealUserHive` need to handle the case where `explorer.exe` isn't running** (e.g. a server-core-like or Explorer-crashed state)? — **RESOLVED (D-14):** preserve the predecessor's hard failure as-is, no fallback.
+   - What we know: `CreateRealHkcuSubKey` (`TweakService.cs:145-155`) throws `InvalidOperationException("explorer.exe not found.")` if no explorer process exists.
 
 ## Environment Availability
 

@@ -33,6 +33,11 @@ Requirements covered: APP-01, APP-02, APP-03, APP-04, APP-05, HOME-01, TWEAKS-01
 - **D-10:** This adds a 5th card to Home beyond the predecessor's 4 (predecessor had no Debloat card, Debloat was nav-sidebar-only) — Debloat gets equal footing with the other four in the new app.
 - **D-11:** Nav sidebar follows the same pattern: all 5 destination entries appear now, with the 4 unbuilt ones disabled until their phase ships.
 
+### Resolved During Research Review (post-RESEARCH.md, pre-plan)
+- **D-12:** The `dep` tweak (pure `bcdedit /set NX`, zero registry footprint) reports live state by spawning `bcdedit /enum {current}` and parsing the NX line on page load — strict D-03 compliance preferred over a write-only exception, despite the small process-spawn latency cost. Resolves RESEARCH.md Open Question 1.
+- **D-13:** The elevation-safe `IFilePickerService` (`Microsoft.Windows.Storage.Pickers`, APP-04) gets a temporary debug smoke-test button in Phase 1 so it has something concrete to click-test, even though no Phase 1 page consumes it for real — remove once Phase 4 wires a real picker consumer. Resolves RESEARCH.md Open Question 2.
+- **D-14:** `CreateRealHkcuSubKey`'s hard failure when `explorer.exe` isn't running is preserved as-is (throw, no fallback) — exact parity with the predecessor, consistent with the phase's port-don't-improve posture. Resolves RESEARCH.md Open Question 3.
+
 ### Claude's Discretion
 - **Defender restart UX** was raised as a possible discussion area but not selected/explored. Default: log-message-only, exact parity with the predecessor (no "Restart Now" button or other new UI affordance around the Defender workflow) — consistent with D-01's "don't touch/wrap this code path with new behavior" spirit. If the user wants a restart-prompt convenience later, that's a small, separable addition to revisit explicitly, not something to add proactively during the port.
 - Exact visual treatment of "Coming soon" placeholders (grayed card vs. lock icon vs. badge text) — Claude's call, should read as clearly non-interactive without looking broken.
