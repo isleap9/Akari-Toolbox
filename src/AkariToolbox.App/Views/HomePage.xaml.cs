@@ -1,19 +1,26 @@
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using AkariToolbox.App.Services;
 using AkariToolbox.App.ViewModels;
 
 namespace AkariToolbox.App.Views;
 
 public sealed partial class HomePage : Page
 {
-    /// <summary>Localized string accessor used by x:Bind function bindings.</summary>
-    public LocalizedStrings Strings { get; }
+    /// <summary>View model used by x:Bind bindings.</summary>
+    public HomeViewModel ViewModel { get; }
 
     public HomePage(HomeViewModel viewModel)
     {
-        Strings = App.Services.GetRequiredService<LocalizedStrings>();
+        ViewModel = viewModel;
         InitializeComponent();
         DataContext = viewModel;
+    }
+
+    private void OnCardClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: Type pageType } && ViewModel.OpenCommand.CanExecute(pageType))
+        {
+            ViewModel.OpenCommand.Execute(pageType);
+        }
     }
 }

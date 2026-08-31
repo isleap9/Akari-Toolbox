@@ -48,7 +48,7 @@
 
             <NavigationView.MenuItemTemplate>
                 <DataTemplate x:DataType="local:NavigationItem">
-                    <NavigationViewItem Content="{x:Bind Label}" Tag="{x:Bind PageType}">
+                    <NavigationViewItem Content="{x:Bind Label}" Tag="{x:Bind PageType}" IsEnabled="{x:Bind IsEnabled}">
                         <NavigationViewItem.Icon>
                             <FontIcon Glyph="{x:Bind Glyph}" />
                         </NavigationViewItem.Icon>
