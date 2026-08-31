@@ -23,6 +23,8 @@ public static class AkariPrimitivesServiceCollectionExtensions
         // MainWindow singleton (and its LogConsole property) is first constructed.
         services.AddSingleton<ILogConsoleService>(_ => new LogConsoleService(DispatcherQueue.GetForCurrentThread()));
 
+        services.AddSingleton<IWindowsServiceController, WindowsServiceController>();
+
         return services;
     }
 }

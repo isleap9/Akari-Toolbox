@@ -27,6 +27,9 @@
     <!-- Behaviors -->
     <PackageVersion Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="3.0.1" />
 
+    <!-- Windows service control (Gaming Tweaks/Debloat service-backed tweaks) -->
+    <PackageVersion Include="System.ServiceProcess.ServiceController" Version="10.0.11" />
+
     <!-- Tests -->
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
