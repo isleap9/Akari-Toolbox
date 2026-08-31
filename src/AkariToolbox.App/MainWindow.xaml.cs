@@ -19,13 +19,15 @@ public sealed partial class MainWindow : Window
     private readonly INavigationService _navigation;
     private readonly IThemeService _theme;
     private readonly IMessenger _messenger;
+    private readonly IFilePickerService _filePicker;
 
     public MainWindow(
         INavigationService navigation,
         IInfoBarService infoBar,
         IThemeService theme,
         IMessenger messenger,
-        ILogConsoleService logConsole)
+        ILogConsoleService logConsole,
+        IFilePickerService filePicker)
     {
         InitializeComponent();
 
@@ -34,6 +36,7 @@ public sealed partial class MainWindow : Window
         _theme = theme;
         _messenger = messenger;
         LogConsole = logConsole;
+        _filePicker = filePicker;
 
         Title = App.AppName;
 
@@ -99,6 +102,27 @@ public sealed partial class MainWindow : Window
         };
 
         ApplyTitleBarColors(theme);
+    }
+
+    // TEMPORARY: D-13 debug smoke test — remove once Phase 4 wires a real picker consumer
+    private async void OnPickerSmokeTestClick(object sender, RoutedEventArgs e)
+    {
+        PickerSmokeTestButton.IsEnabled = false;
+        try
+        {
+            var file = await _filePicker.PickOpenFileAsync(["*"]);
+            LogConsole.Log(file is null
+                ? "Picker smoke test: cancelled"
+                : $"Picker smoke test: picked {file.Path}");
+        }
+        catch (Exception ex)
+        {
+            LogConsole.Log($"Picker smoke test: error — {ex.Message}");
+        }
+        finally
+        {
+            PickerSmokeTestButton.IsEnabled = true;
+        }
     }
 
     private void OnNavSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
