@@ -129,8 +129,10 @@ public partial class App : Application
 
         // Infrastructure providers consumed by framework services.
         builder.Services.AddSingleton(sp => new Func<XamlRoot?>(() => MainWindow?.Content?.XamlRoot));
-        builder.Services.AddSingleton(sp => new Func<IntPtr>(() =>
-            MainWindow is null ? IntPtr.Zero : WinRT.Interop.WindowNative.GetWindowHandle(MainWindow)));
+        builder.Services.AddSingleton(sp => new Func<Microsoft.UI.WindowId>(() =>
+            MainWindow is null
+                ? default
+                : Microsoft.UI.Win32Interop.GetWindowIdFromWindow(WinRT.Interop.WindowNative.GetWindowHandle(MainWindow))));
 
         return builder.Build();
     }

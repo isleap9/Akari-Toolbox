@@ -18,7 +18,7 @@ public static class ServiceCollectionExtensions
     /// The app must additionally register:
     /// <list type="bullet">
     /// <item><c>Func&lt;XamlRoot?&gt;</c> (for <see cref="DialogService"/>)</item>
-    /// <item><c>Func&lt;IntPtr&gt;</c> (for <see cref="FilePickerService"/>)</item>
+    /// <item><c>Func&lt;Microsoft.UI.WindowId&gt;</c> (for <see cref="FilePickerService"/>)</item>
     /// <item><see cref="INavigationService"/> with its page factory</item>
     /// </list>
     /// </para>

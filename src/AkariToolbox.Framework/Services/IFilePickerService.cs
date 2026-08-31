@@ -1,12 +1,15 @@
+using Microsoft.UI;
+using Microsoft.Windows.Storage.Pickers;
 using Windows.Storage;
-using Windows.Storage.Pickers;
-using WinRT.Interop;
 
 namespace AkariToolbox.Framework.Services;
 
 /// <summary>
-/// File picking for unpackaged WinUI 3 apps (pickers are initialized with the
-/// owning window handle instead of requiring an MSIX package).
+/// File/folder picking for unpackaged, elevated WinUI 3 apps. Built on the
+/// WinAppSDK-native, WindowId-based picker namespace (see the <c>using</c> above)
+/// instead of the legacy hwnd/InitializeWithWindow-based picker API, which is
+/// documented by Microsoft to crash under <c>requireAdministrator</c> elevation
+/// (RESEARCH Pitfall 2, microsoft/WindowsAppSDK#2504).
 /// </summary>
 public interface IFilePickerService
 {
@@ -25,15 +28,21 @@ public interface IFilePickerService
         string suggestedFileName,
         IReadOnlyList<string> fileTypeFilters,
         string? suggestedStartLocation = null);
+
+    /// <summary>Opens a single-select folder picker. Returns null when cancelled.</summary>
+    Task<StorageFolder?> PickSingleFolderAsync(string? suggestedStartLocation = null);
+
+    /// <summary>Opens a multi-select folder picker. Returns null when cancelled.</summary>
+    Task<IReadOnlyList<StorageFolder>?> PickMultipleFoldersAsync(string? suggestedStartLocation = null);
 }
 
 public sealed class FilePickerService : IFilePickerService
 {
-    private readonly Func<IntPtr> _hwndProvider;
+    private readonly Func<WindowId> _windowIdProvider;
 
-    public FilePickerService(Func<IntPtr> hwndProvider)
+    public FilePickerService(Func<WindowId> windowIdProvider)
     {
-        _hwndProvider = hwndProvider ?? throw new ArgumentNullException(nameof(hwndProvider));
+        _windowIdProvider = windowIdProvider ?? throw new ArgumentNullException(nameof(windowIdProvider));
     }
 
     public async Task<IReadOnlyList<StorageFile>?> PickOpenFilesAsync(
@@ -41,8 +50,19 @@ public sealed class FilePickerService : IFilePickerService
         string? suggestedStartLocation = null)
     {
         var picker = CreateFileOpenPicker(fileTypeFilters, suggestedStartLocation);
-        var files = await picker.PickMultipleFilesAsync();
-        return files?.ToList();
+        var results = await picker.PickMultipleFilesAsync();
+        if (results is null)
+        {
+            return null;
+        }
+
+        var files = new List<StorageFile>(results.Count);
+        foreach (var result in results)
+        {
+            files.Add(await StorageFile.GetFileFromPathAsync(result.Path));
+        }
+
+        return files;
     }
 
     public async Task<StorageFile?> PickOpenFileAsync(
@@ -50,7 +70,8 @@ public sealed class FilePickerService : IFilePickerService
         string? suggestedStartLocation = null)
     {
         var picker = CreateFileOpenPicker(fileTypeFilters, suggestedStartLocation);
-        return await picker.PickSingleFileAsync();
+        var result = await picker.PickSingleFileAsync();
+        return result is null ? null : await StorageFile.GetFileFromPathAsync(result.Path);
     }
 
     public async Task<StorageFile?> PickSaveFileAsync(
@@ -58,7 +79,7 @@ public sealed class FilePickerService : IFilePickerService
         IReadOnlyList<string> fileTypeFilters,
         string? suggestedStartLocation = null)
     {
-        var picker = new FileSavePicker
+        var picker = new FileSavePicker(_windowIdProvider())
         {
             SuggestedFileName = suggestedFileName,
         };
@@ -73,13 +94,38 @@ public sealed class FilePickerService : IFilePickerService
             picker.FileTypeChoices.Add(Path.GetExtension(filter), [filter]);
         }
 
-        InitializeWithWindow.Initialize(picker, _hwndProvider());
-        return await picker.PickSaveFileAsync();
+        var result = await picker.PickSaveFileAsync();
+        return result is null ? null : await StorageFile.GetFileFromPathAsync(result.Path);
+    }
+
+    public async Task<StorageFolder?> PickSingleFolderAsync(string? suggestedStartLocation = null)
+    {
+        var picker = CreateFolderPicker(suggestedStartLocation);
+        var result = await picker.PickSingleFolderAsync();
+        return result is null ? null : await StorageFolder.GetFolderFromPathAsync(result.Path);
+    }
+
+    public async Task<IReadOnlyList<StorageFolder>?> PickMultipleFoldersAsync(string? suggestedStartLocation = null)
+    {
+        var picker = CreateFolderPicker(suggestedStartLocation);
+        var results = await picker.PickMultipleFoldersAsync();
+        if (results is null)
+        {
+            return null;
+        }
+
+        var folders = new List<StorageFolder>(results.Count);
+        foreach (var result in results)
+        {
+            folders.Add(await StorageFolder.GetFolderFromPathAsync(result.Path));
+        }
+
+        return folders;
     }
 
     private FileOpenPicker CreateFileOpenPicker(IReadOnlyList<string> fileTypeFilters, string? suggestedStartLocation)
     {
-        var picker = new FileOpenPicker
+        var picker = new FileOpenPicker(_windowIdProvider())
         {
             ViewMode = PickerViewMode.List,
         };
@@ -94,7 +140,18 @@ public sealed class FilePickerService : IFilePickerService
             picker.FileTypeFilter.Add(filter);
         }
 
-        InitializeWithWindow.Initialize(picker, _hwndProvider());
+        return picker;
+    }
+
+    private FolderPicker CreateFolderPicker(string? suggestedStartLocation)
+    {
+        var picker = new FolderPicker(_windowIdProvider());
+
+        if (TryGetStartLocation(suggestedStartLocation, out var startLocation))
+        {
+            picker.SuggestedStartLocation = startLocation;
+        }
+
         return picker;
     }
 
