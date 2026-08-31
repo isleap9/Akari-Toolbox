@@ -1,0 +1,11 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Folder Name="/src/">
+    <Project Path="src/AkariToolbox.App/AkariToolbox.App.csproj" />
+    <Project Path="src/AkariToolbox.Framework/AkariToolbox.Framework.csproj" />
+    <Project Path="src/AkariToolbox.Tests/AkariToolbox.Tests.csproj" />
+  </Folder>
+</Solution>
