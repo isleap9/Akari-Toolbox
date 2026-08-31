@@ -34,11 +34,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. User can complete the two-phase guided Defender-disable workflow (tamper protection phase, then real-time protection phase) with explicit warnings at each phase, ported as a direct carry-over of the predecessor's existing logic
   5. The app shell uses native WinUI 3 Fluent 2 controls and Mica backdrop/theming (no WPF-UI theme carried over), background operations (tweak state reads, async callbacks) update the UI without cross-thread crashes, and file/folder picker operations work correctly while the app runs elevated
 
-**Plans:** 7 plans
+**Plans:** 1/7 plans executed
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Walking Skeleton tracer: copy/rename framework solution, elevate, wire WiFi tweak end-to-end; full Home dashboard + nav sidebar
+- [x] 01-01-PLAN.md — Walking Skeleton tracer: copy/rename framework solution, elevate, wire WiFi tweak end-to-end; full Home dashboard + nav sidebar
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -110,7 +110,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Akari OS Tweaks | 0/7 | Planned | - |
+| 1. Foundation & Akari OS Tweaks | 1/7 | In Progress|  |
 | 2. Gaming Tweaks | 0/TBD | Not started | - |
 | 3. Debloat | 0/TBD | Not started | - |
 | 4. Downloads & Misc | 0/TBD | Not started | - |
