@@ -128,26 +128,249 @@ public class GamingGraphicsTweaksTests
         Assert.Equal(TweakCategory.Gaming, handler.Category);
     }
 
+    [Fact]
+    public void IntelSettings_SetState_true_writes_AsyncFlipMode_2_and_LowLatency_0_under_3DKeys_per_adapter()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, GpuDisplayClassGuid, "1234", "5678");
+        var handler = new IntelSettingsTweakHandler(registry);
+
+        handler.SetState(true);
+
+        foreach (var adapter in new[] { "1234", "5678" })
+        {
+            var keysPath = $@"{GpuDisplayClassGuid}\{adapter}\3DKeys";
+            Assert.Equal((2, RegistryValueKind.DWord), registry.GetValueWithKind(RegistryHive.LocalMachine, keysPath, "Global_AsyncFlipMode"));
+            Assert.Equal((0, RegistryValueKind.DWord), registry.GetValueWithKind(RegistryHive.LocalMachine, keysPath, "Global_LowLatency"));
+        }
+    }
+
+    [Fact]
+    public void IntelSettings_SetState_false_deletes_entire_3DKeys_subkey_per_adapter()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, GpuDisplayClassGuid, "1234", "5678");
+        var handler = new IntelSettingsTweakHandler(registry);
+        handler.SetState(true);
+
+        handler.SetState(false);
+
+        foreach (var adapter in new[] { "1234", "5678" })
+        {
+            var keysPath = $@"{GpuDisplayClassGuid}\{adapter}\3DKeys";
+            Assert.True(registry.WasSubKeyTreeDeleted(RegistryHive.LocalMachine, keysPath));
+            Assert.Null(registry.GetValue(RegistryHive.LocalMachine, keysPath, "Global_AsyncFlipMode"));
+        }
+    }
+
+    [Fact]
+    public void IntelSettings_GetState_returns_true_only_when_every_adapter_has_AsyncFlipMode_2()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, GpuDisplayClassGuid, "1234", "5678");
+        registry.Seed(RegistryHive.LocalMachine, $@"{GpuDisplayClassGuid}\1234\3DKeys", "Global_AsyncFlipMode", 2);
+        registry.Seed(RegistryHive.LocalMachine, $@"{GpuDisplayClassGuid}\5678\3DKeys", "Global_AsyncFlipMode", 2);
+        var handler = new IntelSettingsTweakHandler(registry);
+
+        Assert.True(handler.GetState());
+    }
+
+    [Fact]
+    public void IntelSettings_GetState_returns_false_when_3DKeys_subkey_absent_for_one_adapter()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, GpuDisplayClassGuid, "1234", "5678");
+        registry.Seed(RegistryHive.LocalMachine, $@"{GpuDisplayClassGuid}\1234\3DKeys", "Global_AsyncFlipMode", 2);
+        // "5678" intentionally never seeded — 3DKeys is absent for that adapter.
+        var handler = new IntelSettingsTweakHandler(registry);
+
+        Assert.False(handler.GetState());
+    }
+
+    [Fact]
+    public void IntelSettings_metadata_is_Order_104_Category_Gaming()
+    {
+        var handler = new IntelSettingsTweakHandler(new FakeRegistryService());
+
+        Assert.Equal(104, handler.Order);
+        Assert.Equal(TweakCategory.Gaming, handler.Category);
+        Assert.Equal("gpuintelsettings", handler.Key);
+    }
+
+    [Fact]
+    public void HexStringToBytes_converts_hex_pairs_to_bytes()
+    {
+        Assert.Equal(new byte[] { 0x30, 0x00 }, RegistryBinaryHelpers.HexStringToBytes("3000"));
+    }
+
+    [Fact]
+    public void AmdSettings_SetState_true_writes_all_10_fixed_HKCU_values()
+    {
+        var registry = new FakeRegistryService();
+        var handler = new AmdSettingsTweakHandler(registry);
+
+        handler.SetState(true);
+
+        Assert.Equal((0, RegistryValueKind.DWord), registry.GetValueWithKind(RegistryHive.CurrentUser, @"Software\AMD\CN", "AutoUpdate"));
+        Assert.Equal((0, RegistryValueKind.DWord), registry.GetValueWithKind(RegistryHive.CurrentUser, @"Software\AMD\AIM", "LaunchBugTool"));
+        Assert.Equal((1, RegistryValueKind.DWord), registry.GetValueWithKind(RegistryHive.CurrentUser, @"Software\AMD\DVR", "HotkeysDisabled"));
+        Assert.Equal(("false", RegistryValueKind.String), registry.GetValueWithKind(RegistryHive.CurrentUser, @"Software\AMD\CN", "SystemTray"));
+        Assert.Equal(("false", RegistryValueKind.String), registry.GetValueWithKind(RegistryHive.CurrentUser, @"Software\AMD\DVR", "ShowRSOverlay"));
+        Assert.Equal(("true", RegistryValueKind.String), registry.GetValueWithKind(RegistryHive.CurrentUser, @"Software\AMD\CN", "RSXBrowserUnavailable"));
+        Assert.Equal(("false", RegistryValueKind.String), registry.GetValueWithKind(RegistryHive.CurrentUser, @"Software\AMD\CN", "AllowWebContent"));
+        Assert.Equal(("true", RegistryValueKind.String), registry.GetValueWithKind(RegistryHive.CurrentUser, @"Software\AMD\CN", "CN_Hide_Toast_Notification"));
+        Assert.Equal(("false", RegistryValueKind.String), registry.GetValueWithKind(RegistryHive.CurrentUser, @"Software\AMD\CN", "AnimationEffect"));
+        Assert.Equal(("PROFILE_CUSTOM", RegistryValueKind.String), registry.GetValueWithKind(RegistryHive.CurrentUser, @"Software\AMD\CN", "WizardProfile"));
+    }
+
+    [Fact]
+    public void AmdSettings_SetState_false_reverses_fixed_values_per_documented_off_behavior()
+    {
+        var registry = new FakeRegistryService();
+        var handler = new AmdSettingsTweakHandler(registry);
+
+        handler.SetState(false);
+
+        // Values documented as "deleted" on Off: DeleteValue called, no lingering SetValue.
+        Assert.True(registry.WasDeleted(RegistryHive.CurrentUser, @"Software\AMD\CN", "AutoUpdate"));
+        Assert.Null(registry.GetValue(RegistryHive.CurrentUser, @"Software\AMD\CN", "AutoUpdate"));
+        Assert.True(registry.WasDeleted(RegistryHive.CurrentUser, @"Software\AMD\DVR", "HotkeysDisabled"));
+        Assert.Null(registry.GetValue(RegistryHive.CurrentUser, @"Software\AMD\DVR", "HotkeysDisabled"));
+        Assert.True(registry.WasDeleted(RegistryHive.CurrentUser, @"Software\AMD\CN", "SystemTray"));
+        Assert.True(registry.WasDeleted(RegistryHive.CurrentUser, @"Software\AMD\DVR", "ShowRSOverlay"));
+        Assert.True(registry.WasDeleted(RegistryHive.CurrentUser, @"Software\AMD\CN", "RSXBrowserUnavailable"));
+        Assert.True(registry.WasDeleted(RegistryHive.CurrentUser, @"Software\AMD\CN", "AllowWebContent"));
+        Assert.True(registry.WasDeleted(RegistryHive.CurrentUser, @"Software\AMD\CN", "CN_Hide_Toast_Notification"));
+        Assert.True(registry.WasDeleted(RegistryHive.CurrentUser, @"Software\AMD\CN", "AnimationEffect"));
+        Assert.True(registry.WasDeleted(RegistryHive.CurrentUser, @"Software\AMD\CN", "WizardProfile"));
+
+        // The one row documented as rewritten (not deleted) on Off.
+        Assert.Equal((1, RegistryValueKind.DWord), registry.GetValueWithKind(RegistryHive.CurrentUser, @"Software\AMD\AIM", "LaunchBugTool"));
+        Assert.False(registry.WasDeleted(RegistryHive.CurrentUser, @"Software\AMD\AIM", "LaunchBugTool"));
+    }
+
+    [Fact]
+    public void AmdSettings_SetState_true_writes_per_adapter_UMD_values_via_HexStringToBytes()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, GpuDisplayClassGuid, "1234");
+        var handler = new AmdSettingsTweakHandler(registry);
+
+        handler.SetState(true);
+
+        var umdPath = $@"{GpuDisplayClassGuid}\1234\UMD";
+        Assert.Equal(RegistryBinaryHelpers.HexStringToBytes("3000"), registry.GetValue(RegistryHive.LocalMachine, umdPath, "VSyncControl"));
+        Assert.Equal(RegistryBinaryHelpers.HexStringToBytes("3200"), registry.GetValue(RegistryHive.LocalMachine, umdPath, "TFQ"));
+        Assert.Equal(RegistryBinaryHelpers.HexStringToBytes("3100"), registry.GetValue(RegistryHive.LocalMachine, umdPath, "Tessellation"));
+        Assert.Equal(RegistryBinaryHelpers.HexStringToBytes("3200"), registry.GetValue(RegistryHive.LocalMachine, umdPath, "Tessellation_OPTION"));
+    }
+
+    [Fact]
+    public void AmdSettings_SetState_false_writes_per_adapter_UMD_off_values_and_deletes_TFQ()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, GpuDisplayClassGuid, "1234");
+        var handler = new AmdSettingsTweakHandler(registry);
+
+        handler.SetState(false);
+
+        var umdPath = $@"{GpuDisplayClassGuid}\1234\UMD";
+        Assert.Equal(RegistryBinaryHelpers.HexStringToBytes("31000000"), registry.GetValue(RegistryHive.LocalMachine, umdPath, "VSyncControl"));
+        Assert.True(registry.WasDeleted(RegistryHive.LocalMachine, umdPath, "TFQ"));
+        Assert.Equal(RegistryBinaryHelpers.HexStringToBytes("360034000000"), registry.GetValue(RegistryHive.LocalMachine, umdPath, "Tessellation"));
+        Assert.Equal(RegistryBinaryHelpers.HexStringToBytes("30000000"), registry.GetValue(RegistryHive.LocalMachine, umdPath, "Tessellation_OPTION"));
+    }
+
+    [Fact]
+    public void AmdSettings_SetState_true_deletes_then_recreates_Notification_subkey_empty()
+    {
+        var registry = new FakeRegistryService();
+        var handler = new AmdSettingsTweakHandler(registry);
+
+        handler.SetState(true);
+
+        Assert.True(registry.WasSubKeyTreeDeleted(RegistryHive.CurrentUser, @"Software\AMD\CN\Notification"));
+        Assert.True(registry.WasSubKeyCreated(RegistryHive.CurrentUser, @"Software\AMD\CN\Notification"));
+    }
+
+    [Fact]
+    public void AmdSettings_SetState_false_deletes_CustomResolutions_DisplayOverride_Notification_and_AlreadyNotified_subkeys()
+    {
+        var registry = new FakeRegistryService();
+        var handler = new AmdSettingsTweakHandler(registry);
+
+        handler.SetState(false);
+
+        Assert.True(registry.WasSubKeyTreeDeleted(RegistryHive.CurrentUser, @"Software\AMD\CN\CustomResolutions"));
+        Assert.True(registry.WasSubKeyTreeDeleted(RegistryHive.CurrentUser, @"Software\AMD\CN\DisplayOverride"));
+        Assert.True(registry.WasSubKeyTreeDeleted(RegistryHive.CurrentUser, @"Software\AMD\CN\Notification"));
+        Assert.True(registry.WasSubKeyTreeDeleted(RegistryHive.CurrentUser, @"Software\AMD\CN\FreeSync"));
+        Assert.True(registry.WasSubKeyTreeDeleted(RegistryHive.CurrentUser, @"Software\AMD\CN\OverlayNotification"));
+        Assert.True(registry.WasSubKeyTreeDeleted(RegistryHive.CurrentUser, @"Software\AMD\CN\VirtualSuperResolution"));
+    }
+
+    [Fact]
+    public void AmdSettings_GetState_returns_true_only_when_AutoUpdate_equals_0()
+    {
+        var registry = new FakeRegistryService();
+        registry.Seed(RegistryHive.CurrentUser, @"Software\AMD\CN", "AutoUpdate", 0);
+        var handler = new AmdSettingsTweakHandler(registry);
+
+        Assert.True(handler.GetState());
+    }
+
+    [Fact]
+    public void AmdSettings_GetState_returns_false_when_AutoUpdate_is_absent_or_nonzero()
+    {
+        var registry = new FakeRegistryService();
+        var handler = new AmdSettingsTweakHandler(registry);
+        Assert.False(handler.GetState());
+
+        registry.Seed(RegistryHive.CurrentUser, @"Software\AMD\CN", "AutoUpdate", 1);
+        Assert.False(handler.GetState());
+    }
+
+    [Fact]
+    public void AmdSettings_metadata_is_Order_103_Category_Gaming()
+    {
+        var handler = new AmdSettingsTweakHandler(new FakeRegistryService());
+
+        Assert.Equal(103, handler.Order);
+        Assert.Equal(TweakCategory.Gaming, handler.Category);
+        Assert.Equal("gpuamdsettings", handler.Key);
+    }
+
     private sealed class FakeRegistryService : IRegistryService
     {
-        private readonly Dictionary<(RegistryHive Hive, string SubKeyPath, string ValueName), object?> _values = new();
+        private readonly Dictionary<(RegistryHive Hive, string SubKeyPath, string ValueName), (object? Value, RegistryValueKind Kind)> _values = new();
         private readonly Dictionary<(RegistryHive Hive, string SubKeyPath), List<string>> _subKeyNames = new();
         private readonly HashSet<(RegistryHive Hive, string SubKeyPath, string ValueName)> _deletedKeys = new();
+        private readonly HashSet<(RegistryHive Hive, string SubKeyPath)> _deletedSubKeyTrees = new();
+        private readonly HashSet<(RegistryHive Hive, string SubKeyPath)> _createdSubKeys = new();
 
         public void SetSubKeyNames(RegistryHive hive, string subKeyPath, params string[] names) =>
             _subKeyNames[(hive, subKeyPath)] = names.ToList();
 
-        public void Seed(RegistryHive hive, string subKeyPath, string valueName, object? value) =>
-            _values[(hive, subKeyPath, valueName)] = value;
+        public void Seed(RegistryHive hive, string subKeyPath, string valueName, object? value, RegistryValueKind kind = RegistryValueKind.DWord) =>
+            _values[(hive, subKeyPath, valueName)] = (value, kind);
 
         public bool WasDeleted(RegistryHive hive, string subKeyPath, string valueName) =>
             _deletedKeys.Contains((hive, subKeyPath, valueName));
 
+        public bool WasSubKeyTreeDeleted(RegistryHive hive, string subKeyPath) =>
+            _deletedSubKeyTrees.Contains((hive, subKeyPath));
+
+        public bool WasSubKeyCreated(RegistryHive hive, string subKeyPath) =>
+            _createdSubKeys.Contains((hive, subKeyPath));
+
         public object? GetValue(RegistryHive hive, string subKeyPath, string valueName) =>
-            _values.TryGetValue((hive, subKeyPath, valueName), out var v) ? v : null;
+            _values.TryGetValue((hive, subKeyPath, valueName), out var v) ? v.Value : null;
+
+        public (object? Value, RegistryValueKind Kind) GetValueWithKind(RegistryHive hive, string subKeyPath, string valueName) =>
+            _values.TryGetValue((hive, subKeyPath, valueName), out var v) ? v : (null, default);
 
         public void SetValue(RegistryHive hive, string subKeyPath, string valueName, object value, RegistryValueKind kind) =>
-            _values[(hive, subKeyPath, valueName)] = value;
+            _values[(hive, subKeyPath, valueName)] = (value, kind);
 
         public void DeleteValue(RegistryHive hive, string subKeyPath, string valueName)
         {
@@ -157,6 +380,21 @@ public class GamingGraphicsTweaksTests
 
         public IReadOnlyList<string> GetSubKeyNames(RegistryHive hive, string subKeyPath) =>
             _subKeyNames.TryGetValue((hive, subKeyPath), out var names) ? names : [];
+
+        public void DeleteSubKeyTree(RegistryHive hive, string subKeyPath)
+        {
+            foreach (var key in _values.Keys.Where(k => k.Hive == hive && (k.SubKeyPath == subKeyPath || k.SubKeyPath.StartsWith(subKeyPath + "\\", StringComparison.Ordinal))).ToList())
+            {
+                _values.Remove(key);
+            }
+
+            // Historical fact — kept even if a later CreateSubKey recreates the same path,
+            // so tests can assert "deleted then recreated" as two independent occurrences.
+            _deletedSubKeyTrees.Add((hive, subKeyPath));
+        }
+
+        public void CreateSubKey(RegistryHive hive, string subKeyPath) =>
+            _createdSubKeys.Add((hive, subKeyPath));
 
         public RegistryKey OpenRealUserHive(string subKeyPath) =>
             throw new NotSupportedException("Not needed for Gaming Graphics tests.");
