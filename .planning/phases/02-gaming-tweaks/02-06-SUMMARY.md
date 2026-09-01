@@ -148,6 +148,12 @@ None - no external service configuration required.
 - Human verification still needed: elevated manual launch of the Gaming Tweaks page to confirm the driver-tools section renders with all 12 buttons and the risk-disclosure log line fires before each launch (plan's own `<verify>` human-check step) — not performed in this non-interactive execution session.
 - No blockers for subsequent Phase 02 plans.
 
+## Self-Check: PASSED
+
+- FOUND: all 12 embedded `.ps1` resources under `src/AkariToolbox.App/Resources/GamingScripts/`
+- FOUND: `.planning/phases/02-gaming-tweaks/02-06-SUMMARY.md`
+- FOUND commits: `5114b1c`, `425e54d`, `37bdb42`, `5ca5d41` in `git log --oneline`
+
 ---
 *Phase: 02-gaming-tweaks*
 *Completed: 2026-09-01*
