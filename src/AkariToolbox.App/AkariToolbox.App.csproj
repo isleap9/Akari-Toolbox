@@ -57,6 +57,23 @@
          <EmbeddedResource> lines to this same ItemGroup. -->
     <EmbeddedResource Include="Resources\DebloatScripts\telemetry.ps1" />
     <EmbeddedResource Include="Resources\DebloatScripts\telemetry-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\activityhistory.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\activityhistory-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\locationtracking.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\locationtracking-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\ps7telemetry.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\ps7telemetry-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\consumerfeatures.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\consumerfeatures-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\disablebgapps.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\disablebgapps-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\storesearch.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\storesearch-undo.ps1" />
+    <!-- D-14: branch-extracted from the "Ultimate" collection's `6 Windows/9 Copilot.ps1`,
+         not a direct predecessor carry (Copilot-only scope, narrower than the
+         predecessor's WindowsAI.ps1/WindowsAI-Undo.ps1). -->
+    <EmbeddedResource Include="Resources\DebloatScripts\windowsai.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\windowsai-undo.ps1" />
   </ItemGroup>
 
   <ItemGroup>
