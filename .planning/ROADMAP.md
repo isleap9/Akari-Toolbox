@@ -13,7 +13,7 @@ Akari Toolbox is a ground-up port of AkariOS Companion from WPF to native WinUI 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation & Akari OS Tweaks** - New elevated WinUI 3 solution (copied from the framework template, rebranded), Home dashboard, and the full 32-toggle Akari OS Tweaks page with real-state revert and the two-phase Defender workflow
+- [x] **Phase 1: Foundation & Akari OS Tweaks** - New elevated WinUI 3 solution (copied from the framework template, rebranded), Home dashboard, and the full 32-toggle Akari OS Tweaks page with real-state revert and the two-phase Defender workflow (completed 2026-09-01)
 - [ ] **Phase 2: Gaming Tweaks** - Gaming/latency toggles, service-config dropdowns, and a third-party tool launcher grid, reusing the Phase 1 tweak pattern
 - [ ] **Phase 3: Debloat** - 28 PowerShell-backed debloat actions with streamed live output, driven by proper ViewModel/service architecture
 - [ ] **Phase 4: Downloads & Misc** - Self-healing PostInstall asset mirror, playbooks/drivers/links, and classic context-menu management
@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. User can complete the two-phase guided Defender-disable workflow (tamper protection phase, then real-time protection phase) with explicit warnings at each phase, ported as a direct carry-over of the predecessor's existing logic
   5. The app shell uses native WinUI 3 Fluent 2 controls and Mica backdrop/theming (no WPF-UI theme carried over), background operations (tweak state reads, async callbacks) update the UI without cross-thread crashes, and file/folder picker operations work correctly while the app runs elevated
 
-**Plans:** 7/7 plans executed
+**Plans:** 7/7 plans complete
 Plans:
 **Wave 1**
 
@@ -110,7 +110,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Akari OS Tweaks | 7/7 | In Progress|  |
+| 1. Foundation & Akari OS Tweaks | 7/7 | Complete    | 2026-09-01 |
 | 2. Gaming Tweaks | 0/TBD | Not started | - |
 | 3. Debloat | 0/TBD | Not started | - |
 | 4. Downloads & Misc | 0/TBD | Not started | - |

@@ -12,20 +12,19 @@ Every tweak, debloat action, and downloaded asset must apply correctly, report a
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Home page ported to WinUI 3 MVVM (landing/dashboard, matching current app's entry point) — Phase 1
+- ✓ Akari OS Tweaks page ported: 32 registry-backed OS-level tweaks as toggle switches, instant apply with state feedback, including the two-phase Disable Defender workflow — Phase 1
+- ✓ App runs elevated (`requireAdministrator` in app manifest), matching predecessor's privilege model — Phase 1
+- ✓ App identity rebranded to "Akari Toolbox" (namespace, assembly name, manifest identity, icon/branding assets) — Phase 1
 
 ### Active
 
-- [ ] Home page ported to WinUI 3 MVVM (landing/dashboard, matching current app's entry point)
-- [ ] Akari OS Tweaks page ported: 32 registry-backed OS-level tweaks as toggle switches, instant apply with state feedback, including the two-phase Disable Defender workflow
 - [ ] Gaming Tweaks page ported: GPU/latency/service tuning toggles, SvcHost split threshold / Win32 priority separation / service config dropdowns, quick-access tool grid (NVIDIA/AMD/third-party utilities)
 - [ ] Debloat page ported: 28 PowerShell-backed debloat actions, moved out of code-behind into proper ViewModel + service
 - [ ] Downloads page ported: self-healing PostInstall asset fetcher (mirrors `C:\PostInstall\` from GitHub when missing), playbooks/drivers/utility links
 - [ ] Misc page ported: 12 context-menu add/remove entries plus extra tools
-- [ ] App runs elevated (`requireAdministrator` in app manifest), matching predecessor's privilege model
-- [ ] App identity rebranded to "Akari Toolbox" (namespace, assembly name, manifest identity, icon/branding assets)
-- [ ] All ported pages use the WinUI-3-MVVM-Framework's DI, navigation, settings, theming, and dialog services rather than page-level code-behind logic
-- [ ] Visual style uses native WinUI 3 Fluent 2 controls and the framework's Mica backdrop/theming — the predecessor's WPF-UI custom theme (`Themes/Colors.xaml`, `Themes/Controls.xaml`) is not carried over
+- [ ] All ported pages use the WinUI-3-MVVM-Framework's DI, navigation, settings, theming, and dialog services rather than page-level code-behind logic (demonstrated for Home + Akari OS Tweaks in Phase 1; must hold through Phases 2-4)
+- [ ] Visual style uses native WinUI 3 Fluent 2 controls and the framework's Mica backdrop/theming — the predecessor's WPF-UI custom theme (`Themes/Colors.xaml`, `Themes/Controls.xaml`) is not carried over (demonstrated in Phase 1 shell; must hold through Phases 2-4)
 
 ### Out of Scope
 
@@ -52,11 +51,14 @@ Every tweak, debloat action, and downloaded asset must apply correctly, report a
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Port to WinUI 3 on top of the existing WinUI-3-MVVM-Framework (AppTemplate) rather than a fresh solution | Framework already provides DI, navigation, settings, theming, dialogs, and logging — avoids re-solving MVVM plumbing | — Pending |
-| v1 = feature parity with AkariOS Companion; deeper "Ultimate" tweak collection deferred to v2 | Ship a clean, correct port first before expanding scope | — Pending |
-| Rebrand from "AkariOS Companion" to "Akari Toolbox" | Intentional product/repo rename | — Pending |
-| Keep the admin-elevation requirement (`requireAdministrator`) | Same system-level operations (registry, services, Defender) as the predecessor | — Pending |
-| Drop the predecessor's WPF-UI custom theme entirely; use the framework's native WinUI 3 Fluent 2 look (Mica, default controls) | User explicitly wants the native WinUI 3 MVVM look, not a WPF-UI skin carried over | — Pending |
+| Port to WinUI 3 on top of the existing WinUI-3-MVVM-Framework (AppTemplate) rather than a fresh solution | Framework already provides DI, navigation, settings, theming, dialogs, and logging — avoids re-solving MVVM plumbing | Shipped in Phase 1 — solution copied/renamed successfully, DI/nav/settings/theming/dialogs all reused without rework |
+| v1 = feature parity with AkariOS Companion; deeper "Ultimate" tweak collection deferred to v2 | Ship a clean, correct port first before expanding scope | Phase 1 delivered Home + the full 32-tweak Akari OS Tweaks page at parity, including the Defender two-phase workflow |
+| Rebrand from "AkariOS Companion" to "Akari Toolbox" | Intentional product/repo rename | Namespace/assembly/manifest/icon all rebranded in Phase 1 |
+| Keep the admin-elevation requirement (`requireAdministrator`) | Same system-level operations (registry, services, Defender) as the predecessor | Confirmed working — UAC prompt + elevated launch verified via Phase 1 UAT |
+| Drop the predecessor's WPF-UI custom theme entirely; use the framework's native WinUI 3 Fluent 2 look (Mica, default controls) | User explicitly wants the native WinUI 3 MVVM look, not a WPF-UI skin carried over | Confirmed via Phase 1 UAT — Mica backdrop renders, no WPF-UI theme files present |
+| TWEAKS-02 (Defender two-phase workflow): keep the overall two-phase workflow shape (Tamper Protection gate, cab+ps1 install, post-reboot phase 2) as a direct carry-over, not decomposed into the ITweakHandler registry/service-primitive pattern | Decomposing Defender into the generic per-tweak pattern is out of scope for v1 (tracked as SEC-01, v2) | Workflow shape unchanged in Phase 1, but its internal *elevation mechanism* was replaced mid-phase — see next two rows |
+| Replace Defender's elevation mechanism (MinSudo.exe/PowerRun.exe) with native SYSTEM impersonation (P/Invoke token duplication from winlogon.exe) | Explicit project-owner direction, closing a code-review finding (CR-01/CR-03): eliminates the unverified-elevated-binary-execution risk entirely rather than adding more SHA256 pins | Implemented in Phase 1, security-audited (01-SECURITY.md) — 1 new threat surfaced by the change (T-01-17, the headless `--defender-phase2` relaunch had no proof of legitimate scheduling) and closed with a single-use token gate; `threats_open: 0` |
+| Remove Defender's PostInstall/`C:\PostInstall` dependency entirely; embed `NoDefender.cab`/`DisableDefender.ps1` as assembly resources | Explicit project-owner direction — Defender should have no runtime dependency on the downloaded PostInstall mirror | Implemented in Phase 1; `IPostInstallService`/`PostInstallService` remain in the codebase, unused, ahead of the Phase 4 Downloads-page asset mirror (DOWNLOADS-01) |
 
 ## Evolution
 
@@ -76,4 +78,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-31 after initialization*
+*Last updated: 2026-09-01 after Phase 1*
