@@ -226,6 +226,28 @@ public class DebloatCatalogTests
         Assert.Equal(["disablebitlocker-undo.ps1"], scriptRunner.Calls);
     }
 
+    [Fact]
+    public void DebloatViewModel_populates_UndoDownloadsUnverifiedBinary_from_catalog()
+    {
+        var viewModel = new DebloatViewModel(new DebloatCatalog(), new LogConsoleService(dispatcher: null), new FakeScriptRunner(), new FakeDialogService());
+        var items = viewModel.CategoryGroups.SelectMany(g => g.Actions).ToList();
+
+        var expectedTrueKeys = new[] { "edgewebview", "edgesettings" };
+
+        Assert.All(items.Where(i => expectedTrueKeys.Contains(i.Key)), i => Assert.True(i.UndoDownloadsUnverifiedBinary));
+        Assert.All(items.Where(i => !expectedTrueKeys.Contains(i.Key)), i => Assert.False(i.UndoDownloadsUnverifiedBinary));
+    }
+
+    [Fact]
+    public void DebloatViewModel_populates_RequiresConfirmation_from_catalog_unchanged()
+    {
+        var viewModel = new DebloatViewModel(new DebloatCatalog(), new LogConsoleService(dispatcher: null), new FakeScriptRunner(), new FakeDialogService());
+        var items = viewModel.CategoryGroups.SelectMany(g => g.Actions).ToList();
+
+        Assert.All(items.Where(i => ExpectedConfirmationRequiredKeys.Contains(i.Key)), i => Assert.True(i.RequiresConfirmation));
+        Assert.All(items.Where(i => !ExpectedConfirmationRequiredKeys.Contains(i.Key)), i => Assert.False(i.RequiresConfirmation));
+    }
+
     /// <summary>Records every <see cref="RunEmbeddedScriptAsync"/> call's resource suffix.</summary>
     private sealed class FakeScriptRunner : IScriptRunner
     {
