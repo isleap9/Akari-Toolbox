@@ -37,7 +37,6 @@ public partial class AkariOSTweaksViewModel : ViewModelBase
                 IsOn = false,
             };
 
-            item.PropertyChanged += OnTweakItemPropertyChanged;
             Tweaks.Add(item);
 
             // Read the live state in parallel, off the constructor's critical path,
@@ -45,8 +44,18 @@ public partial class AkariOSTweaksViewModel : ViewModelBase
             // never throws (T-01-16): a handler whose GetState() fails is caught, logged,
             // and defaults to false, so one throwing handler cannot prevent the other 31
             // from rendering correctly.
+            //
+            // CR-02 fix (01-REVIEW.md): PropertyChanged is subscribed only AFTER the
+            // initial value is set, not before. Subscribing up front let a stale,
+            // still-in-flight initial-load continuation race a user's early toggle
+            // through the write-through pipeline in OnTweakItemPropertyChanged and
+            // silently revert a tweak the user just applied.
             _ = TryGetStateAsync(_catalog, _log, handler).ContinueWith(
-                task => _dispatcher.RunOnUIThreadAsync(() => item.IsOn = task.Result),
+                task => _dispatcher.RunOnUIThreadAsync(() =>
+                {
+                    item.IsOn = task.Result;
+                    item.PropertyChanged += OnTweakItemPropertyChanged;
+                }),
                 TaskScheduler.Default);
         }
     }
@@ -86,12 +95,31 @@ public partial class AkariOSTweaksViewModel : ViewModelBase
         // Fire-and-forget: the catalog serializes per-key internally and the toggle
         // already reflects the user's intent. Failures are logged, never swallowed
         // silently.
+        //
+        // CR-04 fix (01-REVIEW.md): on fault, re-read the real live state and reflect
+        // it in the UI instead of leaving the toggle showing the requested-but-never-
+        // applied state. Unsubscribe/resubscribe around the correction so setting
+        // item.IsOn back to the real value doesn't re-trigger another write-through.
         _ = _catalog.SetStateAsync(item.Key, item.IsOn).ContinueWith(
-            task =>
+            async task =>
             {
                 if (task.IsFaulted)
                 {
                     _log.Log($"[TWEAK ERROR] {item.Key}: {task.Exception?.GetBaseException().Message}");
+
+                    var handler = _catalog.Handlers.FirstOrDefault(h => h.Key == item.Key);
+                    if (handler is null)
+                    {
+                        return;
+                    }
+
+                    var real = await TryGetStateAsync(_catalog, _log, handler).ConfigureAwait(false);
+                    await _dispatcher.RunOnUIThreadAsync(() =>
+                    {
+                        item.PropertyChanged -= OnTweakItemPropertyChanged;
+                        item.IsOn = real;
+                        item.PropertyChanged += OnTweakItemPropertyChanged;
+                    });
                 }
             },
             TaskScheduler.Default);
