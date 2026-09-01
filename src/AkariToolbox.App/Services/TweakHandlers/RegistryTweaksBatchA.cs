@@ -18,6 +18,8 @@ public sealed class TsxTweakHandler(IRegistryService registry) : ITweakHandler
     public string Description => "Enable Intel Transactional Synchronization Extensions";
     public int Order => 1;
 
+    public TweakCategory Category => TweakCategory.AkariOS;
+
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, Key_, "DisableTsx") is int v && v == 0;
 
@@ -33,6 +35,8 @@ public sealed class ActionCenterTweakHandler(IRegistryService registry) : ITweak
     public string Title => "Disable Action Center";
     public string Description => "Toggle Action Center On or Off";
     public int Order => 2;
+
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     public bool GetState() =>
         registry.GetValue(RegistryHive.CurrentUser, Key_, "DisableNotificationCenter") is int v && v == 1;
@@ -56,6 +60,8 @@ public sealed class VpnTweakHandler(IRegistryService registry) : ITweakHandler
     public string Title => "Disable VPN";
     public string Description => "Toggle VPN On or Off";
     public int Order => 7;
+
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, IkeExt, "Start") is int v && v == 4;
@@ -97,6 +103,8 @@ public sealed class NtfsEncryptionTweakHandler(IRegistryService registry, IScrip
     public string Description => "Toggle NTFS Encryption On or Off";
     public int Order => 8;
 
+    public TweakCategory Category => TweakCategory.AkariOS;
+
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, PoliciesKey, "NtfsDisableEncryption") is int v && v == 1;
 
@@ -128,6 +136,8 @@ public sealed class FsoGamebarTweakHandler(IRegistryService registry) : ITweakHa
     public string Title => "Disable FSO and Gamebar";
     public string Description => "Toggle FSO and Gamebar On or Off";
     public int Order => 9;
+
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     // Representative single-key read (RESEARCH Assumption A3) — matches WifiTweakHandler's
     // precedent for multi-key tweaks.
@@ -183,6 +193,8 @@ public sealed class NotificationsTweakHandler(IRegistryService registry) : ITwea
     public string Description => "Toggle Notifications On or Off";
     public int Order => 10;
 
+    public TweakCategory Category => TweakCategory.AkariOS;
+
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, WpnService, "Start") is int v && v == 4;
 
@@ -218,6 +230,8 @@ public sealed class PrefetchTweakHandler(IRegistryService registry) : ITweakHand
     public string Description => "Toggle Prefetch On or Off";
     public int Order => 11;
 
+    public TweakCategory Category => TweakCategory.AkariOS;
+
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, SysMain, "Start") is int v && v == 4;
 
@@ -237,6 +251,8 @@ public sealed class NoLazyModeTweakHandler(IRegistryService registry) : ITweakHa
     public string Title => "NoLazyMode";
     public string Description => "Disable MMCSS lazy mode";
     public int Order => 14;
+
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, SystemProfile, "NoLazyMode") is int v && v == 1;
@@ -260,6 +276,8 @@ public sealed class AdminUacTweakHandler(IRegistryService registry) : ITweakHand
     public string Description => "Configure UAC for admin accounts";
     public int Order => 15;
 
+    public TweakCategory Category => TweakCategory.AkariOS;
+
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, PoliciesSystem, "ValidateAdminCodeSignatures") is int v && v == 1;
 
@@ -280,6 +298,8 @@ public sealed class UacTweakHandler(IRegistryService registry) : ITweakHandler
     public string Description => "Configure User Account Control settings";
     public int Order => 17;
 
+    public TweakCategory Category => TweakCategory.AkariOS;
+
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, PoliciesSystem, "EnableLUA") is int v && v == 1;
 
@@ -299,6 +319,8 @@ public sealed class StartMenuTweakHandler(IRegistryService registry) : ITweakHan
     public string Title => "Disable Startmenu";
     public string Description => "Toggle Start Menu search/Bing On or Off";
     public int Order => 18;
+
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     // OpenRealUserHive throws (D-14) if explorer.exe is not found — let it propagate,
     // the caller (ITweakCatalog/AkariOSTweaksViewModel) surfaces it via ILogConsoleService.

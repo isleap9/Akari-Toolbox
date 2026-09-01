@@ -27,7 +27,7 @@ public partial class AkariOSTweaksViewModel : ViewModelBase
         _dispatcher = DispatcherQueue.GetForCurrentThread();
         Title = "Akari OS Tweaks";
 
-        foreach (var handler in _catalog.Handlers)
+        foreach (var handler in _catalog.Handlers.Where(h => h.Category == TweakCategory.AkariOS))
         {
             var item = new TweakItem
             {

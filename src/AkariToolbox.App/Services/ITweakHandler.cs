@@ -24,6 +24,14 @@ public interface ITweakHandler
     /// </summary>
     int Order { get; }
 
+    /// <summary>
+    /// Discriminates which page (<c>AkariOSTweaksViewModel</c> vs
+    /// <c>GamingTweaksViewModel</c>) this handler renders on. <see cref="ITweakCatalog.Handlers"/>
+    /// itself stays one flat, unfiltered list — each page's ViewModel filters on this
+    /// discriminator (RESEARCH.md Pattern 1).
+    /// </summary>
+    TweakCategory Category { get; }
+
     /// <summary>Reads the real, live current state — never a cached/app-tracked flag.</summary>
     bool GetState();
 

@@ -37,6 +37,13 @@ public sealed class RegistryService : IRegistryService
         subKey?.DeleteValue(valueName, throwOnMissingValue: false);
     }
 
+    public IReadOnlyList<string> GetSubKeyNames(RegistryHive hive, string subKeyPath)
+    {
+        using var baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64);
+        using var subKey = baseKey.OpenSubKey(subKeyPath);
+        return subKey?.GetSubKeyNames() ?? [];
+    }
+
     public RegistryKey OpenRealUserHive(string subKeyPath)
     {
         // WR-01 fix (01-REVIEW.md): dispose the Process object and close the native

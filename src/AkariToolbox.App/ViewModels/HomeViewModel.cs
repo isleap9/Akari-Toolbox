@@ -32,7 +32,7 @@ public partial class HomeViewModel : ViewModelBase
     /// </summary>
     public IReadOnlyList<HomeCard> Cards { get; } =
     [
-        new HomeCard { Title = "Gaming Tweaks",   Description = "GPU, latency & service tuning for peak FPS",  Glyph = "", Target = typeof(HomePage), IsEnabled = false },
+        new HomeCard { Title = "Gaming Tweaks",   Description = "GPU, latency & service tuning for peak FPS",  Glyph = "", Target = typeof(GamingTweaksPage), IsEnabled = true },
         new HomeCard { Title = "Akari OS Tweaks", Description = "Toggle deep system modifications & services", Glyph = "", Target = typeof(AkariOSTweaksPage), IsEnabled = true },
         new HomeCard { Title = "Debloat",         Description = "Run 28 PowerShell-backed debloat actions",    Glyph = "", Target = typeof(HomePage), IsEnabled = false },
         new HomeCard { Title = "Downloads",       Description = "Playbooks, drivers & recommended utilities",  Glyph = "", Target = typeof(HomePage), IsEnabled = false },

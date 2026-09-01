@@ -1,0 +1,75 @@
+using System.Text.RegularExpressions;
+using Microsoft.Win32;
+using AkariToolbox.Framework.Services;
+
+namespace AkariToolbox.App.Services.TweakHandlers;
+
+/// <summary>
+/// Gaming-category <see cref="ITweakHandler"/>s sourced from the "5 Graphics" folder of
+/// the user's "Ultimate" tweak collection (02-CONTEXT.md D-04). Every handler here targets
+/// <c>CurrentControlSet</c>, never <c>ControlSet001</c>, even where its source .ps1 script
+/// hardcodes the latter (RESEARCH.md Pitfall 1) — consistent with every existing Phase 1
+/// handler's convention.
+/// </summary>
+internal static class GpuAdapterEnumeration
+{
+    internal const string GpuDisplayClassGuid = @"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}";
+
+    /// <summary>
+    /// Returns every 4-digit-named GPU adapter subkey under the Display device-setup-class
+    /// GUID — the RESEARCH-recommended standardized filter (<c>^\d{4}$</c>), used in place
+    /// of each source script's own inconsistent heuristic so every GPU-adapter-enumerating
+    /// handler (Hdcp, P0State, and later Amd/Intel Settings) shares one filter
+    /// (RESEARCH.md Don't Hand-Roll table).
+    /// </summary>
+    internal static IEnumerable<string> GetGpuAdapterSubKeys(IRegistryService registry) =>
+        registry.GetSubKeyNames(RegistryHive.LocalMachine, GpuDisplayClassGuid)
+            .Where(name => Regex.IsMatch(name, @"^\d{4}$"));
+}
+
+/// <summary>
+/// Ported from <c>5 Graphics/7 Hdcp.ps1</c> (02-CONTEXT.md D-04) — first Gaming-category
+/// handler, proves the vertical slice. The source script's "Off (Recommended)" branch
+/// writes <c>RMHdcpKeyglobZero</c>=1 (forcing HDCP off); that maps 1:1 to
+/// <see cref="SetState"/>'s <c>enabled</c> parameter (RESEARCH.md Pattern 2).
+/// </summary>
+public sealed class HdcpTweakHandler(IRegistryService registry) : ITweakHandler
+{
+    public string Key => "gpuhdcp";
+
+    public string Title => "GPU HDCP Override";
+
+    public string Description => "Force-disable HDCP on every detected GPU adapter";
+
+    public int Order => 100;
+
+    public TweakCategory Category => TweakCategory.Gaming;
+
+    public bool GetState()
+    {
+        var adapters = GpuAdapterEnumeration.GetGpuAdapterSubKeys(registry).ToList();
+        if (adapters.Count == 0)
+        {
+            return false;
+        }
+
+        return adapters.All(adapter =>
+            registry.GetValue(
+                RegistryHive.LocalMachine,
+                $@"{GpuAdapterEnumeration.GpuDisplayClassGuid}\{adapter}",
+                "RMHdcpKeyglobZero") is int v && v == 1);
+    }
+
+    public void SetState(bool enabled)
+    {
+        foreach (var adapter in GpuAdapterEnumeration.GetGpuAdapterSubKeys(registry))
+        {
+            registry.SetValue(
+                RegistryHive.LocalMachine,
+                $@"{GpuAdapterEnumeration.GpuDisplayClassGuid}\{adapter}",
+                "RMHdcpKeyglobZero",
+                enabled ? 1 : 0,
+                RegistryValueKind.DWord);
+        }
+    }
+}

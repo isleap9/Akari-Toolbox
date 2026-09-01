@@ -50,7 +50,9 @@ public class TweakHandlerOrderingTests
     {
         using var provider = BuildProvider();
 
-        var handlers = provider.GetServices<ITweakHandler>().ToList();
+        var handlers = provider.GetServices<ITweakHandler>()
+            .Where(h => h.Category == TweakCategory.AkariOS)
+            .ToList();
 
         Assert.Equal(32, handlers.Count);
     }
@@ -60,7 +62,11 @@ public class TweakHandlerOrderingTests
     {
         using var provider = BuildProvider();
 
-        var orders = provider.GetServices<ITweakHandler>().Select(h => h.Order).OrderBy(o => o).ToList();
+        var orders = provider.GetServices<ITweakHandler>()
+            .Where(h => h.Category == TweakCategory.AkariOS)
+            .Select(h => h.Order)
+            .OrderBy(o => o)
+            .ToList();
 
         Assert.Equal(Enumerable.Range(0, 32).ToList(), orders);
     }
@@ -71,6 +77,7 @@ public class TweakHandlerOrderingTests
         using var provider = BuildProvider();
 
         var keys = provider.GetServices<ITweakHandler>()
+            .Where(h => h.Category == TweakCategory.AkariOS)
             .OrderBy(h => h.Order)
             .Select(h => h.Key)
             .ToList();
