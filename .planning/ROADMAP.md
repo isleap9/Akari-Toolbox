@@ -14,7 +14,7 @@ Akari Toolbox is a ground-up port of AkariOS Companion from WPF to native WinUI 
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation & Akari OS Tweaks** - New elevated WinUI 3 solution (copied from the framework template, rebranded), Home dashboard, and the full 32-toggle Akari OS Tweaks page with real-state revert and the two-phase Defender workflow (completed 2026-09-01)
-- [ ] **Phase 2: Gaming Tweaks** - Gaming/latency toggles and service-config dropdowns, reusing the Phase 1 tweak pattern
+- [x] **Phase 2: Gaming Tweaks** - Gaming/latency toggles and service-config dropdowns, reusing the Phase 1 tweak pattern (completed 2026-09-01)
 - [ ] **Phase 3: Debloat** - 28 PowerShell-backed debloat actions with streamed live output, driven by proper ViewModel/service architecture
 - [ ] **Phase 4: Downloads & Misc** - Self-healing PostInstall asset mirror, playbooks/drivers/links, and classic context-menu management
 
@@ -70,7 +70,7 @@ Plans:
 
 **Note:** GAMING-02 (third-party tool launcher grid) is retired per 02-CONTEXT.md D-11/D-12 — the PostInstall asset mirror it depended on is deprecated project-wide with no replacement. See REQUIREMENTS.md for the retirement record.
 
-**Plans:** 7/7 plans executed
+**Plans:** 7/7 plans complete
 Plans:
 **Wave 1**
 
@@ -108,7 +108,36 @@ Plans:
   2. User sees streamed status/output feedback while a debloat action runs, without the UI freezing or crashing
   3. Debloat page logic lives in a ViewModel/service, not in page code-behind (the predecessor's `DebloatPage.xaml.cs` pattern is not carried over)
 
-**Plans**: TBD
+**Plans:** 7 plans
+Plans:
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Tracer: Debloat architecture (catalog/ViewModel/page/DI/nav) + "Telemetry — Disable" wired end-to-end
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 03-02-PLAN.md — Complete Privacy & Telemetry category (7 remaining actions)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 03-03-PLAN.md — Complete System & Performance category (8 actions, incl. BitLocker/Hibernation confirmation)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 03-04-PLAN.md — Complete Explorer & UI (5 actions) + Tools (1 action) categories
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 03-05-PLAN.md — Cleanup direct carries: Disk Cleanup, Temp Files, OneDrive Remove
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 03-06-PLAN.md — Cleanup replacements: Bloatware/Edge & WebView/Edge Settings branch extraction (D-03/D-06/D-07/D-08)
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
+- [ ] 03-07-PLAN.md — Final integration: per-row risk captions, full-catalog regression lock
+
 **UI hint**: yes
 
 ### Phase 4: Downloads & Misc
@@ -135,6 +164,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Akari OS Tweaks | 7/7 | Complete    | 2026-09-01 |
-| 2. Gaming Tweaks | 7/7 | In Progress|  |
-| 3. Debloat | 0/TBD | Not started | - |
+| 2. Gaming Tweaks | 7/7 | Complete    | 2026-09-01 |
+| 3. Debloat | 0/7 | Not started | - |
 | 4. Downloads & Misc | 0/TBD | Not started | - |
