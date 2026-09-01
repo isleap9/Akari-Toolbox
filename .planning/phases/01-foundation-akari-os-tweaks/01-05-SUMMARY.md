@@ -133,6 +133,15 @@ None - no external service configuration required.
 - Live/on-device verification of bcdedit/DISM/service-controller behavior (real state toggles) still needs a manual pass on an actual Windows 10/11 machine with admin rights — flagged under `human_judgment: true` in the coverage block for D2, since a build-only check cannot confirm actual boot-config or feature-state changes.
 - No blockers for subsequent plans in this phase.
 
+## Self-Check: PASSED
+
+- FOUND: src/AkariToolbox.App/Services/TweakHandlers/ServiceBackedTweaks.cs
+- FOUND: src/AkariToolbox.App/Services/TweakHandlers/BcdeditDismTweaks.cs
+- FOUND: .planning/phases/01-foundation-akari-os-tweaks/01-05-SUMMARY.md
+- FOUND commit: 77cfcd3 (Task 1)
+- FOUND commit: 0baa2a1 (Task 2)
+- FOUND commit: 91563a7 (SUMMARY)
+
 ---
 *Phase: 01-foundation-akari-os-tweaks*
 *Completed: 2026-09-01*
