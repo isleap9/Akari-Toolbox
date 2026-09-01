@@ -73,3 +73,60 @@ public sealed class HdcpTweakHandler(IRegistryService registry) : ITweakHandler
         }
     }
 }
+
+/// <summary>
+/// Ported from <c>5 Graphics/8 P0 State.ps1</c> (02-CONTEXT.md D-04). Same shape as
+/// <see cref="HdcpTweakHandler"/>, targeting <c>DisableDynamicPstate</c> instead of
+/// <c>RMHdcpKeyglobZero</c> — an explicit write, not a delete, on both branches
+/// (<c>8 P0 State.ps1:26-33,56-63</c>).
+/// </summary>
+public sealed class P0StateTweakHandler(IRegistryService registry) : ITweakHandler
+{
+    public string Key => "gpup0state";
+
+    public string Title => "GPU P0 State";
+
+    public string Description => "Force GPUs to stay at maximum performance state";
+
+    public int Order => 101;
+
+    public TweakCategory Category => TweakCategory.Gaming;
+
+    public bool GetState() => throw new NotImplementedException();
+
+    public void SetState(bool enabled) => throw new NotImplementedException();
+}
+
+/// <summary>
+/// Ported from <c>5 Graphics/9 Msi Mode.ps1</c> (02-CONTEXT.md D-04). No in-repo primitive
+/// enumerates PnP devices (RESEARCH.md Pattern 4) — enumerates GPU <c>InstanceId</c>s via a
+/// non-interactive <c>Get-PnpDevice -Class Display</c> process spawn through
+/// <see cref="IScriptRunner"/> rather than adding a new dependency. Targets
+/// <c>CurrentControlSet</c>, deviating from <c>9 Msi Mode.ps1:22-28</c>'s own hardcoded
+/// <c>ControlSet001</c> per this plan's prohibition (RESEARCH.md Pitfall 1).
+/// </summary>
+public sealed class MsiModeTweakHandler(IRegistryService registry, IScriptRunner scriptRunner) : ITweakHandler
+{
+    public string Key => "gpumsimode";
+
+    public string Title => "GPU MSI Mode";
+
+    public string Description => "Enable Message-Signaled Interrupts on every detected GPU";
+
+    public int Order => 102;
+
+    public TweakCategory Category => TweakCategory.Gaming;
+
+    public bool GetState() => throw new NotImplementedException();
+
+    public void SetState(bool enabled) => throw new NotImplementedException();
+
+    private async Task<IReadOnlyList<string>> GetGpuInstanceIdsAsync()
+    {
+        var output = await scriptRunner.RunProcessCaptureOutputAsync(
+            "powershell.exe",
+            "-NoProfile -Command \"(Get-PnpDevice -Class Display).InstanceId\"");
+
+        return output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    }
+}
