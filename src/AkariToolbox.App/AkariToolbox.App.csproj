@@ -116,6 +116,11 @@
     <EmbeddedResource Include="Resources\DebloatScripts\tempfiles.ps1" />
     <EmbeddedResource Include="Resources\DebloatScripts\removeonedrive.ps1" />
     <EmbeddedResource Include="Resources\DebloatScripts\removeonedrive-undo.ps1" />
+    <!-- 03-06 Task 1: D-03 branch-extracted Bloatware Run/Undo replacements (not direct
+         predecessor carries), extracted from the "Ultimate" collection's
+         `13 Bloatware.ps1` branches 2/4. -->
+    <EmbeddedResource Include="Resources\DebloatScripts\bloatware-remove.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\bloatware-installall.ps1" />
   </ItemGroup>
 
   <ItemGroup>
