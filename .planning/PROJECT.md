@@ -16,20 +16,21 @@ Every tweak, debloat action, and downloaded asset must apply correctly, report a
 - ✓ Akari OS Tweaks page ported: 32 registry-backed OS-level tweaks as toggle switches, instant apply with state feedback, including the two-phase Disable Defender workflow — Phase 1
 - ✓ App runs elevated (`requireAdministrator` in app manifest), matching predecessor's privilege model — Phase 1
 - ✓ App identity rebranded to "Akari Toolbox" (namespace, assembly name, manifest identity, icon/branding assets) — Phase 1
+- ✓ Gaming Tweaks page ported (GAMING-01): 11 registry/service/subprocess-backed toggles (GPU HDCP/P0State/MSI Mode/AMD/Intel settings, device/network power savings, write-cache flush, IPv4-only, gaming power plan, high-precision timer resolution), 2 registry dropdowns (SvcHost split threshold, Win32 priority separation) with bounds-validated writes, 2 display-settings shortcuts, and the D-06 driver-tools action set (12 embedded network-dependent scripts, explicit no-signature-verification accepted risk) — all reflecting real system state with genuine prior-state revert — Phase 2
 
 ### Active
 
-- [ ] Gaming Tweaks page ported: GPU/latency/service tuning toggles, SvcHost split threshold / Win32 priority separation / service config dropdowns, quick-access tool grid (NVIDIA/AMD/third-party utilities)
 - [ ] Debloat page ported: 28 PowerShell-backed debloat actions, moved out of code-behind into proper ViewModel + service
 - [ ] Downloads page ported: self-healing PostInstall asset fetcher (mirrors `C:\PostInstall\` from GitHub when missing), playbooks/drivers/utility links
 - [ ] Misc page ported: 12 context-menu add/remove entries plus extra tools
-- [ ] All ported pages use the WinUI-3-MVVM-Framework's DI, navigation, settings, theming, and dialog services rather than page-level code-behind logic (demonstrated for Home + Akari OS Tweaks in Phase 1; must hold through Phases 2-4)
-- [ ] Visual style uses native WinUI 3 Fluent 2 controls and the framework's Mica backdrop/theming — the predecessor's WPF-UI custom theme (`Themes/Colors.xaml`, `Themes/Controls.xaml`) is not carried over (demonstrated in Phase 1 shell; must hold through Phases 2-4)
+- [ ] All ported pages use the WinUI-3-MVVM-Framework's DI, navigation, settings, theming, and dialog services rather than page-level code-behind logic (demonstrated for Home + Akari OS Tweaks in Phase 1, and Gaming Tweaks in Phase 2; must hold through Phases 3-4)
+- [ ] Visual style uses native WinUI 3 Fluent 2 controls and the framework's Mica backdrop/theming — the predecessor's WPF-UI custom theme (`Themes/Colors.xaml`, `Themes/Controls.xaml`) is not carried over (demonstrated in Phase 1 shell and held through Phase 2; must hold through Phases 3-4)
 
 ### Out of Scope
 
 - Deeper "Ultimate" tweak collection (~110 PowerShell scripts across Check/Refresh/Setup/Installers/Graphics/Windows/Hardware/Advanced categories, at `C:\Users\isleap\Desktop\AkariOS Tweaks`) — deferred to a v2 milestone; v1 is parity-first per explicit decision
 - Any new tweaks/features beyond AkariOS Companion's current feature set — same reason, v1 = parity first
+- GAMING-02 (predecessor's ~29-button NVIDIA/AMD/third-party quick-launch tool grid) — retired mid-Phase-2 per 02-CONTEXT.md D-11/D-12: the PostInstall asset mirror it depended on is deprecated project-wide with no replacement; the D-06 driver-tools buttons are explicitly not a revival of this grid
 
 ## Context
 
@@ -59,6 +60,11 @@ Every tweak, debloat action, and downloaded asset must apply correctly, report a
 | TWEAKS-02 (Defender two-phase workflow): keep the overall two-phase workflow shape (Tamper Protection gate, cab+ps1 install, post-reboot phase 2) as a direct carry-over, not decomposed into the ITweakHandler registry/service-primitive pattern | Decomposing Defender into the generic per-tweak pattern is out of scope for v1 (tracked as SEC-01, v2) | Workflow shape unchanged in Phase 1, but its internal *elevation mechanism* was replaced mid-phase — see next two rows |
 | Replace Defender's elevation mechanism (MinSudo.exe/PowerRun.exe) with native SYSTEM impersonation (P/Invoke token duplication from winlogon.exe) | Explicit project-owner direction, closing a code-review finding (CR-01/CR-03): eliminates the unverified-elevated-binary-execution risk entirely rather than adding more SHA256 pins | Implemented in Phase 1, security-audited (01-SECURITY.md) — 1 new threat surfaced by the change (T-01-17, the headless `--defender-phase2` relaunch had no proof of legitimate scheduling) and closed with a single-use token gate; `threats_open: 0` |
 | Remove Defender's PostInstall/`C:\PostInstall` dependency entirely; embed `NoDefender.cab`/`DisableDefender.ps1` as assembly resources | Explicit project-owner direction — Defender should have no runtime dependency on the downloaded PostInstall mirror | Implemented in Phase 1; `IPostInstallService`/`PostInstallService` remain in the codebase, unused, ahead of the Phase 4 Downloads-page asset mirror (DOWNLOADS-01) |
+| Introduce `TweakCategory` (AkariOS, Gaming) as a discriminator on the existing flat `ITweakHandler`/`ITweakCatalog.Handlers` list, rather than changing the catalog interface | Lets Gaming Tweaks reuse Phase 1's `ITweakHandler`/`TweakCatalog` real-state-read/revert pattern exactly, with zero catalog-interface changes | Shipped in Phase 2 — 11 new Gaming handlers (Order 100-110) coexist with the 32 AkariOS handlers (Order 0-31), both category-filtered ordering invariants enforced by regression tests |
+| Retire GAMING-02 (predecessor's ~29-button NVIDIA/AMD/third-party quick-launch tool grid) with no replacement | The PostInstall asset mirror it depended on is being deprecated project-wide; reviving it would add a dependency the project is actively removing | Retired 2026-09-01 per 02-CONTEXT.md D-11/D-12; REQUIREMENTS.md records the retirement, not a gap |
+| D-06: port the 6 network-dependent driver-install scripts with their live download-and-execute behavior exactly as authored, with no added SHA256/signature verification for v1 | Explicit, deliberate project-owner decision — v1 is parity-first with the predecessor's own accepted risk, not a new gap introduced by the port | Implemented in Phase 2; the accepted risk is surfaced both in a pre-launch `ILogConsoleService` log line (fires before every one of the 12 buttons runs) and in the page's own "not integrity-verified" UI section header — documented as an accepted risk in `02-SECURITY.md`, not silently hidden |
+| Harden `PowerPlanTweakHandler`'s revert beyond what the source script does (session-scoped `powercfg -export`/`-import` instead of the source's destructive `-restoredefaultschemes`) | GAMING-01 requires "the same real-state and revert behavior as Tweaks," which the source script's own revert cannot satisfy as written | Implemented in Phase 2; a post-execution code review (CR-01) found the initial implementation discarded `powercfg` exit codes, letting a failed export still proceed to delete — fixed to verify every export/duplicate/setactive exit code (and on-disk file existence) before any delete runs, independently re-verified by both the phase verifier and the security auditor |
+| Propagate a fault (throw) from `DefenderTweakHandler`'s re-enable path when native SYSTEM-level service restoration fails, instead of silently clearing the app's own "Defender disabled" state flag | A post-execution code review (CR-02) found the toggle could report Defender as protecting the system again even when the underlying service restore failed — a false-assurance bug in a security-relevant control, directly contradicting the project's "report accurate state" core value | Implemented in Phase 2; the fault now reaches the existing `OnTweakItemPropertyChanged` real-state-correction path instead of being swallowed by the generic catch-all |
 
 ## Evolution
 
@@ -78,4 +84,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-09-01 after Phase 1*
+*Last updated: 2026-09-01 after Phase 2*
