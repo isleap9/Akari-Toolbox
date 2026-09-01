@@ -154,6 +154,44 @@ public class DebloatCatalogTests
     }
 
     [Fact]
+    public void Cleanup_replacement_actions_have_resolvable_resources()
+    {
+        var catalog = new DebloatCatalog();
+        var resourceNames = typeof(AppEntry).Assembly.GetManifestResourceNames();
+
+        var replacementActions = new[] { "bloatware", "edgesettings", "edgewebview" }
+            .Select(key => catalog.Actions.Single(a => a.Key == key));
+
+        Assert.All(replacementActions, action =>
+        {
+            Assert.Contains(resourceNames, n => n.EndsWith(action.RunResourceSuffix, StringComparison.OrdinalIgnoreCase));
+            Assert.NotNull(action.UndoResourceSuffix);
+            Assert.Contains(resourceNames, n => n.EndsWith(action.UndoResourceSuffix!, StringComparison.OrdinalIgnoreCase));
+        });
+    }
+
+    /// <summary>
+    /// Data source for <see cref="All_28_catalog_actions_have_resolvable_run_resources"/> —
+    /// every one of the 28 <see cref="DebloatCatalog"/> actions, one theory case each.
+    /// </summary>
+    public static IEnumerable<object[]> AllCatalogActions() =>
+        new DebloatCatalog().Actions.Select(a => new object[] { a });
+
+    [Theory]
+    [MemberData(nameof(AllCatalogActions))]
+    public void All_28_catalog_actions_have_resolvable_run_resources(DebloatAction action)
+    {
+        var resourceNames = typeof(AppEntry).Assembly.GetManifestResourceNames();
+
+        Assert.Contains(resourceNames, n => n.EndsWith(action.RunResourceSuffix, StringComparison.OrdinalIgnoreCase));
+
+        if (action.UndoResourceSuffix is not null)
+        {
+            Assert.Contains(resourceNames, n => n.EndsWith(action.UndoResourceSuffix, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    [Fact]
     public async Task DebloatViewModel_run_action_invokes_script_runner_with_correct_suffix()
     {
         var scriptRunner = new FakeScriptRunner();
