@@ -227,6 +227,23 @@ public class DebloatCatalogTests
     }
 
     [Fact]
+    public void DebloatViewModel_CategoryGroups_matches_predecessors_exact_category_sequence_and_counts()
+    {
+        var viewModel = new DebloatViewModel(new DebloatCatalog(), new LogConsoleService(dispatcher: null), new FakeScriptRunner(), new FakeDialogService());
+
+        Assert.Equal(ExpectedCategorySequence, viewModel.CategoryGroups.Select(g => g.Name));
+        Assert.Equal(ExpectedCategoryCounts, viewModel.CategoryGroups.Select(g => g.Actions.Count));
+    }
+
+    [Fact]
+    public void DebloatViewModel_total_action_count_is_28()
+    {
+        var viewModel = new DebloatViewModel(new DebloatCatalog(), new LogConsoleService(dispatcher: null), new FakeScriptRunner(), new FakeDialogService());
+
+        Assert.Equal(28, viewModel.CategoryGroups.Sum(g => g.Actions.Count));
+    }
+
+    [Fact]
     public void DebloatViewModel_populates_UndoDownloadsUnverifiedBinary_from_catalog()
     {
         var viewModel = new DebloatViewModel(new DebloatCatalog(), new LogConsoleService(dispatcher: null), new FakeScriptRunner(), new FakeDialogService());
