@@ -9,6 +9,14 @@ namespace AkariToolbox.Framework;
 /// (registry, log console, service controller, script runner) in a DI
 /// container. This is the one registration call site for the primitive layer —
 /// later plans extend this same method rather than adding a second one.
+///
+/// Exception: Plan 01-06's <c>IPostInstallService</c>/<c>PostInstallService</c> and their
+/// named <c>AddHttpClient("PostInstall", ...)</c> registration are App-project types
+/// (Defender's only dependency) and are registered in
+/// <c>AkariToolbox.App.Services.TweakHandlerServiceCollectionExtensions.AddTweakHandlers</c>
+/// instead — this Framework project has no <c>ProjectReference</c> to
+/// <c>AkariToolbox.App</c>, so referencing an App-project type here would require a
+/// circular project reference and fail to build.
 /// </summary>
 public static class AkariPrimitivesServiceCollectionExtensions
 {
