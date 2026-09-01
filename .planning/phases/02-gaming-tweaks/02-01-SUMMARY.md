@@ -195,3 +195,8 @@ None - no external service configuration required.
 ---
 *Phase: 02-gaming-tweaks*
 *Completed: 2026-09-01*
+
+## Self-Check: PASSED
+
+- All 10 created/key files confirmed present on disk (`ls` verified).
+- All 6 commits (`554bbe3`, `71a8ce2`, `d45dd60`, `781f1a8`, `e641067`, `52c262a`) confirmed in `git log`.
