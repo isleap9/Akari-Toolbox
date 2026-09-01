@@ -24,4 +24,18 @@ public interface IScriptRunner
     /// exception, logging the reason via <see cref="ILogConsoleService"/> first.
     /// </summary>
     Task<string> RunProcessCaptureOutputAsync(string fileName, string arguments, TimeSpan? timeout = null);
+
+    /// <summary>
+    /// Extracts an embedded resource whose name ends with <paramref name="resourceSuffix"/>
+    /// to a GUID-suffixed temp file, runs it via
+    /// <c>powershell.exe -NoProfile -ExecutionPolicy Bypass -File &lt;temp&gt; {arguments}</c>,
+    /// and deletes the temp file in a <c>finally</c> block regardless of success/failure.
+    /// Generalizes the extract-to-temp-then-run pattern first proven privately in
+    /// <c>DefenderTweakHandler.ExtractEmbeddedAsync</c>, now promoted to a shared primitive
+    /// per this class's own doc comment ("A later phase that needs to run an embedded script
+    /// should add that capability then") — this is that phase. Throws
+    /// <see cref="FileNotFoundException"/> if no embedded resource matches
+    /// <paramref name="resourceSuffix"/>.
+    /// </summary>
+    Task<int> RunEmbeddedScriptAsync(string resourceSuffix, string? arguments = null, TimeSpan? timeout = null);
 }

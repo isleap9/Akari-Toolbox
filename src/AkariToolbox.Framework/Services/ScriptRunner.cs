@@ -105,4 +105,7 @@ public sealed class ScriptRunner(ILogConsoleService log) : IScriptRunner
             return string.Empty;
         }
     }
+
+    public Task<int> RunEmbeddedScriptAsync(string resourceSuffix, string? arguments = null, TimeSpan? timeout = null) =>
+        throw new NotImplementedException();
 }

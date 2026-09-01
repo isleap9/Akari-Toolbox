@@ -15,4 +15,13 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Throwaway test fixture for IScriptRunner.RunEmbeddedScriptAsync (Plan 02-01, Task 2).
+         Embedded here (not in AkariToolbox.Tests) because RunEmbeddedScriptAsync's production
+         implementation searches typeof(ScriptRunner).Assembly — embedding the fixture in this
+         project is what lets the test exercise the real assembly-resolution contract instead
+         of a mocked one. -->
+    <EmbeddedResource Include="Fixtures\exit7.ps1" />
+  </ItemGroup>
+
 </Project>
