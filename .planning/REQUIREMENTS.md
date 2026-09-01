@@ -11,9 +11,9 @@ Requirements for initial release: a feature-parity WinUI 3 MVVM port of AkariOS 
 
 - [x] **APP-01**: App requests and runs under administrator elevation on launch (`requireAdministrator`), matching the predecessor's privilege model
 - [x] **APP-02**: App identity (namespace, assembly name, manifest identity, icon, branding) reflects the "Akari Toolbox" rebrand
-- [ ] **APP-03**: App uses native WinUI 3 Fluent 2 controls and the framework's Mica backdrop/theming — no WPF-UI custom theme (`Themes/Colors.xaml`, `Themes/Controls.xaml`) is carried over
+- [x] **APP-03**: App uses native WinUI 3 Fluent 2 controls and the framework's Mica backdrop/theming — no WPF-UI custom theme (`Themes/Colors.xaml`, `Themes/Controls.xaml`) is carried over
 - [x] **APP-04**: File/folder picker operations work correctly while the app runs elevated (replacing the framework's default picker if it crashes under `requireAdministrator`)
-- [ ] **APP-05**: Background operations (PowerShell output streaming, download progress) update the UI without cross-thread crashes
+- [x] **APP-05**: Background operations (PowerShell output streaming, download progress) update the UI without cross-thread crashes
 
 ### Home
 
@@ -21,9 +21,9 @@ Requirements for initial release: a feature-parity WinUI 3 MVVM port of AkariOS 
 
 ### Tweaks
 
-- [ ] **TWEAKS-01**: User can view and toggle each of the 32 Akari OS registry/service-backed tweaks, with each toggle reflecting the actual current system state (not cached UI state)
+- [x] **TWEAKS-01**: User can view and toggle each of the 32 Akari OS registry/service-backed tweaks, with each toggle reflecting the actual current system state (not cached UI state)
 - [x] **TWEAKS-02**: User can disable Windows Defender via the two-phase guided workflow (tamper protection phase, then real-time protection phase), with explicit warnings at each phase — ported as a direct carry-over of the predecessor's existing Defender-disable logic; that specific code path is NOT refactored/decomposed into the new tweak-handler architecture for v1, left untouched on explicit user instruction
-- [ ] **TWEAKS-03**: When a user toggles a tweak, the app records the tweak's real prior state before mutating it, so turning a tweak back off restores the actual previous state rather than a hardcoded default — does not apply to the Defender tweak (TWEAKS-02), whose logic is ported as-is
+- [x] **TWEAKS-03**: When a user toggles a tweak, the app records the tweak's real prior state before mutating it, so turning a tweak back off restores the actual previous state rather than a hardcoded default — does not apply to the Defender tweak (TWEAKS-02), whose logic is ported as-is
 
 ### Gaming Tweaks
 
@@ -83,13 +83,13 @@ Explicitly excluded. Documented to prevent scope creep.
 |-------------|-------|--------|
 | APP-01 | Phase 1 | Complete |
 | APP-02 | Phase 1 | Complete |
-| APP-03 | Phase 1 | Pending |
+| APP-03 | Phase 1 | Complete |
 | APP-04 | Phase 1 | Complete |
-| APP-05 | Phase 1 | Pending |
+| APP-05 | Phase 1 | Complete |
 | HOME-01 | Phase 1 | Complete |
-| TWEAKS-01 | Phase 1 | Pending |
+| TWEAKS-01 | Phase 1 | Complete |
 | TWEAKS-02 | Phase 1 | Complete |
-| TWEAKS-03 | Phase 1 | Pending |
+| TWEAKS-03 | Phase 1 | Complete |
 | GAMING-01 | Phase 2 | Pending |
 | GAMING-02 | Phase 2 | Pending |
 | DEBLOAT-01 | Phase 3 | Pending |
