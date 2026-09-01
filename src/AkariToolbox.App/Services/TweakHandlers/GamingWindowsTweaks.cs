@@ -308,3 +308,56 @@ public sealed class WriteCacheFlushTweakHandler(IRegistryService registry) : ITw
     private IEnumerable<string> DiskMatches() =>
         ScsiNvmeRoots.SelectMany(root => DeviceTreeEnumeration.FindChildMatches(registry, root, "Disk"));
 }
+
+/// <summary>
+/// Ported from <c>6 Windows/27 Network IPv4 Only.ps1</c> (02-CONTEXT.md D-07). No raw
+/// registry access — shells to PowerShell's <c>NetAdapterBinding</c> cmdlets exclusively,
+/// matching the source script's own approach exactly (it never touches the registry
+/// directly for this tweak). The On and Off component-ID lists are deliberately
+/// asymmetric: Off re-enables the same 8 IDs the On branch disables, plus a 9th
+/// (<c>ms_tcpip</c>) that the On branch never touches — matching
+/// <c>27 ...:27,53</c>'s own lists exactly, not a copy-paste oversight.
+/// </summary>
+public sealed class NetworkIpv4OnlyTweakHandler(IScriptRunner scriptRunner) : ITweakHandler
+{
+    private static readonly string[] BindingComponentIds =
+    [
+        "ms_lldp", "ms_lltdio", "ms_implat", "ms_rspndr", "ms_tcpip6", "ms_server", "ms_msclient", "ms_pacer",
+    ];
+
+    public string Key => "netipv4only";
+
+    public string Title => "Force IPv4-Only Networking";
+
+    public string Description => "Disable IPv6 and other non-essential network bindings for lower latency";
+
+    public int Order => 107;
+
+    public TweakCategory Category => TweakCategory.Gaming;
+
+    public bool GetState()
+    {
+        var output = scriptRunner.RunProcessCaptureOutputAsync(
+                "powershell.exe",
+                "-NoProfile -Command \"(Get-NetAdapterBinding -Name '*' -ComponentID ms_tcpip6 | Select-Object -First 1).Enabled\"")
+            .GetAwaiter().GetResult();
+
+        // A disabled binding means the tweak is "on" — treat any unparseable/empty
+        // output (e.g. no adapters present) as "off" rather than throwing.
+        return string.Equals(output.Trim(), "False", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public void SetState(bool enable)
+    {
+        var cmdlet = enable ? "Disable-NetAdapterBinding" : "Enable-NetAdapterBinding";
+        var ids = enable ? BindingComponentIds : [.. BindingComponentIds, "ms_tcpip"];
+
+        foreach (var id in ids)
+        {
+            scriptRunner.RunProcessAsync(
+                    "powershell.exe",
+                    $"-NoProfile -Command \"{cmdlet} -Name '*' -ComponentID {id}\"")
+                .GetAwaiter().GetResult();
+        }
+    }
+}

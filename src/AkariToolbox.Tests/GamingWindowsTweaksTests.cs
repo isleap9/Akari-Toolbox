@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using AkariToolbox.App.Services;
 using AkariToolbox.App.Services.TweakHandlers;
 using AkariToolbox.Framework.Services;
@@ -264,6 +265,105 @@ public class GamingWindowsTweaksTests
         Assert.Equal(108, handler.Order);
         Assert.Equal(TweakCategory.Gaming, handler.Category);
         Assert.Equal("writecacheflush", handler.Key);
+    }
+
+    // ---------- NetworkIpv4OnlyTweakHandler (Task 1) ----------
+
+    private static readonly string[] ExpectedDisableComponentIds =
+    [
+        "ms_lldp", "ms_lltdio", "ms_implat", "ms_rspndr", "ms_tcpip6", "ms_server", "ms_msclient", "ms_pacer",
+    ];
+
+    [Fact]
+    public void NetworkIpv4Only_SetState_true_disables_the_8_documented_component_ids()
+    {
+        var scriptRunner = new FakeScriptRunner();
+        var handler = new NetworkIpv4OnlyTweakHandler(scriptRunner);
+
+        handler.SetState(true);
+
+        var disableCalls = scriptRunner.Calls
+            .Where(c => c.FileName == "powershell.exe" && c.Arguments.Contains("Disable-NetAdapterBinding", StringComparison.Ordinal))
+            .ToList();
+        Assert.Equal(8, disableCalls.Count);
+        foreach (var id in ExpectedDisableComponentIds)
+        {
+            Assert.Single(disableCalls, c => c.Arguments.EndsWith($"{id}\"", StringComparison.Ordinal));
+        }
+    }
+
+    [Fact]
+    public void NetworkIpv4Only_SetState_false_enables_exactly_9_component_ids_including_ms_tcpip()
+    {
+        var scriptRunner = new FakeScriptRunner();
+        var handler = new NetworkIpv4OnlyTweakHandler(scriptRunner);
+
+        handler.SetState(false);
+
+        var enableCalls = scriptRunner.Calls
+            .Where(c => c.FileName == "powershell.exe" && c.Arguments.Contains("Enable-NetAdapterBinding", StringComparison.Ordinal))
+            .ToList();
+        Assert.Equal(9, enableCalls.Count);
+        foreach (var id in ExpectedDisableComponentIds)
+        {
+            Assert.Single(enableCalls, c => c.Arguments.EndsWith($"{id}\"", StringComparison.Ordinal));
+        }
+
+        // ms_tcpip is the 9th ID, absent from the On/disable branch — assert it is present
+        // exactly once and distinct from ms_tcpip6 (EndsWith avoids a Contains false-match).
+        Assert.Single(enableCalls, c => c.Arguments.EndsWith("ms_tcpip\"", StringComparison.Ordinal));
+        Assert.Single(enableCalls, c => c.Arguments.EndsWith("ms_tcpip6\"", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NetworkIpv4Only_GetState_returns_true_when_ms_tcpip6_binding_is_disabled()
+    {
+        var scriptRunner = new FakeScriptRunner { CaptureOutputResponder = (_, _) => "False" };
+        var handler = new NetworkIpv4OnlyTweakHandler(scriptRunner);
+
+        Assert.True(handler.GetState());
+    }
+
+    [Fact]
+    public void NetworkIpv4Only_GetState_returns_false_when_binding_enabled_or_unparseable()
+    {
+        var enabledRunner = new FakeScriptRunner { CaptureOutputResponder = (_, _) => "True" };
+        Assert.False(new NetworkIpv4OnlyTweakHandler(enabledRunner).GetState());
+
+        var emptyRunner = new FakeScriptRunner { CaptureOutputResponder = (_, _) => string.Empty };
+        Assert.False(new NetworkIpv4OnlyTweakHandler(emptyRunner).GetState());
+    }
+
+    [Fact]
+    public void NetworkIpv4Only_metadata_is_Order_107_Category_Gaming()
+    {
+        var handler = new NetworkIpv4OnlyTweakHandler(new FakeScriptRunner());
+
+        Assert.Equal(107, handler.Order);
+        Assert.Equal(TweakCategory.Gaming, handler.Category);
+        Assert.Equal("netipv4only", handler.Key);
+    }
+
+    private sealed class FakeScriptRunner : IScriptRunner
+    {
+        public List<(string FileName, string Arguments)> Calls { get; } = new();
+
+        public Func<string, string, string>? CaptureOutputResponder { get; set; }
+
+        public Task<int> RunProcessAsync(string fileName, string arguments, TimeSpan? timeout = null)
+        {
+            Calls.Add((fileName, arguments));
+            return Task.FromResult(0);
+        }
+
+        public Task<string> RunProcessCaptureOutputAsync(string fileName, string arguments, TimeSpan? timeout = null)
+        {
+            Calls.Add((fileName, arguments));
+            return Task.FromResult(CaptureOutputResponder?.Invoke(fileName, arguments) ?? string.Empty);
+        }
+
+        public Task<int> RunEmbeddedScriptAsync(string resourceSuffix, string? arguments = null, TimeSpan? timeout = null) =>
+            throw new NotSupportedException("Not needed for Gaming Windows tests.");
     }
 
     private sealed class FakeRegistryService : IRegistryService
