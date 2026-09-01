@@ -104,7 +104,13 @@ public sealed class DefenderTweakHandler(ILogConsoleService log, IRegistryServic
                     log.Log("[DEFENDER] Go to: Windows Security -> Virus & threat protection");
                     log.Log("[DEFENDER]   -> Manage settings -> Tamper Protection -> Off");
                     log.Log("[DEFENDER] Then try again.");
-                    return;
+                    // CR-02 fix (02-REVIEW.md): propagate a fault instead of a bare
+                    // return, so SetStateAsync's Task ends Faulted and
+                    // OnTweakItemPropertyChanged's existing real-state-correction path
+                    // (CR-04, 01-REVIEW.md) re-reads and reflects the real toggle state
+                    // instead of the "on" (disabled) state silently sticking until a
+                    // full page reload.
+                    throw new InvalidOperationException("Windows Defender Tamper Protection is ON — turn it off before retrying.");
                 }
 
                 log.Log("[DEFENDER] Tamper Protection is off — proceeding.");
@@ -167,11 +173,25 @@ public sealed class DefenderTweakHandler(ILogConsoleService log, IRegistryServic
                 if (!restoreOk)
                 {
                     log.Log("[DEFENDER] ERROR: Could not acquire SYSTEM to restore Defender services.");
+                    // CR-02 fix (02-REVIEW.md): do not clear the app's own DisableDefender
+                    // state flag when restoration failed — propagate a fault instead so
+                    // OnTweakItemPropertyChanged's real-state-correction path runs, rather
+                    // than the toggle silently reporting "Defender re-enabled" while the
+                    // 16 service Start values were almost certainly never restored.
+                    throw new InvalidOperationException("Failed to restore Defender services as SYSTEM.");
                 }
 
                 registry.DeleteValue(RegistryHive.CurrentUser, DefenderStateKey, DefenderStateValue);
                 log.Log("[DEFENDER] Defender re-enabled. Restart required.");
             }
+        }
+        catch (InvalidOperationException)
+        {
+            // Already logged with a specific reason at the throw site above (CR-02 fix,
+            // 02-REVIEW.md) — rethrow so the fault reaches SetStateAsync's Task instead
+            // of being swallowed by the generic catch below, which would make this
+            // operation report success even though nothing was actually applied/restored.
+            throw;
         }
         catch (Exception ex)
         {
