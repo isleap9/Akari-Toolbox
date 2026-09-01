@@ -74,6 +74,21 @@
          predecessor's WindowsAI.ps1/WindowsAI-Undo.ps1). -->
     <EmbeddedResource Include="Resources\DebloatScripts\windowsai.ps1" />
     <EmbeddedResource Include="Resources\DebloatScripts\windowsai-undo.ps1" />
+    <!-- 03-03: System & Performance category, 7 direct predecessor carries. -->
+    <EmbeddedResource Include="Resources\DebloatScripts\visualeffects.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\visualeffects-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\services.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\services-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\deliveryoptimization.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\deliveryoptimization-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\hibernation.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\hibernation-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\storagesense.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\storagesense-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\wpbt.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\wpbt-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\utc.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\utc-undo.ps1" />
   </ItemGroup>
 
   <ItemGroup>
