@@ -44,6 +44,22 @@ public sealed class RegistryService : IRegistryService
         return subKey?.GetSubKeyNames() ?? [];
     }
 
+    public void DeleteSubKeyTree(RegistryHive hive, string subKeyPath)
+    {
+        var lastSeparator = subKeyPath.LastIndexOf('\\');
+        if (lastSeparator < 0)
+        {
+            return; // No parent to open — nothing safe to delete from.
+        }
+
+        var parentPath = subKeyPath[..lastSeparator];
+        var name = subKeyPath[(lastSeparator + 1)..];
+
+        using var baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64);
+        using var parent = baseKey.OpenSubKey(parentPath, writable: true);
+        parent?.DeleteSubKeyTree(name, throwOnMissingSubKey: false);
+    }
+
     public RegistryKey OpenRealUserHive(string subKeyPath)
     {
         // WR-01 fix (01-REVIEW.md): dispose the Process object and close the native

@@ -26,6 +26,18 @@ public interface IRegistryService
     IReadOnlyList<string> GetSubKeyNames(RegistryHive hive, string subKeyPath);
 
     /// <summary>
+    /// Deletes <paramref name="subKeyPath"/> and its entire subtree if present; no-op
+    /// (never throws) if it is already absent — mirrors <see cref="DeleteValue"/>'s
+    /// never-throws-on-missing convention (registry-squatting-safe). Declared as a
+    /// default interface member (throws <see cref="NotSupportedException"/> unless
+    /// overridden) so implementers that predate this member — test doubles that never
+    /// exercise subtree deletion — do not need updating; <see cref="RegistryService"/>
+    /// overrides it with a real implementation.
+    /// </summary>
+    void DeleteSubKeyTree(RegistryHive hive, string subKeyPath) =>
+        throw new NotSupportedException($"{nameof(DeleteSubKeyTree)} is not implemented by this {nameof(IRegistryService)}.");
+
+    /// <summary>
     /// Opens (creating if needed) a sub-key under the real interactive user's HKCU hive,
     /// even though this process is elevated (whose own <c>Registry.CurrentUser</c> may
     /// resolve to a different hive). Ported from the predecessor's
