@@ -276,8 +276,18 @@ public sealed class WriteCacheFlushTweakHandler(IRegistryService registry) : ITw
 
     public TweakCategory Category => TweakCategory.Gaming;
 
-    public bool GetState() =>
-        DiskMatches().Any(diskPath => registry.GetValue(RegistryHive.LocalMachine, diskPath, "CacheIsPowerProtected") is int v && v == 1);
+    // WR-02 fix (02-REVIEW.md): require every matched disk to agree before reporting
+    // "on", matching the `.All(...)` aggregation semantics already established by the
+    // other multi-target Gaming handlers in this phase (HdcpTweakHandler/
+    // P0StateTweakHandler/IntelSettingsTweakHandler) instead of `.Any(...)`, which
+    // reported the tweak "on" as soon as a single disk had CacheIsPowerProtected=1
+    // even if the rest were never toggled.
+    public bool GetState()
+    {
+        var disks = DiskMatches().ToList();
+        return disks.Count > 0 &&
+            disks.All(diskPath => registry.GetValue(RegistryHive.LocalMachine, diskPath, "CacheIsPowerProtected") is int v && v == 1);
+    }
 
     public void SetState(bool enable)
     {
