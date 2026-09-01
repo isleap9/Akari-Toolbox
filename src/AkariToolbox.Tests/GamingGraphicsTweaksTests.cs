@@ -88,6 +88,93 @@ public class GamingGraphicsTweaksTests
         Assert.Equal(TweakCategory.Gaming, handler.Category);
     }
 
+    // ---------- HdcpTweakHandler (WR-03 fix, 02-REVIEW.md) ----------
+    // Mirrors the P0StateTweakHandler tests above — HdcpTweakHandler was the "first
+    // Gaming-category handler, proves the vertical slice" per its own doc comment, yet
+    // had zero direct GetState/SetState test coverage before this fix; it was only
+    // indirectly exercised via TweakHandlerOrderingTests' DI-registration assertions.
+
+    [Fact]
+    public void Hdcp_GetState_returns_true_only_when_every_adapter_has_RMHdcpKeyglobZero_1()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, GpuDisplayClassGuid, "1234", "5678");
+        registry.Seed(RegistryHive.LocalMachine, $@"{GpuDisplayClassGuid}\1234", "RMHdcpKeyglobZero", 1);
+        registry.Seed(RegistryHive.LocalMachine, $@"{GpuDisplayClassGuid}\5678", "RMHdcpKeyglobZero", 1);
+        var handler = new HdcpTweakHandler(registry);
+
+        Assert.True(handler.GetState());
+    }
+
+    [Fact]
+    public void Hdcp_GetState_returns_false_when_one_adapter_is_off()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, GpuDisplayClassGuid, "1234", "5678");
+        registry.Seed(RegistryHive.LocalMachine, $@"{GpuDisplayClassGuid}\1234", "RMHdcpKeyglobZero", 1);
+        registry.Seed(RegistryHive.LocalMachine, $@"{GpuDisplayClassGuid}\5678", "RMHdcpKeyglobZero", 0);
+        var handler = new HdcpTweakHandler(registry);
+
+        Assert.False(handler.GetState());
+    }
+
+    [Fact]
+    public void Hdcp_GetState_returns_false_when_one_adapter_value_is_absent()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, GpuDisplayClassGuid, "1234", "5678");
+        registry.Seed(RegistryHive.LocalMachine, $@"{GpuDisplayClassGuid}\1234", "RMHdcpKeyglobZero", 1);
+        // "5678" intentionally never seeded — value is absent.
+        var handler = new HdcpTweakHandler(registry);
+
+        Assert.False(handler.GetState());
+    }
+
+    [Fact]
+    public void Hdcp_GetState_returns_false_when_no_adapters_found()
+    {
+        var registry = new FakeRegistryService();
+        var handler = new HdcpTweakHandler(registry);
+
+        Assert.False(handler.GetState());
+    }
+
+    [Fact]
+    public void Hdcp_SetState_true_writes_1_to_every_adapter()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, GpuDisplayClassGuid, "1234", "5678");
+        var handler = new HdcpTweakHandler(registry);
+
+        handler.SetState(true);
+
+        Assert.Equal(1, registry.GetValue(RegistryHive.LocalMachine, $@"{GpuDisplayClassGuid}\1234", "RMHdcpKeyglobZero"));
+        Assert.Equal(1, registry.GetValue(RegistryHive.LocalMachine, $@"{GpuDisplayClassGuid}\5678", "RMHdcpKeyglobZero"));
+    }
+
+    [Fact]
+    public void Hdcp_SetState_false_writes_0_to_every_adapter()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, GpuDisplayClassGuid, "1234", "5678");
+        var handler = new HdcpTweakHandler(registry);
+
+        handler.SetState(false);
+
+        Assert.Equal(0, registry.GetValue(RegistryHive.LocalMachine, $@"{GpuDisplayClassGuid}\1234", "RMHdcpKeyglobZero"));
+        Assert.Equal(0, registry.GetValue(RegistryHive.LocalMachine, $@"{GpuDisplayClassGuid}\5678", "RMHdcpKeyglobZero"));
+    }
+
+    [Fact]
+    public void Hdcp_metadata_is_Order_100_Category_Gaming()
+    {
+        var handler = new HdcpTweakHandler(new FakeRegistryService());
+
+        Assert.Equal(100, handler.Order);
+        Assert.Equal(TweakCategory.Gaming, handler.Category);
+        Assert.Equal("gpuhdcp", handler.Key);
+    }
+
     [Fact]
     public void MsiMode_SetState_true_writes_MSISupported_1_under_CurrentControlSet_for_each_instance_id()
     {
