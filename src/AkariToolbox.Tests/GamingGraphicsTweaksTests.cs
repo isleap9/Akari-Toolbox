@@ -129,6 +129,75 @@ public class GamingGraphicsTweaksTests
     }
 
     [Fact]
+    public void IntelSettings_SetState_true_writes_AsyncFlipMode_2_and_LowLatency_0_under_3DKeys_per_adapter()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, GpuDisplayClassGuid, "1234", "5678");
+        var handler = new IntelSettingsTweakHandler(registry);
+
+        handler.SetState(true);
+
+        foreach (var adapter in new[] { "1234", "5678" })
+        {
+            var keysPath = $@"{GpuDisplayClassGuid}\{adapter}\3DKeys";
+            Assert.Equal((2, RegistryValueKind.DWord), registry.GetValueWithKind(RegistryHive.LocalMachine, keysPath, "Global_AsyncFlipMode"));
+            Assert.Equal((0, RegistryValueKind.DWord), registry.GetValueWithKind(RegistryHive.LocalMachine, keysPath, "Global_LowLatency"));
+        }
+    }
+
+    [Fact]
+    public void IntelSettings_SetState_false_deletes_entire_3DKeys_subkey_per_adapter()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, GpuDisplayClassGuid, "1234", "5678");
+        var handler = new IntelSettingsTweakHandler(registry);
+        handler.SetState(true);
+
+        handler.SetState(false);
+
+        foreach (var adapter in new[] { "1234", "5678" })
+        {
+            var keysPath = $@"{GpuDisplayClassGuid}\{adapter}\3DKeys";
+            Assert.True(registry.WasSubKeyTreeDeleted(RegistryHive.LocalMachine, keysPath));
+            Assert.Null(registry.GetValue(RegistryHive.LocalMachine, keysPath, "Global_AsyncFlipMode"));
+        }
+    }
+
+    [Fact]
+    public void IntelSettings_GetState_returns_true_only_when_every_adapter_has_AsyncFlipMode_2()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, GpuDisplayClassGuid, "1234", "5678");
+        registry.Seed(RegistryHive.LocalMachine, $@"{GpuDisplayClassGuid}\1234\3DKeys", "Global_AsyncFlipMode", 2);
+        registry.Seed(RegistryHive.LocalMachine, $@"{GpuDisplayClassGuid}\5678\3DKeys", "Global_AsyncFlipMode", 2);
+        var handler = new IntelSettingsTweakHandler(registry);
+
+        Assert.True(handler.GetState());
+    }
+
+    [Fact]
+    public void IntelSettings_GetState_returns_false_when_3DKeys_subkey_absent_for_one_adapter()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, GpuDisplayClassGuid, "1234", "5678");
+        registry.Seed(RegistryHive.LocalMachine, $@"{GpuDisplayClassGuid}\1234\3DKeys", "Global_AsyncFlipMode", 2);
+        // "5678" intentionally never seeded — 3DKeys is absent for that adapter.
+        var handler = new IntelSettingsTweakHandler(registry);
+
+        Assert.False(handler.GetState());
+    }
+
+    [Fact]
+    public void IntelSettings_metadata_is_Order_104_Category_Gaming()
+    {
+        var handler = new IntelSettingsTweakHandler(new FakeRegistryService());
+
+        Assert.Equal(104, handler.Order);
+        Assert.Equal(TweakCategory.Gaming, handler.Category);
+        Assert.Equal("gpuintelsettings", handler.Key);
+    }
+
+    [Fact]
     public void HexStringToBytes_converts_hex_pairs_to_bytes()
     {
         Assert.Equal(new byte[] { 0x30, 0x00 }, RegistryBinaryHelpers.HexStringToBytes("3000"));
