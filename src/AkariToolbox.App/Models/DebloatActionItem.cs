@@ -25,6 +25,13 @@ public sealed partial class DebloatActionItem : ObservableObject
 
     public bool RequiresConfirmation { get; init; }
 
+    /// <summary>
+    /// D-10 accepted-risk flag mirrored from <see cref="DebloatAction.UndoDownloadsUnverifiedBinary"/> —
+    /// true when this row's Undo branch downloads an unverified installer binary, driving
+    /// the page's per-row risk caption (RESEARCH.md Pitfall 5).
+    /// </summary>
+    public bool UndoDownloadsUnverifiedBinary { get; init; }
+
     [ObservableProperty]
     private bool _isRunning;
 }

@@ -50,6 +50,7 @@ public partial class DebloatViewModel : ViewModelBase
                     Description = a.Description,
                     HasUndo = a.UndoResourceSuffix is not null,
                     RequiresConfirmation = a.RequiresConfirmation,
+                    UndoDownloadsUnverifiedBinary = a.UndoDownloadsUnverifiedBinary,
                 }).ToList(),
             })
             .ToList();

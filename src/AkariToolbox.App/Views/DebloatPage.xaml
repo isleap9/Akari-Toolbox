@@ -48,6 +48,18 @@
                                                         TextWrapping="Wrap"
                                                         Opacity="0.8"
                                                         Style="{StaticResource CaptionTextBlockStyle}" />
+                                                    <TextBlock
+                                                        Text="Requires confirmation before running"
+                                                        Visibility="{x:Bind RequiresConfirmation}"
+                                                        TextWrapping="Wrap"
+                                                        Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                                        Style="{StaticResource CaptionTextBlockStyle}" />
+                                                    <TextBlock
+                                                        Text="Undo downloads a binary that is not signature-verified"
+                                                        Visibility="{x:Bind UndoDownloadsUnverifiedBinary}"
+                                                        TextWrapping="Wrap"
+                                                        Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                                        Style="{StaticResource CaptionTextBlockStyle}" />
                                                 </StackPanel>
 
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
