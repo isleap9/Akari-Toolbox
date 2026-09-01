@@ -44,6 +44,12 @@ public static class TweakHandlerServiceCollectionExtensions
         });
         services.AddSingleton<IPostInstallService, PostInstallService>();
 
+        // GAMING-01's two registry dropdowns (SvcHost split threshold, Win32 Priority
+        // Separation) — not an ITweakHandler (no boolean state, no revert semantics),
+        // so it is registered here directly rather than picked up by the reflection
+        // scan above (Plan 02-05).
+        services.AddSingleton<IGamingDropdownService, GamingDropdownService>();
+
         return services;
     }
 }
