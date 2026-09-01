@@ -69,10 +69,10 @@
                 Margin="0,16,0,0" />
 
             <StackPanel Orientation="Horizontal" Spacing="8">
-                <Button Content="Driver Clean (DDU Auto)" Command="{x:Bind ViewModel.RunDriverCleanAutoAsyncCommand}" />
-                <Button Content="Driver Clean (DDU Manual)" Command="{x:Bind ViewModel.RunDriverCleanManualAsyncCommand}" />
-                <Button Content="DirectX" Command="{x:Bind ViewModel.RunDirectXAsyncCommand}" />
-                <Button Content="C++ Redistributables" Command="{x:Bind ViewModel.RunCppAsyncCommand}" />
+                <Button Content="Driver Clean (DDU Auto)" Command="{x:Bind ViewModel.RunDriverCleanAutoCommand}" />
+                <Button Content="Driver Clean (DDU Manual)" Command="{x:Bind ViewModel.RunDriverCleanManualCommand}" />
+                <Button Content="DirectX" Command="{x:Bind ViewModel.RunDirectXCommand}" />
+                <Button Content="C++ Redistributables" Command="{x:Bind ViewModel.RunCppCommand}" />
             </StackPanel>
 
         </StackPanel>
