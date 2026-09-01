@@ -11,6 +11,10 @@ public sealed class RegistryService : IRegistryService
     [DllImport("advapi32.dll", SetLastError = true)]
     private static extern bool OpenProcessToken(IntPtr processHandle, uint desiredAccess, out IntPtr tokenHandle);
 
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool CloseHandle(IntPtr handle);
+
     public object? GetValue(RegistryHive hive, string subKeyPath, string valueName)
     {
         using var baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64);
@@ -35,7 +39,12 @@ public sealed class RegistryService : IRegistryService
 
     public RegistryKey OpenRealUserHive(string subKeyPath)
     {
-        var explorer = Process.GetProcessesByName("explorer").FirstOrDefault()
+        // WR-01 fix (01-REVIEW.md): dispose the Process object and close the native
+        // token handle explicitly. WindowsIdentity's IntPtr constructor duplicates the
+        // token internally, so disposing `identity` does not close our own handle —
+        // without the finally block below, every call leaked one process token handle
+        // for the lifetime of this long-running elevated process.
+        using var explorer = Process.GetProcessesByName("explorer").FirstOrDefault()
             ?? throw new InvalidOperationException("explorer.exe not found.");
 
         if (!OpenProcessToken(explorer.Handle, 8, out var token))
@@ -43,9 +52,16 @@ public sealed class RegistryService : IRegistryService
             throw new InvalidOperationException("Could not open explorer process token.");
         }
 
-        using var identity = new WindowsIdentity(token);
-        var sid = identity.User!.Value;
-        var hku = RegistryKey.OpenBaseKey(RegistryHive.Users, RegistryView.Default);
-        return hku.CreateSubKey($@"{sid}\{subKeyPath}", writable: true)!;
+        try
+        {
+            using var identity = new WindowsIdentity(token);
+            var sid = identity.User!.Value;
+            var hku = RegistryKey.OpenBaseKey(RegistryHive.Users, RegistryView.Default);
+            return hku.CreateSubKey($@"{sid}\{subKeyPath}", writable: true)!;
+        }
+        finally
+        {
+            CloseHandle(token);
+        }
     }
 }
