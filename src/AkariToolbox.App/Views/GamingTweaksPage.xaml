@@ -50,6 +50,19 @@
                 <Button Content="Advanced Graphics Settings (HAGS)" Command="{x:Bind ViewModel.OpenAdvancedGraphicsSettingsCommand}" />
             </StackPanel>
 
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <ComboBox
+                    Header="SvcHost Split Threshold"
+                    ItemsSource="{x:Bind ViewModel.SvcHostPresetLabels}"
+                    SelectedIndex="{x:Bind ViewModel.SelectedSvcHostIndex, Mode=TwoWay}"
+                    MinWidth="220" />
+                <ComboBox
+                    Header="Win32 Priority Separation"
+                    ItemsSource="{x:Bind ViewModel.Win32PriorityPresetLabels}"
+                    SelectedIndex="{x:Bind ViewModel.SelectedWin32PriorityIndex, Mode=TwoWay}"
+                    MinWidth="260" />
+            </StackPanel>
+
         </StackPanel>
     </ScrollViewer>
 </Page>

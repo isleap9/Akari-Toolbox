@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Dispatching;
 using AkariToolbox.App.Models;
@@ -16,18 +17,28 @@ namespace AkariToolbox.App.ViewModels;
 /// pattern — filtering <see cref="ITweakCatalog.Handlers"/> to
 /// <see cref="TweakCategory.Gaming"/> instead of <see cref="TweakCategory.AkariOS"/>. This
 /// ViewModel needs no further changes as later plans add more Gaming handlers — it is
-/// entirely catalog-driven.
+/// entirely catalog-driven. Also drives the two D-09 registry dropdowns
+/// (<see cref="IGamingDropdownService"/>) — not <see cref="ITweakHandler"/>s, so they are
+/// wired independently of the <c>Tweaks</c> collection above.
 /// </summary>
 public partial class GamingTweaksViewModel : ViewModelBase
 {
     private readonly ITweakCatalog _catalog;
     private readonly ILogConsoleService _log;
+    private readonly IGamingDropdownService _dropdownService;
     private readonly DispatcherQueue _dispatcher;
 
-    public GamingTweaksViewModel(ITweakCatalog catalog, ILogConsoleService log)
+    // Guards OnSelectedSvcHostIndexChanged/OnSelectedWin32PriorityIndexChanged so the
+    // constructor's initial live-read-driven assignment of SelectedSvcHostIndex/
+    // SelectedWin32PriorityIndex doesn't immediately re-write the value it just read.
+    // Set true only after both indices have been assigned.
+    private bool _initialized;
+
+    public GamingTweaksViewModel(ITweakCatalog catalog, ILogConsoleService log, IGamingDropdownService dropdownService)
     {
         _catalog = catalog;
         _log = log;
+        _dropdownService = dropdownService;
         _dispatcher = DispatcherQueue.GetForCurrentThread();
         Title = "Gaming Tweaks";
 
@@ -55,9 +66,46 @@ public partial class GamingTweaksViewModel : ViewModelBase
                 }),
                 TaskScheduler.Default);
         }
+
+        SvcHostPresetLabels = _dropdownService.SvcHostPresets.Select(p => p.Label).ToList();
+        Win32PriorityPresetLabels = _dropdownService.Win32PriorityPresets.Select(p => p.Label).ToList();
+
+        SelectedSvcHostIndex = _dropdownService.GetSvcHostPresetIndex();
+        SelectedWin32PriorityIndex = _dropdownService.GetWin32PriorityPresetIndex();
+        _initialized = true;
     }
 
     public ObservableCollection<TweakItem> Tweaks { get; } = [];
+
+    public IReadOnlyList<string> SvcHostPresetLabels { get; }
+
+    public IReadOnlyList<string> Win32PriorityPresetLabels { get; }
+
+    [ObservableProperty]
+    private int _selectedSvcHostIndex;
+
+    [ObservableProperty]
+    private int _selectedWin32PriorityIndex;
+
+    partial void OnSelectedSvcHostIndexChanged(int value)
+    {
+        if (!_initialized)
+        {
+            return;
+        }
+
+        _dropdownService.SetSvcHostPreset(value);
+    }
+
+    partial void OnSelectedWin32PriorityIndexChanged(int value)
+    {
+        if (!_initialized)
+        {
+            return;
+        }
+
+        _dropdownService.SetWin32PriorityPreset(value);
+    }
 
     // D-05 one-shot shortcuts (12 Resolution Refresh Rate.ps1 / 13 Hags Windowed.ps1) —
     // plain ms-settings: URI launches, not ITweakHandlers: no menu, no elevation check,
