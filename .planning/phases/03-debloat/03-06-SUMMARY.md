@@ -159,6 +159,10 @@ None - no external service configuration required.
 - Manual smoke testing (plan's verification item 4) remains recommended before considering this phase's Cleanup category fully UAT-verified: clicking "Unwanted Apps — Remove"/"Microsoft Edge — Remove" Run and Undo on a live elevated Windows machine, both with and without internet connectivity, to confirm the Pause/show-menu fixes actually prevent hangs in the real `IScriptRunner` child-process environment (not exercisable from this non-Windows-elevated execution context)
 - No blockers for phase closure — this was the final plan (wave 6) in Phase 3's 03-debloat sequence per the roadmap's plan count
 
+## Self-Check: PASSED
+
+All 6 created `.ps1` files and this SUMMARY.md verified present via `git ls-files`; all 3 task commits (`b11fd90`, `946c63c`, `51555aa`) verified present in `git log`.
+
 ---
 *Phase: 03-debloat*
 *Completed: 2026-09-02*
