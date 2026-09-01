@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.AppLifecycle;
 using AkariToolbox.App.Services;
+using AkariToolbox.App.Services.TweakHandlers;
 using AkariToolbox.Framework.Logging;
 using AkariToolbox.App.ViewModels;
 using AkariToolbox.Framework;
@@ -45,6 +46,17 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        // Headless post-reboot relaunch: DefenderPhase2Scheduler.ScheduleRunOnce() schedules
+        // "<exe>" --defender-phase2 to run once at next login (see DefenderTweakHandler
+        // CR-01/CR-03 fix). Handle it before anything else — no single-instance registration,
+        // no DI host, no window — run the native SYSTEM-impersonation cleanup and exit.
+        if (Environment.GetCommandLineArgs().Contains("--defender-phase2", StringComparer.OrdinalIgnoreCase))
+        {
+            RunDefenderPhase2Headless();
+            Environment.Exit(0);
+            return;
+        }
+
         base.OnLaunched(args);
 
         // Single-instance: only the first process becomes the primary instance.
@@ -90,6 +102,41 @@ public partial class App : Application
 
             MainWindow?.ApplyTheme(themeService.CurrentTheme);
         });
+    }
+
+    /// <summary>
+    /// Runs <see cref="DefenderTweakHandler.RunPhase2Native"/> headlessly (no DI host, no
+    /// window) and logs to a plain file, since the DI-backed <c>ILogConsoleService</c> isn't
+    /// available in this no-UI relaunch path. Called only when this process was launched
+    /// with <c>--defender-phase2</c> by the RunOnce entry <c>DefenderPhase2Scheduler</c>
+    /// scheduled at the end of phase 1.
+    /// </summary>
+    private static void RunDefenderPhase2Headless()
+    {
+        var logDir = Path.Combine(SettingsFolder, "logs");
+        Directory.CreateDirectory(logDir);
+        var logPath = Path.Combine(logDir, "defender-phase2.log");
+
+        try
+        {
+            using var writer = new StreamWriter(logPath, append: true) { AutoFlush = true };
+            void Log(string message) => writer.WriteLine($"{DateTime.Now:O} {message}");
+
+            Log("[PHASE2] Headless relaunch detected (--defender-phase2). Starting native phase 2...");
+            DefenderTweakHandler.RunPhase2Native(Log);
+            Log("[PHASE2] Headless relaunch complete.");
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                File.AppendAllText(logPath, $"{DateTime.Now:O} [PHASE2] FATAL — {ex}{Environment.NewLine}");
+            }
+            catch
+            {
+                // Logging itself failed — nothing more we can do in a headless, no-UI path.
+            }
+        }
     }
 
     private static IHost BuildHost()
