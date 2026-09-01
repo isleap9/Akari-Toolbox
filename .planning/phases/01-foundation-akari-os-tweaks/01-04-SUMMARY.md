@@ -126,3 +126,12 @@ None - no external service configuration required.
 ---
 *Phase: 01-foundation-akari-os-tweaks*
 *Completed: 2026-09-01*
+
+## Self-Check: PASSED
+
+- FOUND: src/AkariToolbox.App/Services/TweakHandlers/RegistryTweaksBatchA.cs
+- FOUND: src/AkariToolbox.App/Services/TweakHandlers/RegistryTweaksBatchB.cs
+- FOUND: .planning/phases/01-foundation-akari-os-tweaks/01-04-SUMMARY.md
+- FOUND commit: df996fd (Task 1)
+- FOUND commit: 966df5e (Task 2)
+- FOUND commit: 4d1d0b9 (docs: plan metadata)
