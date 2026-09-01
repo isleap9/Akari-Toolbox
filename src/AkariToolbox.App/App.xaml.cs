@@ -47,12 +47,19 @@ public partial class App : Application
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         // Headless post-reboot relaunch: DefenderPhase2Scheduler.ScheduleRunOnce() schedules
-        // "<exe>" --defender-phase2 to run once at next login (see DefenderTweakHandler
+        // "<exe>" --defender-phase2 <token> to run once at next login (see DefenderTweakHandler
         // CR-01/CR-03 fix). Handle it before anything else — no single-instance registration,
-        // no DI host, no window — run the native SYSTEM-impersonation cleanup and exit.
-        if (Environment.GetCommandLineArgs().Contains("--defender-phase2", StringComparer.OrdinalIgnoreCase))
+        // no DI host, no window — run the native SYSTEM-impersonation cleanup and exit. The
+        // token is verified inside RunPhase2Native itself (T-01-17 security-audit fix); a
+        // missing/wrong token here still routes through the same headless path so an invalid
+        // attempt is logged and rejected without ever falling through to a normal GUI launch.
+        var launchArgs = Environment.GetCommandLineArgs();
+        var phase2ArgIndex = Array.FindIndex(
+            launchArgs, a => string.Equals(a, "--defender-phase2", StringComparison.OrdinalIgnoreCase));
+        if (phase2ArgIndex >= 0)
         {
-            RunDefenderPhase2Headless();
+            var token = phase2ArgIndex + 1 < launchArgs.Length ? launchArgs[phase2ArgIndex + 1] : null;
+            RunDefenderPhase2Headless(token);
             Environment.Exit(0);
             return;
         }
@@ -109,9 +116,11 @@ public partial class App : Application
     /// window) and logs to a plain file, since the DI-backed <c>ILogConsoleService</c> isn't
     /// available in this no-UI relaunch path. Called only when this process was launched
     /// with <c>--defender-phase2</c> by the RunOnce entry <c>DefenderPhase2Scheduler</c>
-    /// scheduled at the end of phase 1.
+    /// scheduled at the end of phase 1. <paramref name="token"/> is forwarded as-is (including
+    /// <c>null</c> if it was missing) — <see cref="DefenderTweakHandler.RunPhase2Native"/>
+    /// itself verifies it before doing anything (T-01-17 security-audit fix).
     /// </summary>
-    private static void RunDefenderPhase2Headless()
+    private static void RunDefenderPhase2Headless(string? token)
     {
         var logDir = Path.Combine(SettingsFolder, "logs");
         Directory.CreateDirectory(logDir);
@@ -123,7 +132,7 @@ public partial class App : Application
             void Log(string message) => writer.WriteLine($"{DateTime.Now:O} {message}");
 
             Log("[PHASE2] Headless relaunch detected (--defender-phase2). Starting native phase 2...");
-            DefenderTweakHandler.RunPhase2Native(Log);
+            DefenderTweakHandler.RunPhase2Native(token, Log);
             Log("[PHASE2] Headless relaunch complete.");
         }
         catch (Exception ex)

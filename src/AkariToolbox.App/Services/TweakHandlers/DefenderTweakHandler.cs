@@ -185,14 +185,31 @@ public sealed class DefenderTweakHandler(ILogConsoleService log, IRegistryServic
     /// disables the Defender scheduled tasks — all inside a single native SYSTEM
     /// impersonation (no PowerRun.exe/MinSudo.exe). A failure on one step is logged and
     /// does not abort the rest. Intended to be invoked headlessly when the app is
-    /// relaunched with the <c>--defender-phase2</c> argument that
+    /// relaunched with the <c>--defender-phase2 &lt;token&gt;</c> arguments that
     /// <see cref="DefenderPhase2Scheduler.ScheduleRunOnce"/> schedules.
     /// </summary>
-    public static void RunPhase2Native(Action<string> log)
+    /// <param name="providedToken">
+    /// The token argument the relaunch was invoked with. T-01-17 (01-SECURITY.md security
+    /// audit): a bare <c>--defender-phase2</c> flag is a static, discoverable trigger — any
+    /// process already holding a full-Administrator token could otherwise invoke this
+    /// directly and silently disable Defender/SmartScreen with no UI trace and no Tamper
+    /// Protection re-check. This method refuses to do anything unless
+    /// <paramref name="providedToken"/> matches the single-use token
+    /// <see cref="DefenderPhase2Scheduler.ScheduleRunOnce"/> persisted when Phase 1 actually
+    /// completed — verified and consumed via <see cref="DefenderPhase2Scheduler.ConsumeToken"/>
+    /// before any registry/service mutation happens.
+    /// </param>
+    public static void RunPhase2Native(string? providedToken, Action<string> log)
     {
         // Belt-and-braces: RunOnce already self-clears when Windows runs it, but clear it
         // explicitly too, matching the reference implementation.
         DefenderPhase2Scheduler.ClearRunOnce();
+
+        if (!DefenderPhase2Scheduler.ConsumeToken(providedToken))
+        {
+            log("[PHASE2] ERROR: missing or invalid phase-2 token — refusing to run. This invocation was not scheduled by a completed Phase 1 disable.");
+            return;
+        }
 
         bool ok = ElevationService.RunAsSystem(() =>
         {
