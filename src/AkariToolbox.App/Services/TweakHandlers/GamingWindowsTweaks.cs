@@ -241,3 +241,70 @@ public sealed class NetAdapterPowerSavingsTweakHandler(IRegistryService registry
         }
     }
 }
+
+/// <summary>
+/// Ported from <c>6 Windows/28 Write Cache Buffer Flushing.ps1</c> (02-CONTEXT.md D-07).
+/// The On and Off paths are two genuinely separate, independently-targeted enumeration
+/// methods (RESEARCH.md Pitfall 4) — On matches subkeys named exactly
+/// <c>"Device Parameters"</c> and creates/writes a child <c>Disk</c> subkey there; Off
+/// matches subkeys named exactly <c>"Disk"</c> directly and deletes them. Reusing one
+/// enumeration helper parameterized by the match string across both directions would
+/// silently no-op the asymmetric source behavior, so <see cref="SetStateOn"/> and
+/// <see cref="SetStateOff"/> stay as distinct methods rather than one shared
+/// implementation branching on a string/bool parameter.
+/// </summary>
+public sealed class WriteCacheFlushTweakHandler(IRegistryService registry) : ITweakHandler
+{
+    private static readonly string[] ScsiNvmeRoots =
+    [
+        $@"{DeviceTreeEnumeration.EnumRoot}\SCSI",
+        $@"{DeviceTreeEnumeration.EnumRoot}\NVME",
+    ];
+
+    public string Key => "writecacheflush";
+
+    public string Title => "Write Cache Buffer Flushing";
+
+    public string Description => "Mark disk write caches as power-protected to reduce flush overhead";
+
+    public int Order => 108;
+
+    public TweakCategory Category => TweakCategory.Gaming;
+
+    public bool GetState() =>
+        DiskMatches().Any(diskPath => registry.GetValue(RegistryHive.LocalMachine, diskPath, "CacheIsPowerProtected") is int v && v == 1);
+
+    public void SetState(bool enable)
+    {
+        if (enable)
+        {
+            SetStateOn();
+        }
+        else
+        {
+            SetStateOff();
+        }
+    }
+
+    private void SetStateOn()
+    {
+        foreach (var deviceParamsPath in DeviceParametersMatches())
+        {
+            registry.SetValue(RegistryHive.LocalMachine, $@"{deviceParamsPath}\Disk", "CacheIsPowerProtected", 1, RegistryValueKind.DWord);
+        }
+    }
+
+    private void SetStateOff()
+    {
+        foreach (var diskPath in DiskMatches())
+        {
+            registry.DeleteSubKeyTree(RegistryHive.LocalMachine, diskPath);
+        }
+    }
+
+    private IEnumerable<string> DeviceParametersMatches() =>
+        ScsiNvmeRoots.SelectMany(root => DeviceTreeEnumeration.FindChildMatches(registry, root, "Device Parameters"));
+
+    private IEnumerable<string> DiskMatches() =>
+        ScsiNvmeRoots.SelectMany(root => DeviceTreeEnumeration.FindChildMatches(registry, root, "Disk"));
+}

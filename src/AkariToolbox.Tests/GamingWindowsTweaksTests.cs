@@ -198,6 +198,74 @@ public class GamingWindowsTweaksTests
         Assert.Equal("netpowersavings", handler.Key);
     }
 
+    // ---------- WriteCacheFlushTweakHandler (Task 3) ----------
+
+    private static void SeedScsiNvmeDeviceParameters(FakeRegistryService registry)
+    {
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, $@"{EnumRoot}\SCSI", "DEV0");
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, $@"{EnumRoot}\SCSI\DEV0", "Device Parameters");
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, $@"{EnumRoot}\NVME", "DEV0");
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, $@"{EnumRoot}\NVME\DEV0", "Device Parameters");
+    }
+
+    [Fact]
+    public void WriteCacheFlush_SetState_true_creates_child_Disk_subkey_and_writes_CacheIsPowerProtected()
+    {
+        var registry = new FakeRegistryService();
+        SeedScsiNvmeDeviceParameters(registry);
+        var handler = new WriteCacheFlushTweakHandler(registry);
+
+        handler.SetState(true);
+
+        const string scsiDiskPath = $@"{EnumRoot}\SCSI\DEV0\Device Parameters\Disk";
+        const string nvmeDiskPath = $@"{EnumRoot}\NVME\DEV0\Device Parameters\Disk";
+        Assert.Equal(1, registry.GetValue(RegistryHive.LocalMachine, scsiDiskPath, "CacheIsPowerProtected"));
+        Assert.Equal(1, registry.GetValue(RegistryHive.LocalMachine, nvmeDiskPath, "CacheIsPowerProtected"));
+    }
+
+    [Fact]
+    public void WriteCacheFlush_SetState_false_deletes_subkeys_named_exactly_Disk()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, $@"{EnumRoot}\SCSI", "DEV0");
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, $@"{EnumRoot}\SCSI\DEV0", "Disk");
+        registry.Seed(RegistryHive.LocalMachine, $@"{EnumRoot}\SCSI\DEV0\Disk", "CacheIsPowerProtected", 1);
+        var handler = new WriteCacheFlushTweakHandler(registry);
+
+        handler.SetState(false);
+
+        const string diskPath = $@"{EnumRoot}\SCSI\DEV0\Disk";
+        Assert.True(registry.WasSubKeyTreeDeleted(RegistryHive.LocalMachine, diskPath));
+        Assert.Null(registry.GetValue(RegistryHive.LocalMachine, diskPath, "CacheIsPowerProtected"));
+    }
+
+    [Fact]
+    public void WriteCacheFlush_SetState_false_finds_and_deletes_what_SetState_true_created_round_trip()
+    {
+        var registry = new FakeRegistryService();
+        SeedScsiNvmeDeviceParameters(registry);
+        var handler = new WriteCacheFlushTweakHandler(registry);
+        handler.SetState(true);
+
+        handler.SetState(false);
+
+        const string scsiDiskPath = $@"{EnumRoot}\SCSI\DEV0\Device Parameters\Disk";
+        const string nvmeDiskPath = $@"{EnumRoot}\NVME\DEV0\Device Parameters\Disk";
+        Assert.Null(registry.GetValue(RegistryHive.LocalMachine, scsiDiskPath, "CacheIsPowerProtected"));
+        Assert.Null(registry.GetValue(RegistryHive.LocalMachine, nvmeDiskPath, "CacheIsPowerProtected"));
+        Assert.False(handler.GetState());
+    }
+
+    [Fact]
+    public void WriteCacheFlush_metadata_is_Order_108_Category_Gaming()
+    {
+        var handler = new WriteCacheFlushTweakHandler(new FakeRegistryService());
+
+        Assert.Equal(108, handler.Order);
+        Assert.Equal(TweakCategory.Gaming, handler.Category);
+        Assert.Equal("writecacheflush", handler.Key);
+    }
+
     private sealed class FakeRegistryService : IRegistryService
     {
         private readonly Dictionary<(RegistryHive Hive, string SubKeyPath, string ValueName), object?> _values = new();
