@@ -1,0 +1,229 @@
+using AkariToolbox.App.Services;
+using AkariToolbox.App.Services.TweakHandlers;
+using AkariToolbox.Framework.Services;
+using Microsoft.Win32;
+using Xunit;
+
+namespace AkariToolbox.Tests;
+
+/// <summary>
+/// Covers <see cref="DevicePowerSavingsTweakHandler"/>, <see cref="NetAdapterPowerSavingsTweakHandler"/>,
+/// and <see cref="WriteCacheFlushTweakHandler"/> — ported from <c>6 Windows/25</c>, <c>26</c>,
+/// and <c>28</c> (02-CONTEXT.md D-07). Exercises against a hand-rolled fake registry
+/// (matching this project's existing test-double style) whose <c>SetValue</c> auto-registers
+/// the written subkey path into its parent's subkey-name listing, mirroring how a real
+/// registry key becomes enumerable the moment a value is written under it — this is what
+/// makes the write-cache-flush round-trip test (On creates, Off finds and deletes) work
+/// against a single shared fake tree.
+/// </summary>
+public class GamingWindowsTweaksTests
+{
+    private const string EnumRoot = @"SYSTEM\CurrentControlSet\Enum";
+
+    private static void SeedFourClassDeviceTree(FakeRegistryService registry)
+    {
+        foreach (var deviceClass in new[] { "ACPI", "HID", "PCI", "USB" })
+        {
+            registry.SetSubKeyNames(RegistryHive.LocalMachine, $@"{EnumRoot}\{deviceClass}", "DEV0");
+            registry.SetSubKeyNames(RegistryHive.LocalMachine, $@"{EnumRoot}\{deviceClass}\DEV0", "Device Parameters");
+        }
+
+        // Exactly one WDF match, nested alongside ACPI's Device Parameters instance.
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, $@"{EnumRoot}\ACPI\DEV0", "Device Parameters", "WDF");
+    }
+
+    // ---------- DevicePowerSavingsTweakHandler (Task 1) ----------
+
+    [Fact]
+    public void DevicePowerSavings_SetState_true_writes_documented_values_to_every_DeviceParameters_and_WDF_match()
+    {
+        var registry = new FakeRegistryService();
+        SeedFourClassDeviceTree(registry);
+        var handler = new DevicePowerSavingsTweakHandler(registry);
+
+        handler.SetState(true);
+
+        foreach (var deviceClass in new[] { "ACPI", "HID", "PCI", "USB" })
+        {
+            var path = $@"{EnumRoot}\{deviceClass}\DEV0\Device Parameters";
+            Assert.Equal(0, registry.GetValue(RegistryHive.LocalMachine, path, "EnhancedPowerManagementEnabled"));
+            Assert.Equal(0, registry.GetValue(RegistryHive.LocalMachine, path, "SelectiveSuspendOn"));
+            Assert.Equal(0, registry.GetValue(RegistryHive.LocalMachine, path, "WaitWakeEnabled"));
+        }
+
+        const string wdfPath = $@"{EnumRoot}\ACPI\DEV0\WDF";
+        Assert.Equal(0, registry.GetValue(RegistryHive.LocalMachine, wdfPath, "IdleInWorkingState"));
+    }
+
+    [Fact]
+    public void DevicePowerSavings_SetState_true_preserves_ACPI_typo_and_uses_correct_spelling_elsewhere()
+    {
+        var registry = new FakeRegistryService();
+        SeedFourClassDeviceTree(registry);
+        var handler = new DevicePowerSavingsTweakHandler(registry);
+
+        handler.SetState(true);
+
+        const string acpiPath = $@"{EnumRoot}\ACPI\DEV0\Device Parameters";
+        Assert.Equal(new byte[] { 0x00 }, registry.GetValue(RegistryHive.LocalMachine, acpiPath, "SeleactiveSuspendEnabled"));
+        Assert.Null(registry.GetValue(RegistryHive.LocalMachine, acpiPath, "SelectiveSuspendEnabled"));
+
+        foreach (var deviceClass in new[] { "HID", "PCI", "USB" })
+        {
+            var path = $@"{EnumRoot}\{deviceClass}\DEV0\Device Parameters";
+            Assert.Equal(new byte[] { 0x00 }, registry.GetValue(RegistryHive.LocalMachine, path, "SelectiveSuspendEnabled"));
+            Assert.Null(registry.GetValue(RegistryHive.LocalMachine, path, "SeleactiveSuspendEnabled"));
+        }
+    }
+
+    [Fact]
+    public void DevicePowerSavings_SetState_false_deletes_every_value_written_by_SetState_true()
+    {
+        var registry = new FakeRegistryService();
+        SeedFourClassDeviceTree(registry);
+        var handler = new DevicePowerSavingsTweakHandler(registry);
+        handler.SetState(true);
+
+        handler.SetState(false);
+
+        const string acpiPath = $@"{EnumRoot}\ACPI\DEV0\Device Parameters";
+        Assert.True(registry.WasDeleted(RegistryHive.LocalMachine, acpiPath, "EnhancedPowerManagementEnabled"));
+        Assert.True(registry.WasDeleted(RegistryHive.LocalMachine, acpiPath, "SeleactiveSuspendEnabled"));
+        Assert.True(registry.WasDeleted(RegistryHive.LocalMachine, acpiPath, "SelectiveSuspendOn"));
+        Assert.True(registry.WasDeleted(RegistryHive.LocalMachine, acpiPath, "WaitWakeEnabled"));
+
+        const string hidPath = $@"{EnumRoot}\HID\DEV0\Device Parameters";
+        Assert.True(registry.WasDeleted(RegistryHive.LocalMachine, hidPath, "SelectiveSuspendEnabled"));
+
+        const string wdfPath = $@"{EnumRoot}\ACPI\DEV0\WDF";
+        Assert.True(registry.WasDeleted(RegistryHive.LocalMachine, wdfPath, "IdleInWorkingState"));
+    }
+
+    [Fact]
+    public void DevicePowerSavings_GetState_returns_false_when_no_matches_exist()
+    {
+        var registry = new FakeRegistryService();
+        var handler = new DevicePowerSavingsTweakHandler(registry);
+
+        Assert.False(handler.GetState());
+    }
+
+    [Fact]
+    public void DevicePowerSavings_GetState_returns_true_after_SetState_true()
+    {
+        var registry = new FakeRegistryService();
+        SeedFourClassDeviceTree(registry);
+        var handler = new DevicePowerSavingsTweakHandler(registry);
+
+        handler.SetState(true);
+
+        Assert.True(handler.GetState());
+    }
+
+    [Fact]
+    public void DevicePowerSavings_metadata_is_Order_105_Category_Gaming()
+    {
+        var handler = new DevicePowerSavingsTweakHandler(new FakeRegistryService());
+
+        Assert.Equal(105, handler.Order);
+        Assert.Equal(TweakCategory.Gaming, handler.Category);
+        Assert.Equal("devpowersavings", handler.Key);
+    }
+
+    private sealed class FakeRegistryService : IRegistryService
+    {
+        private readonly Dictionary<(RegistryHive Hive, string SubKeyPath, string ValueName), object?> _values = new();
+        private readonly Dictionary<(RegistryHive Hive, string SubKeyPath), List<string>> _subKeyNames = new();
+        private readonly HashSet<(RegistryHive Hive, string SubKeyPath, string ValueName)> _deletedKeys = new();
+        private readonly HashSet<(RegistryHive Hive, string SubKeyPath)> _deletedSubKeyTrees = new();
+
+        public void SetSubKeyNames(RegistryHive hive, string subKeyPath, params string[] names) =>
+            _subKeyNames[(hive, subKeyPath)] = names.ToList();
+
+        public void Seed(RegistryHive hive, string subKeyPath, string valueName, object? value) =>
+            _values[(hive, subKeyPath, valueName)] = value;
+
+        public bool WasDeleted(RegistryHive hive, string subKeyPath, string valueName) =>
+            _deletedKeys.Contains((hive, subKeyPath, valueName));
+
+        public bool WasSubKeyTreeDeleted(RegistryHive hive, string subKeyPath) =>
+            _deletedSubKeyTrees.Contains((hive, subKeyPath));
+
+        public object? GetValue(RegistryHive hive, string subKeyPath, string valueName) =>
+            _values.TryGetValue((hive, subKeyPath, valueName), out var v) ? v : null;
+
+        public void SetValue(RegistryHive hive, string subKeyPath, string valueName, object value, RegistryValueKind kind)
+        {
+            _values[(hive, subKeyPath, valueName)] = value;
+            RegisterSubKeyPath(hive, subKeyPath);
+        }
+
+        public void DeleteValue(RegistryHive hive, string subKeyPath, string valueName)
+        {
+            _values.Remove((hive, subKeyPath, valueName));
+            _deletedKeys.Add((hive, subKeyPath, valueName));
+        }
+
+        public IReadOnlyList<string> GetSubKeyNames(RegistryHive hive, string subKeyPath) =>
+            _subKeyNames.TryGetValue((hive, subKeyPath), out var names) ? names : [];
+
+        public void DeleteSubKeyTree(RegistryHive hive, string subKeyPath)
+        {
+            foreach (var key in _values.Keys
+                         .Where(k => k.Hive == hive && (k.SubKeyPath == subKeyPath || k.SubKeyPath.StartsWith(subKeyPath + "\\", StringComparison.Ordinal)))
+                         .ToList())
+            {
+                _values.Remove(key);
+            }
+
+            _deletedSubKeyTrees.Add((hive, subKeyPath));
+            _subKeyNames.Remove((hive, subKeyPath));
+
+            var lastSeparator = subKeyPath.LastIndexOf('\\');
+            if (lastSeparator >= 0)
+            {
+                var parentPath = subKeyPath[..lastSeparator];
+                var name = subKeyPath[(lastSeparator + 1)..];
+                if (_subKeyNames.TryGetValue((hive, parentPath), out var siblingNames))
+                {
+                    siblingNames.Remove(name);
+                }
+            }
+        }
+
+        public RegistryKey OpenRealUserHive(string subKeyPath) =>
+            throw new NotSupportedException("Not needed for Gaming Windows tests.");
+
+        /// <summary>
+        /// Mirrors real-registry auto-creation semantics: writing a value under a path
+        /// registers that path as a child of its parent (and so on up the chain), so a
+        /// later <see cref="GetSubKeyNames"/> walk discovers what a prior write created —
+        /// this is what lets the write-cache-flush round-trip test find the "Disk" subkey
+        /// the On path created without the test manually re-seeding it.
+        /// </summary>
+        private void RegisterSubKeyPath(RegistryHive hive, string subKeyPath)
+        {
+            var lastSeparator = subKeyPath.LastIndexOf('\\');
+            if (lastSeparator < 0)
+            {
+                return;
+            }
+
+            var parentPath = subKeyPath[..lastSeparator];
+            var name = subKeyPath[(lastSeparator + 1)..];
+
+            if (!_subKeyNames.TryGetValue((hive, parentPath), out var names))
+            {
+                names = [];
+                _subKeyNames[(hive, parentPath)] = names;
+            }
+
+            if (!names.Contains(name, StringComparer.Ordinal))
+            {
+                names.Add(name);
+            }
+
+            RegisterSubKeyPath(hive, parentPath);
+        }
+    }
+}
