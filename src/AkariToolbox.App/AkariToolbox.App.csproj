@@ -121,6 +121,16 @@
          `13 Bloatware.ps1` branches 2/4. -->
     <EmbeddedResource Include="Resources\DebloatScripts\bloatware-remove.ps1" />
     <EmbeddedResource Include="Resources\DebloatScripts\bloatware-installall.ps1" />
+    <!-- 03-06 Task 2: D-06/D-07/D-08 branch-extracted Edge & WebView / Edge Settings
+         Run/Undo replacements (not direct predecessor carries), extracted from the
+         "Ultimate" collection's `20 Edge & WebView.ps1` and `10 Edge Settings.ps1`.
+         Both Undo branches (edgewebview-default, edgesettings-default) download
+         unverified edge.exe/edgewebview.exe binaries (D-10, no SHA256/signature check,
+         matching the existing D-06 accepted-risk precedent). -->
+    <EmbeddedResource Include="Resources\DebloatScripts\edgewebview-uninstall.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\edgewebview-default.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\edgesettings-optimize.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\edgesettings-default.ps1" />
   </ItemGroup>
 
   <ItemGroup>
