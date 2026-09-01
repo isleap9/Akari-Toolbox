@@ -344,6 +344,148 @@ public class GamingWindowsTweaksTests
         Assert.Equal("netipv4only", handler.Key);
     }
 
+    // ---------- PowerPlanTweakHandler (Task 2) ----------
+
+    private const string PowerPlanExportDirName = "AkariToolbox-PowerPlanBackup";
+
+    private static string PowerPlanExportDir() => Path.Combine(Path.GetTempPath(), PowerPlanExportDirName);
+
+    private static void CleanupPowerPlanExportDir()
+    {
+        try
+        {
+            var dir = PowerPlanExportDir();
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+        }
+        catch
+        {
+            // Best-effort test cleanup only.
+        }
+    }
+
+    [Fact]
+    public void PowerPlan_SetState_true_exports_every_existing_scheme_before_any_delete_call()
+    {
+        CleanupPowerPlanExportDir();
+        try
+        {
+            var registry = new FakeRegistryService();
+            var scriptRunner = new FakeScriptRunner
+            {
+                CaptureOutputResponder = (_, arguments) => arguments == "/L"
+                    ? "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)\r\n" +
+                      "Power Scheme GUID: a1841308-3541-4fab-bc81-f71556f20b4a  (Power saver)\r\n"
+                    : string.Empty,
+            };
+            var handler = new PowerPlanTweakHandler(scriptRunner, registry, new FakeLogConsoleService());
+
+            handler.SetState(true);
+
+            var exportIndexes = IndexesWhere(scriptRunner.Calls, c => c.Arguments.StartsWith("-export", StringComparison.Ordinal));
+            var deleteIndexes = IndexesWhere(scriptRunner.Calls, c => c.Arguments.StartsWith("/delete", StringComparison.Ordinal));
+
+            Assert.Equal(2, exportIndexes.Count);
+            Assert.Equal(2, deleteIndexes.Count);
+            Assert.True(exportIndexes.Max() < deleteIndexes.Min());
+        }
+        finally
+        {
+            CleanupPowerPlanExportDir();
+        }
+    }
+
+    [Fact]
+    public void PowerPlan_SetState_false_falls_back_to_restoredefaultschemes_when_no_session_export_exists()
+    {
+        CleanupPowerPlanExportDir();
+        try
+        {
+            var registry = new FakeRegistryService();
+            var scriptRunner = new FakeScriptRunner();
+            var log = new FakeLogConsoleService();
+            var handler = new PowerPlanTweakHandler(scriptRunner, registry, log);
+
+            handler.SetState(false);
+
+            Assert.Contains(scriptRunner.Calls, c => c.FileName == "powercfg" && c.Arguments == "-restoredefaultschemes");
+            Assert.DoesNotContain(scriptRunner.Calls, c => c.Arguments.StartsWith("-import", StringComparison.Ordinal));
+            Assert.NotEmpty(log.Messages);
+        }
+        finally
+        {
+            CleanupPowerPlanExportDir();
+        }
+    }
+
+    [Fact]
+    public void PowerPlan_SetState_false_imports_session_backup_instead_of_restoredefaultschemes_when_export_exists()
+    {
+        CleanupPowerPlanExportDir();
+        var exportDir = PowerPlanExportDir();
+        Directory.CreateDirectory(exportDir);
+        File.WriteAllText(Path.Combine(exportDir, "381b4222-f694-41f0-9685-ff5bb260df2e.pow"), "fake-pow-contents");
+
+        try
+        {
+            var registry = new FakeRegistryService();
+            var scriptRunner = new FakeScriptRunner();
+            var handler = new PowerPlanTweakHandler(scriptRunner, registry, new FakeLogConsoleService());
+
+            handler.SetState(false);
+
+            Assert.Contains(scriptRunner.Calls, c => c.FileName == "powercfg" && c.Arguments.StartsWith("-import", StringComparison.Ordinal));
+            Assert.DoesNotContain(scriptRunner.Calls, c => c.Arguments == "-restoredefaultschemes");
+            Assert.False(Directory.Exists(exportDir));
+        }
+        finally
+        {
+            CleanupPowerPlanExportDir();
+        }
+    }
+
+    [Fact]
+    public void PowerPlan_GetState_returns_true_when_active_scheme_output_contains_custom_guid()
+    {
+        var scriptRunner = new FakeScriptRunner
+        {
+            CaptureOutputResponder = (_, arguments) => arguments == "/getactivescheme"
+                ? "Power Scheme GUID: 99999999-9999-9999-9999-999999999999  (Akari Toolbox Gaming)"
+                : string.Empty,
+        };
+        var handler = new PowerPlanTweakHandler(scriptRunner, new FakeRegistryService(), new FakeLogConsoleService());
+
+        Assert.True(handler.GetState());
+    }
+
+    [Fact]
+    public void PowerPlan_metadata_is_Order_109_Category_Gaming()
+    {
+        var handler = new PowerPlanTweakHandler(new FakeScriptRunner(), new FakeRegistryService(), new FakeLogConsoleService());
+
+        Assert.Equal(109, handler.Order);
+        Assert.Equal(TweakCategory.Gaming, handler.Category);
+        Assert.Equal("powerplan", handler.Key);
+    }
+
+    private static List<int> IndexesWhere(IReadOnlyList<(string FileName, string Arguments)> calls, Func<(string FileName, string Arguments), bool> predicate) =>
+        calls.Select((call, index) => (call, index)).Where(x => predicate(x.call)).Select(x => x.index).ToList();
+
+    private sealed class FakeLogConsoleService : ILogConsoleService
+    {
+        public ObservableCollection<string> Lines { get; } = new();
+
+        public List<string> Messages { get; } = new();
+
+        public void Log(string message)
+        {
+            Messages.Add(message);
+            Lines.Add(message);
+        }
+    }
+
     private sealed class FakeScriptRunner : IScriptRunner
     {
         public List<(string FileName, string Arguments)> Calls { get; } = new();
