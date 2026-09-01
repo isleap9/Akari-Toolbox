@@ -25,6 +25,17 @@ public class TweakHandlerOrderingTests
         "lockscreen", "animations", "dcom", "nvme", "largecache", "sysprofile", "defender", "mitigation",
     ];
 
+    /// <summary>
+    /// The Phase 2 Gaming-category 11-tweak sequence, ordered by <see cref="ITweakHandler.Order"/>
+    /// (<c>100..110</c>) — the closing regression-test lock for GAMING-01 (02-07-PLAN.md Task 1),
+    /// assembled across Plans 02-01 through 02-04, disjoint from the AkariOS <c>[0..31]</c> range.
+    /// </summary>
+    private static readonly string[] ExpectedGamingKeySequence =
+    [
+        "gpuhdcp", "gpup0state", "gpumsimode", "gpuamdsettings", "gpuintelsettings",
+        "devpowersavings", "netpowersavings", "netipv4only", "writecacheflush", "powerplan", "timerresolution",
+    ];
+
     private static ServiceProvider BuildProvider()
     {
         var services = new ServiceCollection();
@@ -83,6 +94,53 @@ public class TweakHandlerOrderingTests
             .ToList();
 
         Assert.Equal(ExpectedKeySequence, keys);
+    }
+
+    [Fact]
+    public void Resolving_ITweakHandler_yields_exactly_11_Gaming_handlers()
+    {
+        using var provider = BuildProvider();
+
+        var handlers = provider.GetServices<ITweakHandler>()
+            .Where(h => h.Category == TweakCategory.Gaming)
+            .ToList();
+
+        Assert.Equal(11, handlers.Count);
+    }
+
+    [Fact]
+    public void Gaming_handler_order_values_span_100_to_110_with_no_gaps_or_duplicates_and_no_AkariOS_overlap()
+    {
+        using var provider = BuildProvider();
+
+        var gamingOrders = provider.GetServices<ITweakHandler>()
+            .Where(h => h.Category == TweakCategory.Gaming)
+            .Select(h => h.Order)
+            .OrderBy(o => o)
+            .ToList();
+
+        Assert.Equal(Enumerable.Range(100, 11).ToList(), gamingOrders);
+
+        var akariOsOrders = provider.GetServices<ITweakHandler>()
+            .Where(h => h.Category == TweakCategory.AkariOS)
+            .Select(h => h.Order)
+            .ToHashSet();
+
+        Assert.DoesNotContain(gamingOrders, akariOsOrders.Contains);
+    }
+
+    [Fact]
+    public void Gaming_handlers_sorted_by_order_match_expected_key_sequence()
+    {
+        using var provider = BuildProvider();
+
+        var keys = provider.GetServices<ITweakHandler>()
+            .Where(h => h.Category == TweakCategory.Gaming)
+            .OrderBy(h => h.Order)
+            .Select(h => h.Key)
+            .ToList();
+
+        Assert.Equal(ExpectedGamingKeySequence, keys);
     }
 
     [Fact]
