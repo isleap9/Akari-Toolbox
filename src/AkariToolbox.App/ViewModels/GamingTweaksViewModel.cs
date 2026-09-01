@@ -162,10 +162,25 @@ public partial class GamingTweaksViewModel : ViewModelBase
     [RelayCommand]
     private Task RunDriverInstallDebloatIntelAsync() => RunD06ScriptAsync("Driver Install Debloat & Settings (Intel)", "driverinstalldebloat-intel.ps1");
 
-    private Task RunD06ScriptAsync(string displayName, string resourceSuffix)
+    private async Task RunD06ScriptAsync(string displayName, string resourceSuffix)
     {
         _log.Log($"[GAMING] Launching {displayName} — downloaded binary is NOT SHA256/signature-verified before execution (accepted risk, D-06).");
-        return _scriptRunner.RunEmbeddedScriptAsync(resourceSuffix);
+
+        try
+        {
+            await _scriptRunner.RunEmbeddedScriptAsync(resourceSuffix);
+        }
+        catch (FileNotFoundException ex)
+        {
+            // WR-04 fix (02-REVIEW.md): RunEmbeddedScriptAsync throws before entering
+            // its own try/catch when the requested embedded resource can't be found,
+            // bypassing the ILogConsoleService logging every other ScriptRunner failure
+            // path uses. Catch it here so a mismatched resourceSuffix surfaces visibly
+            // in the in-app log dock the user is looking at, instead of only reaching
+            // App.xaml.cs's file-logger-only TaskScheduler.UnobservedTaskException
+            // handler.
+            _log.Log($"[GAMING] ERROR: {displayName} failed to launch — {ex.Message}");
+        }
     }
 
     private void OnTweakItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
