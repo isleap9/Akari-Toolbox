@@ -487,17 +487,37 @@ public sealed class PowerPlanTweakHandler(IScriptRunner scriptRunner, IRegistryS
             .ToList();
 
         // Assumption A4 hardening — export every pre-existing scheme BEFORE any delete
-        // call, never present in the source script.
+        // call, never present in the source script. CR-01 fix (02-REVIEW.md): each
+        // export's exit code (and the exported file actually landing on disk) is
+        // verified before any duplicate/setactive/delete call runs — a failed export
+        // aborts the whole enable operation instead of silently proceeding to delete a
+        // scheme with no usable backup.
         var exportDir = GetExportDir();
         Directory.CreateDirectory(exportDir);
         foreach (var guid in existingSchemeGuids)
         {
             var exportPath = Path.Combine(exportDir, $"{guid}.pow");
-            scriptRunner.RunProcessAsync("powercfg", $"-export \"{exportPath}\" {guid}").GetAwaiter().GetResult();
+            var exportExitCode = scriptRunner.RunProcessAsync("powercfg", $"-export \"{exportPath}\" {guid}").GetAwaiter().GetResult();
+            if (exportExitCode != 0 || !File.Exists(exportPath))
+            {
+                log.Log($"[POWER-PLAN] Export of scheme {guid} failed (exit {exportExitCode}) — aborting before any delete.");
+                return;
+            }
         }
 
-        scriptRunner.RunProcessAsync("powercfg", $"/duplicatescheme {UltimatePerformanceBaseGuid} {CustomSchemeGuid}").GetAwaiter().GetResult();
-        scriptRunner.RunProcessAsync("powercfg", $"/setactive {CustomSchemeGuid}").GetAwaiter().GetResult();
+        var duplicateExitCode = scriptRunner.RunProcessAsync("powercfg", $"/duplicatescheme {UltimatePerformanceBaseGuid} {CustomSchemeGuid}").GetAwaiter().GetResult();
+        if (duplicateExitCode != 0)
+        {
+            log.Log($"[POWER-PLAN] Failed to duplicate base scheme (exit {duplicateExitCode}) — aborting before any delete.");
+            return;
+        }
+
+        var setActiveExitCode = scriptRunner.RunProcessAsync("powercfg", $"/setactive {CustomSchemeGuid}").GetAwaiter().GetResult();
+        if (setActiveExitCode != 0)
+        {
+            log.Log($"[POWER-PLAN] Failed to activate custom scheme (exit {setActiveExitCode}) — aborting before any delete.");
+            return;
+        }
 
         foreach (var guid in existingSchemeGuids)
         {
