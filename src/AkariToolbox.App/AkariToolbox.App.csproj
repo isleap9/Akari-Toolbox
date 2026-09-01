@@ -89,6 +89,12 @@
     <EmbeddedResource Include="Resources\DebloatScripts\wpbt-undo.ps1" />
     <EmbeddedResource Include="Resources\DebloatScripts\utc.ps1" />
     <EmbeddedResource Include="Resources\DebloatScripts\utc-undo.ps1" />
+    <!-- 03-03 D-12/D-13: BitLocker — Disable, branch-extracted from the "Ultimate"
+         collection's `3 Setup/1 BitLocker.ps1`, not a direct predecessor carry. Undo
+         (branch 2, "BitLocker: On") only opens the BitLocker Control Panel for manual
+         re-enable — it does not call Enable-BitLocker. -->
+    <EmbeddedResource Include="Resources\DebloatScripts\disablebitlocker.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\disablebitlocker-undo.ps1" />
   </ItemGroup>
 
   <ItemGroup>
