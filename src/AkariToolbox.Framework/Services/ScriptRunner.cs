@@ -106,6 +106,28 @@ public sealed class ScriptRunner(ILogConsoleService log) : IScriptRunner
         }
     }
 
-    public Task<int> RunEmbeddedScriptAsync(string resourceSuffix, string? arguments = null, TimeSpan? timeout = null) =>
-        throw new NotImplementedException();
+    public async Task<int> RunEmbeddedScriptAsync(string resourceSuffix, string? arguments = null, TimeSpan? timeout = null)
+    {
+        var asm = typeof(ScriptRunner).Assembly;
+        var name = asm.GetManifestResourceNames()
+            .FirstOrDefault(n => n.EndsWith(resourceSuffix, StringComparison.OrdinalIgnoreCase))
+            ?? throw new FileNotFoundException($"Embedded resource not found: {resourceSuffix}");
+
+        var temp = Path.Combine(Path.GetTempPath(), $"AkariToolbox-{Guid.NewGuid():N}-{resourceSuffix}");
+        try
+        {
+            await using (var rs = asm.GetManifestResourceStream(name)!)
+            await using (var fs = File.Create(temp))
+            {
+                await rs.CopyToAsync(fs);
+            }
+
+            var args = $"-NoProfile -ExecutionPolicy Bypass -File \"{temp}\" {arguments}".TrimEnd();
+            return await RunProcessAsync("powershell.exe", args, timeout);
+        }
+        finally
+        {
+            try { if (File.Exists(temp)) File.Delete(temp); } catch { /* best-effort temp cleanup */ }
+        }
+    }
 }
