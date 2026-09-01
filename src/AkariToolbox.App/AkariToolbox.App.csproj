@@ -69,6 +69,11 @@
     <EmbeddedResource Include="Resources\DebloatScripts\disablebgapps-undo.ps1" />
     <EmbeddedResource Include="Resources\DebloatScripts\storesearch.ps1" />
     <EmbeddedResource Include="Resources\DebloatScripts\storesearch-undo.ps1" />
+    <!-- D-14: branch-extracted from the "Ultimate" collection's `6 Windows/9 Copilot.ps1`,
+         not a direct predecessor carry (Copilot-only scope, narrower than the
+         predecessor's WindowsAI.ps1/WindowsAI-Undo.ps1). -->
+    <EmbeddedResource Include="Resources\DebloatScripts\windowsai.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\windowsai-undo.ps1" />
   </ItemGroup>
 
   <ItemGroup>
