@@ -319,15 +319,13 @@ public class GamingGraphicsTweaksTests
                 _values.Remove(key);
             }
 
+            // Historical fact — kept even if a later CreateSubKey recreates the same path,
+            // so tests can assert "deleted then recreated" as two independent occurrences.
             _deletedSubKeyTrees.Add((hive, subKeyPath));
-            _createdSubKeys.Remove((hive, subKeyPath));
         }
 
-        public void CreateSubKey(RegistryHive hive, string subKeyPath)
-        {
+        public void CreateSubKey(RegistryHive hive, string subKeyPath) =>
             _createdSubKeys.Add((hive, subKeyPath));
-            _deletedSubKeyTrees.Remove((hive, subKeyPath));
-        }
 
         public RegistryKey OpenRealUserHive(string subKeyPath) =>
             throw new NotSupportedException("Not needed for Gaming Graphics tests.");
