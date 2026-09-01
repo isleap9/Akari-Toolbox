@@ -142,6 +142,10 @@ None - no external service configuration required.
 - Recommended before considering the phase fully UAT-verified: a manual pass on a live elevated Windows machine — visit the Debloat page, confirm all 28 rows render across 5 categories, confirm the 5 D-11 rows and 2 unverified-download rows show their new captions (Edge & WebView Remove shows both), spot-check 3-4 actions across categories (at least one Run-only, one Run+Undo, one D-11-gated) execute end-to-end with streamed log output. Not exercisable from this non-Windows-elevated execution context (same limitation 03-06-SUMMARY.md and prior phase-closing plans documented).
 - Phase 4 (Downloads/Misc) can proceed; no blockers carried forward from this plan.
 
+## Self-Check: PASSED
+
+All 4 modified source files found on disk; SUMMARY.md found on disk; all 4 commit hashes (010b03e, 09b5da2, 50bce18, b055707) found in `git log`.
+
 ---
 *Phase: 03-debloat*
 *Completed: 2026-09-02*
