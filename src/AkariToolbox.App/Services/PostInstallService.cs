@@ -25,12 +25,10 @@ public sealed class PostInstallService(IHttpClientFactory httpClientFactory, ILo
 
     public string LocalRoot => @"C:\PostInstall";
 
-    public string NoDefenderPath => Path.Combine(LocalRoot, @"Defender\NoDefender.cab");
-
     // Full asset manifest — copied verbatim from the predecessor's PostInstallService.cs
-    // (~130 entries), unchanged. Only Downloads-page (Phase 4/DOWNLOADS-01) work touches
-    // this list; this plan only needs EnsureDefenderFilesAsync/EnsureMinSudoAsync's
-    // fallback into EnsurePostInstallAsync to be correct.
+    // (~130 entries), unchanged. Not currently consumed by any Phase 1 handler (Defender's
+    // cab+ps1 payload is embedded directly instead); this list is Phase 4/DOWNLOADS-01
+    // scope, kept as-is ahead of that page's asset-mirror work.
     private static readonly string[] AllFiles =
     {
         "AntiCheat/Disable DEP NX (default).bat",
@@ -182,29 +180,8 @@ public sealed class PostInstallService(IHttpClientFactory httpClientFactory, ILo
         "Tweaks/serviwin.exe",
     };
 
-    public bool NoDefenderPresent => File.Exists(NoDefenderPath);
-
     public bool IsFullyInstalled =>
         AllFiles.All(f => File.Exists(Path.Combine(LocalRoot, f.Replace('/', '\\'))));
-
-    public async Task<bool> EnsureDefenderFilesAsync()
-    {
-        // 01-REVIEW.md CR-01/CR-03 fix: the native SYSTEM-impersonation Defender path no
-        // longer reads MinSudo.exe/PowerRun.exe/DisableDefenderServices.bat/
-        // EnableDefender.ps1/EnableDefenderServices.bat, so readiness only requires the
-        // two files the disable flow actually touches (NoDefender.cab + DisableDefender.ps1).
-        bool defenderReady =
-            File.Exists(Path.Combine(LocalRoot, @"Defender\NoDefender.cab")) &&
-            File.Exists(Path.Combine(LocalRoot, @"Defender\DisableDefender.ps1"));
-
-        if (defenderReady)
-        {
-            log.Log("[POSTINSTALL] All Defender files already present.");
-            return true;
-        }
-
-        return await EnsurePostInstallAsync();
-    }
 
     public async Task<bool> EnsurePostInstallAsync()
     {

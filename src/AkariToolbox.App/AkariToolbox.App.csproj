@@ -24,6 +24,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Defender's cab+ps1 payload, embedded directly so the Defender workflow has no
+         runtime dependency on PostInstallService / the downloaded C:\PostInstall mirror. -->
+    <EmbeddedResource Include="Defender\NoDefender.cab" />
+    <EmbeddedResource Include="Defender\DisableDefender.ps1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\AkariToolbox.Framework\AkariToolbox.Framework.csproj" />
   </ItemGroup>
 

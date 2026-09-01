@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.Win32;
 using AkariToolbox.Framework.Services;
 
@@ -13,42 +14,34 @@ namespace AkariToolbox.App.Services.TweakHandlers;
 /// NOT decomposed into the registry/service-primitive pattern the other 31 handlers use;
 /// <see cref="SetDefenderAsync"/> and everything it calls remains a port of the
 /// predecessor's <c>TweakService.cs</c> two-phase Defender workflow (Tamper Protection
-/// gate, cab+ps1 install, post-reboot phase 2), plus the SHA256 integrity gate (T-01-SC)
-/// added ahead of the Tamper Protection check.
+/// gate, cab+ps1 install, post-reboot phase 2).
 ///
-/// The *elevation mechanism* was deliberately replaced (per explicit project-owner
-/// direction, closing CR-01/CR-03 from 01-REVIEW.md) with a native SYSTEM-impersonation
-/// port (<see cref="ElevationService.RunAsSystem"/>, adapted from the sibling AkariTool
-/// repo) in place of the predecessor's <c>MinSudo.exe</c>/<c>PowerRun.exe</c> external
-/// binaries — this eliminates the unverified-elevated-binary-execution risk entirely for
-/// the Defender path (no external executable is launched to gain SYSTEM/TrustedInstaller
-/// rights any more) and also closes CR-01 (the fire-and-forget <c>SetState</c> that
-/// defeated <see cref="TweakCatalog"/>'s per-key serialization), since the native path no
-/// longer needs the generated-.bat-plus-RunOnce indirection that motivated the original
-/// fire-and-forget shape. This is not a decomposition into the <see cref="ITweakHandler"/>
-/// registry/service-primitive pattern (that remains out of scope, SEC-01/v2) — it is an
-/// internal implementation swap of one specific mechanism (privilege escalation) inside
-/// the still-special-cased Defender handler. The overall two-phase Defender *workflow*
-/// shape (Tamper Protection gate, cab+ps1 install, RunOnce-scheduled phase 2) is unchanged
-/// from the predecessor's.
+/// Two mechanisms were deliberately replaced (per explicit project-owner direction) with
+/// native, self-contained equivalents adapted from the sibling AkariTool repo:
+/// <list type="bullet">
+/// <item>Elevation: <see cref="ElevationService.RunAsSystem"/> (native SYSTEM
+/// impersonation) replaces the predecessor's <c>MinSudo.exe</c>/<c>PowerRun.exe</c>
+/// external binaries — no external executable is launched to gain SYSTEM rights any more
+/// (closes CR-01/CR-03 from 01-REVIEW.md). This also makes <see cref="SetState"/> block
+/// for the duration of the operation, since the native path no longer needs the
+/// generated-.bat-plus-RunOnce indirection that motivated the original fire-and-forget
+/// shape.</item>
+/// <item>Asset delivery: <c>NoDefender.cab</c> and <c>DisableDefender.ps1</c> are embedded
+/// assembly resources (see the .csproj) instead of being downloaded on demand into
+/// <c>C:\PostInstall\</c> — per explicit project-owner direction, the Defender workflow has
+/// no runtime dependency on <c>IPostInstallService</c> at all. Because the bytes are fixed
+/// at build time rather than fetched from the network, the SHA256 integrity gate that
+/// guarded the downloaded copies (T-01-SC) is no longer meaningful here and was removed —
+/// embedded resources are not a network trust boundary the way a runtime download is.</item>
+/// </list>
+/// Neither change is a decomposition into the <see cref="ITweakHandler"/>
+/// registry/service-primitive pattern (that remains out of scope, SEC-01/v2) — they are
+/// internal implementation swaps inside the still-special-cased Defender handler. The
+/// overall two-phase Defender *workflow* shape (Tamper Protection gate, cab+ps1 install,
+/// RunOnce-scheduled phase 2) is unchanged from the predecessor's.
 /// </summary>
-public sealed class DefenderTweakHandler(IPostInstallService postInstall, ILogConsoleService log, IRegistryService registry) : ITweakHandler
+public sealed class DefenderTweakHandler(ILogConsoleService log, IRegistryService registry) : ITweakHandler
 {
-    // T-01-SC mitigation constants (new, Phase-1-scoped, NOT ported from the predecessor —
-    // closes BLOCKER T-01-SC from phase-plan review). These two files are fetched at
-    // runtime from the pinned GitHub PostInstall repo (RESEARCH Pitfall 5); their exact
-    // bytes are not known during planning, so the digests below are trust-on-first-use
-    // pins computed by downloading the exact same raw.githubusercontent.com URLs
-    // EnsureDefenderFilesAsync()/EnsurePostInstallAsync() use and hashing the bytes with
-    // SHA256 (equivalent to running `Get-FileHash -Algorithm SHA256` against the local
-    // copy once it lands in C:\PostInstall\ — no live Windows test machine was available
-    // during this automated implementation pass, so this pin should be re-confirmed
-    // against the actual local files during the Task 2 human real-machine check).
-    // SHA256 pinned 2026-09-01 from https://raw.githubusercontent.com/isleap9/PostInstall/main/PostInstall/Defender/NoDefender.cab
-    private const string ExpectedNoDefenderCabSha256 = "cb0204461effd80c450bb2bab531e1e07fda4ef06b29d80f251b250bf43e0638";
-    // SHA256 pinned 2026-09-01 from https://raw.githubusercontent.com/isleap9/PostInstall/main/PostInstall/Defender/DisableDefender.ps1
-    private const string ExpectedDisableDefenderPs1Sha256 = "ef4b85ae5dac8b756bc3c24d6d9bad334e0270dadcf93ea50263d2f70426d4ea";
-
     // Defender's own explicitly-scoped state flag (D-03/D-04 exemption, per D-01) — this
     // app deliberately never creates the predecessor's HKCU\Software\AkariTool hive
     // (Pitfall 4, applies to every other handler), so Defender gets a small dedicated
@@ -98,35 +91,9 @@ public sealed class DefenderTweakHandler(IPostInstallService postInstall, ILogCo
         {
             if (disable)
             {
-                // Auto-download required files if missing (matches Akari Tool Premium).
-                // On AkariOS, all files already exist and this returns instantly.
-                // On a fresh VM / stock Windows, this fetches ~30MB from GitHub.
-                bool filesReady = await postInstall.EnsureDefenderFilesAsync();
-
-                if (!filesReady)
-                {
-                    log.Log("[DEFENDER] Could not obtain required files. Check your internet connection and try again.");
-                    return;
-                }
-
                 if (GetState()) return;
 
                 log.Log("[DEFENDER] Disabling Windows Defender...");
-
-                // T-01-SC mitigation (new, not ported from the predecessor): verify both
-                // downloaded Defender-critical assets before any copy/execution. A mismatch
-                // aborts with no partial state change — same early-return shape as the
-                // Tamper Protection gate below.
-                var noDefenderOk = await postInstall.VerifyFileSha256Async(postInstall.NoDefenderPath, ExpectedNoDefenderCabSha256);
-                var disableScriptOk = await postInstall.VerifyFileSha256Async(
-                    Path.Combine(postInstall.LocalRoot, "Defender", "DisableDefender.ps1"), ExpectedDisableDefenderPs1Sha256);
-
-                if (!noDefenderOk || !disableScriptOk)
-                {
-                    log.Log("[DEFENDER] ERROR: Integrity check failed for a downloaded PostInstall asset — refusing to proceed. Delete C:\\PostInstall\\Defender and retry to re-download.");
-                    return;
-                }
-
                 log.Log("[DEFENDER] Checking Tamper Protection status...");
 
                 if (IsDefenderTamperProtectionOn())
@@ -140,11 +107,21 @@ public sealed class DefenderTweakHandler(IPostInstallService postInstall, ILogCo
 
                 log.Log("[DEFENDER] Tamper Protection is off — proceeding.");
                 log.Log("[DEFENDER] Preparing NoDefender package...");
-                File.Copy(postInstall.NoDefenderPath, WinNoDefenderCab, overwrite: true);
 
-                log.Log("[DEFENDER] Installing NoDefender (30-60s)...");
-                await DefenderRunElevatedPsFileAsync(
-                    Path.Combine(postInstall.LocalRoot, @"Defender\DisableDefender.ps1"));
+                var cabTemp = await ExtractEmbeddedAsync(".NoDefender.cab", "NoDefender.cab");
+                var ps1Temp = await ExtractEmbeddedAsync(".DisableDefender.ps1", "DisableDefender.ps1");
+                try
+                {
+                    File.Copy(cabTemp, WinNoDefenderCab, overwrite: true);
+
+                    log.Log("[DEFENDER] Installing NoDefender (30-60s)...");
+                    await DefenderRunElevatedPsFileAsync(ps1Temp);
+                }
+                finally
+                {
+                    try { File.Delete(cabTemp); } catch { /* best-effort temp cleanup */ }
+                    try { File.Delete(ps1Temp); } catch { /* best-effort temp cleanup */ }
+                }
 
                 // CR-01/CR-03 fix: schedule the native post-reboot phase 2 via a RunOnce
                 // entry that re-launches this app itself (--defender-phase2), instead of
@@ -159,10 +136,8 @@ public sealed class DefenderTweakHandler(IPostInstallService postInstall, ILogCo
             }
             else
             {
-                // No PostInstall dependency for re-enable: native SYSTEM impersonation
-                // needs no downloaded file (CR-01/CR-03 fix removes the prior
-                // postInstall.EnsureMinSudoAsync() gate here — that only existed to fetch
-                // MinSudo.exe for the now-removed TrustedInstaller .bat path).
+                // No PostInstall dependency for re-enable either: native SYSTEM
+                // impersonation needs no downloaded/embedded file at all.
                 log.Log("[DEFENDER] Re-enabling Windows Defender...");
                 log.Log("[DEFENDER] Restoring Defender package (30-60s)...");
 
@@ -320,6 +295,24 @@ public sealed class DefenderTweakHandler(IPostInstallService postInstall, ILogCo
             if (proc.ExitCode != 0) log($"[PHASE2]   '{file} {args}' exit code {proc.ExitCode}");
         }
         catch (Exception ex) { log($"[PHASE2]   '{file} {args}' threw — {ex.Message}"); }
+    }
+
+    /// <summary>
+    /// Extracts an embedded resource (matched by a suffix such as ".NoDefender.cab") to a
+    /// file in the temp folder and returns its path. Self-contained — no PostInstall
+    /// folder dependency, per explicit project-owner direction.
+    /// </summary>
+    private static async Task<string> ExtractEmbeddedAsync(string endsWith, string destFileName)
+    {
+        var asm = typeof(DefenderTweakHandler).Assembly;
+        var name = asm.GetManifestResourceNames()
+            .FirstOrDefault(n => n.EndsWith(endsWith, StringComparison.OrdinalIgnoreCase))
+            ?? throw new FileNotFoundException($"Embedded resource not found: {endsWith}");
+        var dest = Path.Combine(Path.GetTempPath(), destFileName);
+        await using var rs = asm.GetManifestResourceStream(name)!;
+        await using var fs = File.Create(dest);
+        await rs.CopyToAsync(fs);
+        return dest;
     }
 
     private bool IsDefenderTamperProtectionOn()
