@@ -16,6 +16,7 @@ public sealed class FakeTweakHandler(string key, bool initialState, int order = 
     public string Title => key;
     public string Description => key;
     public int Order => order;
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     public bool GetState()
     {
@@ -129,6 +130,7 @@ public class TweakCatalogTests
         public string Title => key;
         public string Description => key;
         public int Order => 0;
+        public TweakCategory Category => TweakCategory.AkariOS;
 
         public bool GetState() => _state;
 

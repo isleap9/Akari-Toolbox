@@ -22,6 +22,9 @@ public interface IRegistryService
     /// <summary>Deletes a value if present; no-op (never throws) if it is already absent.</summary>
     void DeleteValue(RegistryHive hive, string subKeyPath, string valueName);
 
+    /// <summary>Returns direct child subkey names under subKeyPath, or an empty list if absent.</summary>
+    IReadOnlyList<string> GetSubKeyNames(RegistryHive hive, string subKeyPath);
+
     /// <summary>
     /// Opens (creating if needed) a sub-key under the real interactive user's HKCU hive,
     /// even though this process is elevated (whose own <c>Registry.CurrentUser</c> may

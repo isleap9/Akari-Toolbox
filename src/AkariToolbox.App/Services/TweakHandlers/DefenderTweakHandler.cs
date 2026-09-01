@@ -75,6 +75,8 @@ public sealed class DefenderTweakHandler(ILogConsoleService log, IRegistryServic
 
     public int Order => 30;
 
+    public TweakCategory Category => TweakCategory.AkariOS;
+
     public bool GetState() =>
         registry.GetValue(RegistryHive.CurrentUser, DefenderStateKey, DefenderStateValue) is int v && v != 0;
 

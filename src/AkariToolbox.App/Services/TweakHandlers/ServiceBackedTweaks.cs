@@ -22,6 +22,8 @@ public sealed class ClipboardTweakHandler(IWindowsServiceController serviceContr
     public string Description => "Toggle Clipboard service On or Off";
     public int Order => 4;
 
+    public TweakCategory Category => TweakCategory.AkariOS;
+
     public bool GetState() => serviceController.GetStartType(Cbdhsvc) == 2;
 
     public void SetState(bool enable) => serviceController.SetStartType(Cbdhsvc, enable ? 2 : 4);
@@ -41,6 +43,8 @@ public sealed class BluetoothTweakHandler(IWindowsServiceController serviceContr
     public string Title => "Disable Bluetooth";
     public string Description => "Toggle Bluetooth On or Off";
     public int Order => 5;
+
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     // Representative single-service read (RESEARCH Assumption A3) — matches the
     // pattern already established for wifi/vpn/vr in this phase.
@@ -67,6 +71,8 @@ public sealed class CdromTweakHandler(IRegistryService registry) : ITweakHandler
     public string Title => "CDROM";
     public string Description => "Enable the CDROM service";
     public int Order => 12;
+
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, CdromKey, "Start") is int v && v == 3;
@@ -107,6 +113,8 @@ public sealed class PrintSpoolerTweakHandler(IWindowsServiceController serviceCo
     public string Title => "Disable Print Spooler";
     public string Description => "Toggle Print Spooler On or Off";
     public int Order => 13;
+
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     public bool GetState() => serviceController.GetStartType(Spooler) == 4;
 

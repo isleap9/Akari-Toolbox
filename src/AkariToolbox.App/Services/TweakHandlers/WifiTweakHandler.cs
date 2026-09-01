@@ -35,6 +35,8 @@ public sealed class WifiTweakHandler(IRegistryService registry) : ITweakHandler
 
     public int Order => 0;
 
+    public TweakCategory Category => TweakCategory.AkariOS;
+
     public bool GetState()
     {
         var wlanStart = registry.GetValue(RegistryHive.LocalMachine, WlanSvc, "Start");

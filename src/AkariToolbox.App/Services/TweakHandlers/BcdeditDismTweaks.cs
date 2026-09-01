@@ -21,6 +21,8 @@ public sealed class DepTweakHandler(IScriptRunner scriptRunner) : ITweakHandler
     public string Description => "Toggle Data Execution Prevention";
     public int Order => 3;
 
+    public TweakCategory Category => TweakCategory.AkariOS;
+
     public bool GetState()
     {
         var output = scriptRunner.RunProcessCaptureOutputAsync("bcdedit", "/enum {current}").GetAwaiter().GetResult();
@@ -53,6 +55,8 @@ public sealed class BootMenuTweakHandler(IScriptRunner scriptRunner) : ITweakHan
     public string Description => "Set Boot Menu Policy to Standard";
     public int Order => 6;
 
+    public TweakCategory Category => TweakCategory.AkariOS;
+
     public bool GetState()
     {
         var output = scriptRunner.RunProcessCaptureOutputAsync("bcdedit", "/enum {current}").GetAwaiter().GetResult();
@@ -74,6 +78,8 @@ public sealed class HyperVTweakHandler(IScriptRunner scriptRunner, IRegistryServ
     public string Title => "Disable Hyper-V";
     public string Description => "Toggle Hyper-V On or Off";
     public int Order => 19;
+
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     // Registry portion only (Pitfall 6) — both the disable and enable write paths
     // converge on this one key, so it is a reliable single-key representative read.
@@ -131,6 +137,8 @@ public sealed class VrTweakHandler(IScriptRunner scriptRunner, IRegistryService 
     public string Title => "VR";
     public string Description => "Enable VR Services";
     public int Order => 16;
+
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     // Registry portion only (Pitfall 6) — KSecPkg's enable-value (0) is distinct from
     // every other service's non-zero enable-value, making it the cleanest single-key

@@ -19,6 +19,8 @@ public sealed class VbsTweakHandler(IRegistryService registry) : ITweakHandler
     public string Description => "Toggle Virtualization Based Security";
     public int Order => 20;
 
+    public TweakCategory Category => TweakCategory.AkariOS;
+
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, DeviceGuard, "EnableVirtualizationBasedSecurity") is int v && v == 1;
 
@@ -40,6 +42,8 @@ public sealed class WallpaperQualityTweakHandler(IRegistryService registry) : IT
     public string Title => "Disable Wallpaper Quality Reduction";
     public string Description => "Prevent wallpaper quality reduction";
     public int Order => 21;
+
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     public bool GetState() =>
         registry.GetValue(RegistryHive.CurrentUser, Desktop, "JPEGImportQuality") is int v && v == 100;
@@ -68,6 +72,8 @@ public sealed class MpoTweakHandler(IRegistryService registry) : ITweakHandler
     public string Description => "Toggle MPO On or Off";
     public int Order => 22;
 
+    public TweakCategory Category => TweakCategory.AkariOS;
+
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, GraphicsDrivers, "DisableOverlays") is int v && v == 1;
 
@@ -93,6 +99,8 @@ public sealed class TransparencyTweakHandler(IRegistryService registry) : ITweak
     public string Description => "Toggle transparency effects";
     public int Order => 23;
 
+    public TweakCategory Category => TweakCategory.AkariOS;
+
     // OpenRealUserHive throws (D-14) if explorer.exe is not found — let it propagate,
     // same as StartMenuTweakHandler.
     public bool GetState()
@@ -116,6 +124,8 @@ public sealed class LockScreenTweakHandler(IRegistryService registry) : ITweakHa
     public string Title => "Disable Lock Screen";
     public string Description => "Toggle lock screen On or Off";
     public int Order => 24;
+
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, Personalization, "NoLockScreen") is int v && v == 1;
@@ -143,6 +153,8 @@ public sealed class AnimationsTweakHandler(IRegistryService registry) : ITweakHa
     public string Title => "Disable Animations";
     public string Description => "Toggle system animations";
     public int Order => 25;
+
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, DwmPolicy, "DisallowAnimations") is int v && v == 1;
@@ -191,6 +203,8 @@ public sealed class DcomTweakHandler(IRegistryService registry) : ITweakHandler
     public string Description => "Toggle DCOM On or Off";
     public int Order => 26;
 
+    public TweakCategory Category => TweakCategory.AkariOS;
+
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, Ole, "EnableDCOM") is string v && v == "N";
 
@@ -206,6 +220,8 @@ public sealed class NvmeTweaksTweakHandler(IRegistryService registry) : ITweakHa
     public string Title => "NVME Tweaks";
     public string Description => "Apply NVME performance tweaks";
     public int Order => 27;
+
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, StorNvmeDevice, "ContiguousMemoryFromAnyNode") is int v && v == 1;
@@ -238,6 +254,8 @@ public sealed class LargeSystemCacheTweakHandler(IRegistryService registry) : IT
     public string Description => "Configure large system cache";
     public int Order => 28;
 
+    public TweakCategory Category => TweakCategory.AkariOS;
+
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, MemoryManagement, "LargeSystemCache") is int v && v == 1;
 
@@ -255,6 +273,8 @@ public sealed class SystemProfileTweakHandler(IRegistryService registry) : ITwea
     public string Title => "System Profile Tweaks";
     public string Description => "Apply various system profile tweaks";
     public int Order => 29;
+
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, GamesTask, "Priority") is int v && v == 8;
@@ -298,6 +318,8 @@ public sealed class ProcessMitigationsTweakHandler(IRegistryService registry) : 
     public string Title => "Enable Process Mitigation";
     public string Description => "Enable process mitigation policies";
     public int Order => 31;
+
+    public TweakCategory Category => TweakCategory.AkariOS;
 
     public bool GetState() =>
         registry.GetValue(RegistryHive.LocalMachine, MemoryManagement, "FeatureSettingsOverride") is int v && v == 0;
