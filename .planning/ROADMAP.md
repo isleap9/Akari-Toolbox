@@ -70,29 +70,29 @@ Plans:
 
 **Note:** GAMING-02 (third-party tool launcher grid) is retired per 02-CONTEXT.md D-11/D-12 — the PostInstall asset mirror it depended on is deprecated project-wide with no replacement. See REQUIREMENTS.md for the retirement record.
 
-**Plans:** 7 plans
+**Plans:** 7/7 plans executed
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Tracer: TweakCategory discriminator + Hdcp toggle end-to-end + RunEmbeddedScriptAsync primitive + P0State/MsiMode handlers
+- [x] 02-01-PLAN.md — Tracer: TweakCategory discriminator + Hdcp toggle end-to-end + RunEmbeddedScriptAsync primitive + P0State/MsiMode handlers
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-02-PLAN.md — AmdSettings/IntelSettings toggle handlers + D-05 display-settings shortcuts
-- [ ] 02-03-PLAN.md — DevicePowerSavings/NetAdapterPowerSavings/WriteCacheFlush toggle handlers
+- [x] 02-02-PLAN.md — AmdSettings/IntelSettings toggle handlers + D-05 display-settings shortcuts
+- [x] 02-03-PLAN.md — DevicePowerSavings/NetAdapterPowerSavings/WriteCacheFlush toggle handlers
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 02-04-PLAN.md — NetworkIpv4Only/PowerPlan (hardened revert)/TimerResolution toggle handlers
-- [ ] 02-05-PLAN.md — SvcHost + Win32PrioritySeparation dropdowns (preset-list approval checkpoint)
+- [x] 02-04-PLAN.md — NetworkIpv4Only/PowerPlan (hardened revert)/TimerResolution toggle handlers
+- [x] 02-05-PLAN.md — SvcHost + Win32PrioritySeparation dropdowns (preset-list approval checkpoint)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 02-06-PLAN.md — 6 D-06 network-dependent driver/tool install actions (embedded scripts)
+- [x] 02-06-PLAN.md — 6 D-06 network-dependent driver/tool install actions (embedded scripts)
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 02-07-PLAN.md — Final integration: Gaming-scoped ordering regression test, full-catalog verification pass
+- [x] 02-07-PLAN.md — Final integration: Gaming-scoped ordering regression test, full-catalog verification pass
 
 **UI hint**: yes
 
@@ -135,6 +135,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Akari OS Tweaks | 7/7 | Complete    | 2026-09-01 |
-| 2. Gaming Tweaks | 0/7 | Not started | - |
+| 2. Gaming Tweaks | 7/7 | In Progress|  |
 | 3. Debloat | 0/TBD | Not started | - |
 | 4. Downloads & Misc | 0/TBD | Not started | - |
