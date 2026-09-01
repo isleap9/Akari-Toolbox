@@ -473,6 +473,75 @@ public class GamingWindowsTweaksTests
     private static List<int> IndexesWhere(IReadOnlyList<(string FileName, string Arguments)> calls, Func<(string FileName, string Arguments), bool> predicate) =>
         calls.Select((call, index) => (call, index)).Where(x => predicate(x.call)).Select(x => x.index).ToList();
 
+    // ---------- TimerResolutionTweakHandler (Task 3) ----------
+
+    private const string KernelKey = @"SYSTEM\CurrentControlSet\Control\Session Manager\kernel";
+    private const string CscPath = @"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe";
+
+    [Fact]
+    public void TimerResolution_SetState_true_logs_failure_and_skips_compilation_when_csc_missing()
+    {
+        var scriptRunner = new FakeScriptRunner();
+        var log = new FakeLogConsoleService();
+        var handler = new TimerResolutionTweakHandler(
+            scriptRunner, new FakeRegistryService(), new FakeWindowsServiceController(), log,
+            fileExists: _ => false);
+
+        handler.SetState(true);
+
+        Assert.DoesNotContain(scriptRunner.Calls, c => c.FileName == CscPath);
+        Assert.NotEmpty(log.Messages);
+    }
+
+    [Fact]
+    public void TimerResolution_SetState_true_compiles_via_csc_when_compiler_present()
+    {
+        var scriptRunner = new FakeScriptRunner();
+        var handler = new TimerResolutionTweakHandler(
+            scriptRunner, new FakeRegistryService(), new FakeWindowsServiceController(), new FakeLogConsoleService(),
+            fileExists: _ => true,
+            writeAllText: (_, _) => { });
+
+        handler.SetState(true);
+
+        var compileCall = Assert.Single(scriptRunner.Calls, c => c.FileName == CscPath);
+        Assert.Contains(@"C:\Windows\SetTimerResolutionService.exe", compileCall.Arguments, StringComparison.Ordinal);
+        Assert.Contains(@"C:\Windows\SetTimerResolutionService.cs", compileCall.Arguments, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TimerResolution_GetState_returns_true_only_when_GlobalTimerResolutionRequests_equals_1()
+    {
+        var registry = new FakeRegistryService();
+        var handler = new TimerResolutionTweakHandler(new FakeScriptRunner(), registry, new FakeWindowsServiceController(), new FakeLogConsoleService());
+
+        registry.Seed(RegistryHive.LocalMachine, KernelKey, "GlobalTimerResolutionRequests", 1);
+        Assert.True(handler.GetState());
+
+        registry.Seed(RegistryHive.LocalMachine, KernelKey, "GlobalTimerResolutionRequests", 0);
+        Assert.False(handler.GetState());
+    }
+
+    [Fact]
+    public void TimerResolution_metadata_is_Order_110_Category_Gaming()
+    {
+        var handler = new TimerResolutionTweakHandler(new FakeScriptRunner(), new FakeRegistryService(), new FakeWindowsServiceController(), new FakeLogConsoleService());
+
+        Assert.Equal(110, handler.Order);
+        Assert.Equal(TweakCategory.Gaming, handler.Category);
+        Assert.Equal("timerresolution", handler.Key);
+    }
+
+    private sealed class FakeWindowsServiceController : IWindowsServiceController
+    {
+        private readonly Dictionary<string, int> _startTypes = new(StringComparer.OrdinalIgnoreCase);
+
+        public int? GetStartType(string serviceName) =>
+            _startTypes.TryGetValue(serviceName, out var value) ? value : null;
+
+        public void SetStartType(string serviceName, int startValue) => _startTypes[serviceName] = startValue;
+    }
+
     private sealed class FakeLogConsoleService : ILogConsoleService
     {
         public ObservableCollection<string> Lines { get; } = new();

@@ -577,3 +577,318 @@ public sealed class PowerPlanTweakHandler(IScriptRunner scriptRunner, IRegistryS
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 }
+
+/// <summary>
+/// Ported from <c>6 Windows/30 Timer Resolution.ps1</c> (02-CONTEXT.md D-07). On enable,
+/// writes a fixed, compile-time C# source literal (<see cref="ServiceSourceCode"/>, never
+/// built from user/download input — this plan's threat model T-02-10) to disk, compiles it
+/// via a hardcoded <c>csc.exe</c> path, and installs/starts the resulting service via
+/// PowerShell cmdlets (mirroring the source script's own <c>New-Service</c>/<c>Set-Service</c>
+/// calls almost verbatim, minus the <c>Read-Host</c> menu and its error-suppressing flags —
+/// service-lifecycle failures now surface through <see cref="IScriptRunner"/>'s own
+/// captured-stdout/stderr logging instead of being swallowed). A missing compiler produces a
+/// visible, logged failure via <see cref="ILogConsoleService"/> BEFORE any compilation is
+/// attempted (RESEARCH.md Pitfall 3) — probed through an injectable <c>fileExists</c> seam
+/// so unit tests never touch the real filesystem for that check.
+/// </summary>
+public sealed class TimerResolutionTweakHandler(
+    IScriptRunner scriptRunner,
+    IRegistryService registry,
+    IWindowsServiceController serviceController,
+    ILogConsoleService log,
+    Func<string, bool>? fileExists = null,
+    Action<string, string>? writeAllText = null) : ITweakHandler
+{
+    private const string CscPath = @"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe";
+    private const string CsSourcePath = @"C:\Windows\SetTimerResolutionService.cs";
+    private const string CompiledExePath = @"C:\Windows\SetTimerResolutionService.exe";
+    private const string ServiceName = "Set Timer Resolution Service";
+    private const string KernelKey = @"SYSTEM\CurrentControlSet\Control\Session Manager\kernel";
+
+    private readonly Func<string, bool> _fileExists = fileExists ?? File.Exists;
+    private readonly Action<string, string> _writeAllText = writeAllText ?? File.WriteAllText;
+
+    public string Key => "timerresolution";
+
+    public string Title => "High-Precision Timer Resolution";
+
+    public string Description => "Compile and install a background service that forces the OS's minimum timer resolution";
+
+    public int Order => 110;
+
+    public TweakCategory Category => TweakCategory.Gaming;
+
+    public bool GetState() =>
+        registry.GetValue(RegistryHive.LocalMachine, KernelKey, "GlobalTimerResolutionRequests") is int v && v == 1;
+
+    public void SetState(bool enable)
+    {
+        if (enable)
+        {
+            EnableInternal();
+        }
+        else
+        {
+            DisableInternal();
+        }
+    }
+
+    private void EnableInternal()
+    {
+        // Pitfall 3 fix — probe BEFORE compiling and log visibly on failure, unlike the
+        // source script's own silent-failure error handling throughout.
+        if (!_fileExists(CscPath))
+        {
+            log.Log("[TIMER-RES] csc.exe not found at expected path — Timer Resolution toggle cannot be applied on this machine.");
+            return;
+        }
+
+        _writeAllText(CsSourcePath, ServiceSourceCode);
+
+        scriptRunner.RunProcessAsync(CscPath, $"-out:{CompiledExePath} {CsSourcePath}").GetAwaiter().GetResult();
+
+        try { if (File.Exists(CsSourcePath)) { File.Delete(CsSourcePath); } } catch { /* best-effort cleanup */ }
+
+        // Remove a stale prior install before re-registering (30 Timer Resolution.ps1:228-231).
+        // No error-suppressing flag on Get-Service: a missing service just yields $null (no
+        // terminating error), and IScriptRunner itself captures/logs stderr rather than
+        // silently dropping it — the source script's own suppression is not carried over.
+        scriptRunner.RunProcessAsync(
+                "powershell.exe",
+                $"-NoProfile -Command \"if (Get-Service -Name '{ServiceName}') {{ sc.exe delete '{ServiceName}' | Out-Null; Start-Sleep -Seconds 2 }}\"")
+            .GetAwaiter().GetResult();
+
+        scriptRunner.RunProcessAsync(
+                "powershell.exe",
+                $"-NoProfile -Command \"New-Service -Name '{ServiceName}' -BinaryPathName '{CompiledExePath}' | Out-Null\"")
+            .GetAwaiter().GetResult();
+
+        serviceController.SetStartType(ServiceName, 2); // Auto — replaces Set-Service -StartupType Auto
+
+        scriptRunner.RunProcessAsync(
+                "powershell.exe",
+                $"-NoProfile -Command \"Set-Service -Name '{ServiceName}' -Status Running\"")
+            .GetAwaiter().GetResult();
+
+        registry.SetValue(RegistryHive.LocalMachine, KernelKey, "GlobalTimerResolutionRequests", 1, RegistryValueKind.DWord);
+    }
+
+    private void DisableInternal()
+    {
+        serviceController.SetStartType(ServiceName, 4); // Disabled — replaces Set-Service -StartupType Disabled
+
+        scriptRunner.RunProcessAsync(
+                "powershell.exe",
+                $"-NoProfile -Command \"Set-Service -Name '{ServiceName}' -Status Stopped\"")
+            .GetAwaiter().GetResult();
+
+        scriptRunner.RunProcessAsync("sc.exe", $"delete \"{ServiceName}\"").GetAwaiter().GetResult();
+
+        try { if (File.Exists(CompiledExePath)) { File.Delete(CompiledExePath); } } catch { /* best-effort cleanup */ }
+
+        registry.DeleteValue(RegistryHive.LocalMachine, KernelKey, "GlobalTimerResolutionRequests");
+    }
+
+    // Ported verbatim from 30 Timer Resolution.ps1:23-217 (the $csfile here-string) — a
+    // fixed compile-time literal, never built from user/download input (threat model
+    // T-02-10). Internally names the service "STR" (a source-authored mismatch against the
+    // "Set Timer Resolution Service" name PowerShell registers it under — not fixed here,
+    // ported exactly as authored per D-07's "exactly as authored" philosophy).
+    private const string ServiceSourceCode = """
+using System;
+using System.Runtime.InteropServices;
+using System.ServiceProcess;
+using System.ComponentModel;
+using System.Configuration.Install;
+using System.Collections.Generic;
+using System.Reflection;
+using System.IO;
+using System.Management;
+using System.Threading;
+using System.Diagnostics;
+[assembly: AssemblyVersion("2.1")]
+[assembly: AssemblyProduct("Set Timer Resolution service")]
+namespace WindowsService
+{
+    class WindowsService : ServiceBase
+    {
+        public WindowsService()
+        {
+            this.ServiceName = "STR";
+            this.EventLog.Log = "Application";
+            this.CanStop = true;
+            this.CanHandlePowerEvent = false;
+            this.CanHandleSessionChangeEvent = false;
+            this.CanPauseAndContinue = false;
+            this.CanShutdown = false;
+        }
+        static void Main()
+        {
+            ServiceBase.Run(new WindowsService());
+        }
+        protected override void OnStart(string[] args)
+        {
+            base.OnStart(args);
+            ReadProcessList();
+            NtQueryTimerResolution(out this.MinimumResolution, out this.MaximumResolution, out this.DefaultResolution);
+            if(null != this.EventLog)
+                try { this.EventLog.WriteEntry(String.Format("Minimum={0}; Maximum={1}; Default={2}; Processes='{3}'", this.MinimumResolution, this.MaximumResolution, this.DefaultResolution, null != this.ProcessesNames ? String.Join("','", this.ProcessesNames) : "")); }
+                catch {}
+            if(null == this.ProcessesNames)
+            {
+                SetMaximumResolution();
+                return;
+            }
+            if(0 == this.ProcessesNames.Count)
+            {
+                return;
+            }
+            this.ProcessStartDelegate = new OnProcessStart(this.ProcessStarted);
+            try
+            {
+                String query = String.Format("SELECT * FROM __InstanceCreationEvent WITHIN 0.5 WHERE (TargetInstance isa \"Win32_Process\") AND (TargetInstance.Name=\"{0}\")", String.Join("\" OR TargetInstance.Name=\"", this.ProcessesNames));
+                this.startWatch = new ManagementEventWatcher(query);
+                this.startWatch.EventArrived += this.startWatch_EventArrived;
+                this.startWatch.Start();
+            }
+            catch(Exception ee)
+            {
+                if(null != this.EventLog)
+                    try { this.EventLog.WriteEntry(ee.ToString(), EventLogEntryType.Error); }
+                    catch {}
+            }
+        }
+        protected override void OnStop()
+        {
+            if(null != this.startWatch)
+            {
+                this.startWatch.Stop();
+            }
+
+            base.OnStop();
+        }
+        ManagementEventWatcher startWatch;
+        void startWatch_EventArrived(object sender, EventArrivedEventArgs e)
+        {
+            try
+            {
+                ManagementBaseObject process = (ManagementBaseObject)e.NewEvent.Properties["TargetInstance"].Value;
+                UInt32 processId = (UInt32)process.Properties["ProcessId"].Value;
+                this.ProcessStartDelegate.BeginInvoke(processId, null, null);
+            }
+            catch(Exception ee)
+            {
+                if(null != this.EventLog)
+                    try { this.EventLog.WriteEntry(ee.ToString(), EventLogEntryType.Warning); }
+                    catch {}
+
+            }
+        }
+        [DllImport("kernel32.dll", SetLastError=true)]
+        static extern Int32 WaitForSingleObject(IntPtr Handle, Int32 Milliseconds);
+        [DllImport("kernel32.dll", SetLastError=true)]
+        static extern IntPtr OpenProcess(UInt32 DesiredAccess, Int32 InheritHandle, UInt32 ProcessId);
+        [DllImport("kernel32.dll", SetLastError=true)]
+        static extern Int32 CloseHandle(IntPtr Handle);
+        const UInt32 SYNCHRONIZE = 0x00100000;
+        delegate void OnProcessStart(UInt32 processId);
+        OnProcessStart ProcessStartDelegate = null;
+        void ProcessStarted(UInt32 processId)
+        {
+            SetMaximumResolution();
+            IntPtr processHandle = IntPtr.Zero;
+            try
+            {
+                processHandle = OpenProcess(SYNCHRONIZE, 0, processId);
+                if(processHandle != IntPtr.Zero)
+                    WaitForSingleObject(processHandle, -1);
+            }
+            catch(Exception ee)
+            {
+                if(null != this.EventLog)
+                    try { this.EventLog.WriteEntry(ee.ToString(), EventLogEntryType.Warning); }
+                    catch {}
+            }
+            finally
+            {
+                if(processHandle != IntPtr.Zero)
+                    CloseHandle(processHandle);
+            }
+            SetDefaultResolution();
+        }
+        List<String> ProcessesNames = null;
+        void ReadProcessList()
+        {
+            String iniFilePath = Assembly.GetExecutingAssembly().Location + ".ini";
+            if(File.Exists(iniFilePath))
+            {
+                this.ProcessesNames = new List<String>();
+                String[] iniFileLines = File.ReadAllLines(iniFilePath);
+                foreach(var line in iniFileLines)
+                {
+                    String[] names = line.Split(new char[] {',', ' ', ';'} , StringSplitOptions.RemoveEmptyEntries);
+                    foreach(var name in names)
+                    {
+                        String lwr_name = name.ToLower();
+                        if(!lwr_name.EndsWith(".exe"))
+                            lwr_name += ".exe";
+                        if(!this.ProcessesNames.Contains(lwr_name))
+                            this.ProcessesNames.Add(lwr_name);
+                    }
+                }
+            }
+        }
+        [DllImport("ntdll.dll", SetLastError=true)]
+        static extern int NtSetTimerResolution(uint DesiredResolution, bool SetResolution, out uint CurrentResolution);
+        [DllImport("ntdll.dll", SetLastError=true)]
+        static extern int NtQueryTimerResolution(out uint MinimumResolution, out uint MaximumResolution, out uint ActualResolution);
+        uint DefaultResolution = 0;
+        uint MinimumResolution = 0;
+        uint MaximumResolution = 0;
+        long processCounter = 0;
+        void SetMaximumResolution()
+        {
+            long counter = Interlocked.Increment(ref this.processCounter);
+            if(counter <= 1)
+            {
+                uint actual = 0;
+                NtSetTimerResolution(this.MaximumResolution, true, out actual);
+                if(null != this.EventLog)
+                    try { this.EventLog.WriteEntry(String.Format("Actual resolution = {0}", actual)); }
+                    catch {}
+            }
+        }
+        void SetDefaultResolution()
+        {
+            long counter = Interlocked.Decrement(ref this.processCounter);
+            if(counter < 1)
+            {
+                uint actual = 0;
+                NtSetTimerResolution(this.DefaultResolution, true, out actual);
+                if(null != this.EventLog)
+                    try { this.EventLog.WriteEntry(String.Format("Actual resolution = {0}", actual)); }
+                    catch {}
+            }
+        }
+    }
+    [RunInstaller(true)]
+    public class WindowsServiceInstaller : Installer
+    {
+        public WindowsServiceInstaller()
+        {
+            ServiceProcessInstaller serviceProcessInstaller =
+                               new ServiceProcessInstaller();
+            ServiceInstaller serviceInstaller = new ServiceInstaller();
+            serviceProcessInstaller.Account = ServiceAccount.LocalSystem;
+            serviceProcessInstaller.Username = null;
+            serviceProcessInstaller.Password = null;
+            serviceInstaller.DisplayName = "Set Timer Resolution Service";
+            serviceInstaller.StartType = ServiceStartMode.Automatic;
+            serviceInstaller.ServiceName = "STR";
+            this.Installers.Add(serviceProcessInstaller);
+            this.Installers.Add(serviceInstaller);
+        }
+    }
+}
+""";
+}
