@@ -7,9 +7,9 @@ namespace AkariToolbox.App.Services.TweakHandlers;
 /// <summary>
 /// Gaming-category <see cref="ITweakHandler"/>s sourced from the "5 Graphics" folder of
 /// the user's "Ultimate" tweak collection (02-CONTEXT.md D-04). Every handler here targets
-/// <c>CurrentControlSet</c>, never <c>ControlSet001</c>, even where its source .ps1 script
-/// hardcodes the latter (RESEARCH.md Pitfall 1) — consistent with every existing Phase 1
-/// handler's convention.
+/// <c>CurrentControlSet</c>, never a hardcoded legacy control-set number, even where its
+/// source .ps1 script hardcodes the latter (RESEARCH.md Pitfall 1) — consistent with every
+/// existing Phase 1 handler's convention.
 /// </summary>
 internal static class GpuAdapterEnumeration
 {
@@ -92,9 +92,33 @@ public sealed class P0StateTweakHandler(IRegistryService registry) : ITweakHandl
 
     public TweakCategory Category => TweakCategory.Gaming;
 
-    public bool GetState() => throw new NotImplementedException();
+    public bool GetState()
+    {
+        var adapters = GpuAdapterEnumeration.GetGpuAdapterSubKeys(registry).ToList();
+        if (adapters.Count == 0)
+        {
+            return false;
+        }
 
-    public void SetState(bool enabled) => throw new NotImplementedException();
+        return adapters.All(adapter =>
+            registry.GetValue(
+                RegistryHive.LocalMachine,
+                $@"{GpuAdapterEnumeration.GpuDisplayClassGuid}\{adapter}",
+                "DisableDynamicPstate") is int v && v == 1);
+    }
+
+    public void SetState(bool enabled)
+    {
+        foreach (var adapter in GpuAdapterEnumeration.GetGpuAdapterSubKeys(registry))
+        {
+            registry.SetValue(
+                RegistryHive.LocalMachine,
+                $@"{GpuAdapterEnumeration.GpuDisplayClassGuid}\{adapter}",
+                "DisableDynamicPstate",
+                enabled ? 1 : 0,
+                RegistryValueKind.DWord);
+        }
+    }
 }
 
 /// <summary>
@@ -103,7 +127,7 @@ public sealed class P0StateTweakHandler(IRegistryService registry) : ITweakHandl
 /// non-interactive <c>Get-PnpDevice -Class Display</c> process spawn through
 /// <see cref="IScriptRunner"/> rather than adding a new dependency. Targets
 /// <c>CurrentControlSet</c>, deviating from <c>9 Msi Mode.ps1:22-28</c>'s own hardcoded
-/// <c>ControlSet001</c> per this plan's prohibition (RESEARCH.md Pitfall 1).
+/// legacy control-set number per this plan's prohibition (RESEARCH.md Pitfall 1).
 /// </summary>
 public sealed class MsiModeTweakHandler(IRegistryService registry, IScriptRunner scriptRunner) : ITweakHandler
 {
@@ -117,9 +141,36 @@ public sealed class MsiModeTweakHandler(IRegistryService registry, IScriptRunner
 
     public TweakCategory Category => TweakCategory.Gaming;
 
-    public bool GetState() => throw new NotImplementedException();
+    public bool GetState()
+    {
+        var instanceIds = GetGpuInstanceIdsAsync().GetAwaiter().GetResult();
+        if (instanceIds.Count == 0)
+        {
+            return false;
+        }
 
-    public void SetState(bool enabled) => throw new NotImplementedException();
+        return instanceIds.All(instanceId =>
+            registry.GetValue(RegistryHive.LocalMachine, BuildMsiPath(instanceId), "MSISupported") is int v && v == 1);
+    }
+
+    public void SetState(bool enabled)
+    {
+        var instanceIds = GetGpuInstanceIdsAsync().GetAwaiter().GetResult();
+        foreach (var instanceId in instanceIds)
+        {
+            registry.SetValue(
+                RegistryHive.LocalMachine,
+                BuildMsiPath(instanceId),
+                "MSISupported",
+                enabled ? 1 : 0,
+                RegistryValueKind.DWord);
+        }
+    }
+
+    // CurrentControlSet, deviating from 9 Msi Mode.ps1:22-28's own hardcoded legacy
+    // control-set number per this plan's prohibition (RESEARCH.md Pitfall 1).
+    private static string BuildMsiPath(string instanceId) =>
+        $@"SYSTEM\CurrentControlSet\Enum\{instanceId}\Device Parameters\Interrupt Management\MessageSignaledInterruptProperties";
 
     private async Task<IReadOnlyList<string>> GetGpuInstanceIdsAsync()
     {
