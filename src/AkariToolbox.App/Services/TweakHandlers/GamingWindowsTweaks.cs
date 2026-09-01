@@ -204,16 +204,21 @@ public sealed class NetAdapterPowerSavingsTweakHandler(IRegistryService registry
 
     public bool GetState()
     {
-        var adapter = NetworkAdapterEnumeration.GetAdapterSubKeys(registry).FirstOrDefault();
-        if (adapter is null)
+        var adapters = NetworkAdapterEnumeration.GetAdapterSubKeys(registry).ToList();
+        if (adapters.Count == 0)
         {
             return false;
         }
 
-        return registry.GetValue(
-            RegistryHive.LocalMachine,
-            $@"{NetworkAdapterEnumeration.NetworkAdapterClassGuid}\{adapter}",
-            "PnPCapabilities") is int v && v == 24;
+        // WR-01 fix (02-REVIEW.md): read every adapter, matching SetState's
+        // every-adapter write and the sibling HdcpTweakHandler/P0StateTweakHandler/
+        // IntelSettingsTweakHandler `.All(...)` aggregation semantics, instead of
+        // only inspecting whichever adapter happens to enumerate first.
+        return adapters.All(adapter =>
+            registry.GetValue(
+                RegistryHive.LocalMachine,
+                $@"{NetworkAdapterEnumeration.NetworkAdapterClassGuid}\{adapter}",
+                "PnPCapabilities") is int v && v == 24);
     }
 
     public void SetState(bool enable)
