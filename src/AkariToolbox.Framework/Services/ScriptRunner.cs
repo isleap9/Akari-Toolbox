@@ -57,4 +57,52 @@ public sealed class ScriptRunner(ILogConsoleService log) : IScriptRunner
             return -1;
         }
     }
+
+    public async Task<string> RunProcessCaptureOutputAsync(string fileName, string arguments, TimeSpan? timeout = null)
+    {
+        var output = new StringBuilder();
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = fileName,
+                Arguments = arguments,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8,
+            };
+
+            using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+            process.OutputDataReceived += (_, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) output.AppendLine(e.Data); };
+            process.ErrorDataReceived += (_, e) => { if (!string.IsNullOrWhiteSpace(e.Data)) log.Log($"[ERROR] {e.Data}"); };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            var waitTask = process.WaitForExitAsync();
+            if (timeout is null)
+            {
+                await waitTask;
+            }
+            else if (await Task.WhenAny(waitTask, Task.Delay(timeout.Value)) != waitTask)
+            {
+                process.Kill(entireProcessTree: true);
+                log.Log("[TIMEOUT]");
+                return string.Empty;
+            }
+
+            var result = output.ToString();
+            log.Log(result);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            log.Log($"[EXCEPTION] {ex.Message}");
+            return string.Empty;
+        }
+    }
 }
