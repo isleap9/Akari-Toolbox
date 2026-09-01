@@ -41,26 +41,40 @@ public partial class AkariOSTweaksViewModel : ViewModelBase
             Tweaks.Add(item);
 
             // Read the live state in parallel, off the constructor's critical path,
-            // then marshal the result back to the UI thread individually.
-            // (ITweakCatalog.GetStateAsync already dispatches its own live read via
-            // Task.Run internally, so no extra Task.Run wrapper is needed here.)
-            _ = _catalog.GetStateAsync(handler.Key).ContinueWith(
-                task =>
-                {
-                    if (task.IsCompletedSuccessfully)
-                    {
-                        _ = _dispatcher.RunOnUIThreadAsync(() => item.IsOn = task.Result);
-                    }
-                    else
-                    {
-                        _log.Log($"[TWEAK ERROR] {handler.Key}: {task.Exception?.GetBaseException().Message}");
-                    }
-                },
+            // then marshal the result back to the UI thread individually. TryGetStateAsync
+            // never throws (T-01-16): a handler whose GetState() fails is caught, logged,
+            // and defaults to false, so one throwing handler cannot prevent the other 31
+            // from rendering correctly.
+            _ = TryGetStateAsync(_catalog, _log, handler).ContinueWith(
+                task => _dispatcher.RunOnUIThreadAsync(() => item.IsOn = task.Result),
                 TaskScheduler.Default);
         }
     }
 
     public ObservableCollection<TweakItem> Tweaks { get; } = [];
+
+    /// <summary>
+    /// Reads <paramref name="handler"/>'s live state via <paramref name="catalog"/>, catching
+    /// and logging any exception via <paramref name="log"/> instead of letting it escape
+    /// unobserved (T-01-16). Defaults to <c>false</c> on failure rather than leaving the
+    /// corresponding toggle in an indeterminate state. Internal and static (not private/instance)
+    /// so it can be exercised directly by tests without needing a live
+    /// <see cref="DispatcherQueue"/> — constructing this ViewModel requires
+    /// <see cref="DispatcherQueue.GetForCurrentThread"/> to succeed, which throws outside a
+    /// real WinRT-activated UI thread (e.g. a plain xunit test host).
+    /// </summary>
+    internal static async Task<bool> TryGetStateAsync(ITweakCatalog catalog, ILogConsoleService log, ITweakHandler handler)
+    {
+        try
+        {
+            return await catalog.GetStateAsync(handler.Key).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            log.Log($"[TWEAK] {handler.Key} GetState failed: {ex.Message}");
+            return false;
+        }
+    }
 
     private void OnTweakItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
