@@ -95,6 +95,19 @@
          re-enable — it does not call Enable-BitLocker. -->
     <EmbeddedResource Include="Resources\DebloatScripts\disablebitlocker.ps1" />
     <EmbeddedResource Include="Resources\DebloatScripts\disablebitlocker-undo.ps1" />
+    <!-- 03-04: Explorer & UI category (5 direct predecessor carries) and the Tools
+         category's single action (O&O ShutUp10++, run-only, no Undo counterpart). -->
+    <EmbeddedResource Include="Resources\DebloatScripts\endtask.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\endtask-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\folderdiscovery.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\folderdiscovery-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\removehomeandgallery.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\removehomeandgallery-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\rightclickmenu.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\rightclickmenu-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\widgets.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\widgets-undo.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\oosu.ps1" />
   </ItemGroup>
 
   <ItemGroup>
