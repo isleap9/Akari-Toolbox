@@ -184,6 +184,64 @@ public sealed class MsiModeTweakHandler(IRegistryService registry, IScriptRunner
 }
 
 /// <summary>
+/// Ported from <c>5 Graphics/6 Intel Settings.ps1</c> (02-CONTEXT.md D-04). Unlike the
+/// other Graphics handlers, this one's on/off shape is asymmetric — creates a whole
+/// <c>3DKeys</c> child subkey per adapter on the On branch, deletes the entire subkey
+/// (not individual values) on the Off branch, matching <c>6 Intel Settings.ps1</c>'s own
+/// asymmetric create-vs-delete-subkey shape. Targets <c>CurrentControlSet</c>, deviating
+/// from the source script's own hardcoded legacy control-set number (RESEARCH.md
+/// Pitfall 1).
+/// </summary>
+public sealed class IntelSettingsTweakHandler(IRegistryService registry) : ITweakHandler
+{
+    public string Key => "gpuintelsettings";
+
+    public string Title => "Intel Graphics Settings";
+
+    public string Description => "Enable async flip mode and low-latency mode on Intel GPUs";
+
+    public int Order => 104;
+
+    public TweakCategory Category => TweakCategory.Gaming;
+
+    public bool GetState()
+    {
+        var adapters = GpuAdapterEnumeration.GetGpuAdapterSubKeys(registry).ToList();
+        if (adapters.Count == 0)
+        {
+            return false;
+        }
+
+        return adapters.All(adapter =>
+            registry.GetValue(
+                RegistryHive.LocalMachine,
+                BuildKeysPath(adapter),
+                "Global_AsyncFlipMode") is int v && v == 2);
+    }
+
+    public void SetState(bool enabled)
+    {
+        foreach (var adapter in GpuAdapterEnumeration.GetGpuAdapterSubKeys(registry))
+        {
+            var keysPath = BuildKeysPath(adapter);
+
+            if (enabled)
+            {
+                registry.SetValue(RegistryHive.LocalMachine, keysPath, "Global_AsyncFlipMode", 2, RegistryValueKind.DWord);
+                registry.SetValue(RegistryHive.LocalMachine, keysPath, "Global_LowLatency", 0, RegistryValueKind.DWord);
+            }
+            else
+            {
+                registry.DeleteSubKeyTree(RegistryHive.LocalMachine, keysPath);
+            }
+        }
+    }
+
+    private static string BuildKeysPath(string adapter) =>
+        $@"{GpuAdapterEnumeration.GpuDisplayClassGuid}\{adapter}\3DKeys";
+}
+
+/// <summary>
 /// Converts a hex string (pairs of hex characters, as authored in <c>reg.exe /t
 /// REG_BINARY /d "..."</c> syntax) into a <see cref="byte"/> array — matches how
 /// <c>reg.exe</c> itself parses its data argument. Shared by every REG_BINARY value in
