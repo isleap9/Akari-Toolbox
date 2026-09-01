@@ -14,7 +14,7 @@ Akari Toolbox is a ground-up port of AkariOS Companion from WPF to native WinUI 
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation & Akari OS Tweaks** - New elevated WinUI 3 solution (copied from the framework template, rebranded), Home dashboard, and the full 32-toggle Akari OS Tweaks page with real-state revert and the two-phase Defender workflow (completed 2026-09-01)
-- [ ] **Phase 2: Gaming Tweaks** - Gaming/latency toggles, service-config dropdowns, and a third-party tool launcher grid, reusing the Phase 1 tweak pattern
+- [ ] **Phase 2: Gaming Tweaks** - Gaming/latency toggles and service-config dropdowns, reusing the Phase 1 tweak pattern
 - [ ] **Phase 3: Debloat** - 28 PowerShell-backed debloat actions with streamed live output, driven by proper ViewModel/service architecture
 - [ ] **Phase 4: Downloads & Misc** - Self-healing PostInstall asset mirror, playbooks/drivers/links, and classic context-menu management
 
@@ -59,15 +59,16 @@ Plans:
 
 ### Phase 2: Gaming Tweaks
 
-**Goal**: Users can tune gaming/latency system settings and launch third-party GPU/utility tools from one page, reusing the tweak pattern (real-state read, prior-state revert) established in Phase 1.
+**Goal**: Users can tune gaming/latency system settings from one page, reusing the tweak pattern (real-state read, prior-state revert) established in Phase 1.
 **Mode:** mvp
 **Depends on**: Phase 1
-**Requirements**: GAMING-01, GAMING-02
+**Requirements**: GAMING-01
 **Success Criteria** (what must be TRUE):
 
   1. User can view and toggle gaming/latency/service tweaks (SvcHost split threshold, Win32 priority separation, service configuration dropdowns) with toggles reflecting actual current system state
   2. Turning a gaming tweak off restores the real prior state the app recorded before mutating it, matching the Tweaks page guarantee
-  3. User can launch quick-access tools for NVIDIA, AMD, and other third-party utilities from a launcher grid
+
+**Note:** GAMING-02 (third-party tool launcher grid) is retired per 02-CONTEXT.md D-11/D-12 — the PostInstall asset mirror it depended on is deprecated project-wide with no replacement. See REQUIREMENTS.md for the retirement record.
 
 **Plans**: TBD
 **UI hint**: yes
