@@ -561,10 +561,34 @@ public class GamingWindowsTweaksTests
 
         public Func<string, string, string>? CaptureOutputResponder { get; set; }
 
+        /// <summary>
+        /// Exit code override per (fileName, arguments) call, defaulting to 0 (success)
+        /// when unset — lets CR-01-style tests (02-REVIEW.md) simulate a failing
+        /// <c>powercfg</c> call without needing a real process.
+        /// </summary>
+        public Func<string, string, int>? ExitCodeResponder { get; set; }
+
         public Task<int> RunProcessAsync(string fileName, string arguments, TimeSpan? timeout = null)
         {
             Calls.Add((fileName, arguments));
-            return Task.FromResult(0);
+
+            // CR-01 fix (02-REVIEW.md): PowerPlanTweakHandler now verifies
+            // File.Exists(exportPath) after every "-export" call, not just the exit
+            // code — simulate powercfg actually writing its output file so that check
+            // exercises its real success path here instead of always failing against
+            // this in-memory fake.
+            if (string.Equals(fileName, "powercfg", StringComparison.Ordinal) &&
+                arguments.StartsWith("-export \"", StringComparison.Ordinal))
+            {
+                var start = arguments.IndexOf('"') + 1;
+                var end = arguments.IndexOf('"', start);
+                if (end > start)
+                {
+                    File.WriteAllText(arguments[start..end], "fake-export-contents");
+                }
+            }
+
+            return Task.FromResult(ExitCodeResponder?.Invoke(fileName, arguments) ?? 0);
         }
 
         public Task<string> RunProcessCaptureOutputAsync(string fileName, string arguments, TimeSpan? timeout = null)
