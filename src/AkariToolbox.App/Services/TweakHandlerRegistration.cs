@@ -50,6 +50,11 @@ public static class TweakHandlerServiceCollectionExtensions
         // scan above (Plan 02-05).
         services.AddSingleton<IGamingDropdownService, GamingDropdownService>();
 
+        // Debloat's compiled-in 28-action catalog (DEBLOAT-01) — not an ITweakHandler
+        // either (no GetState/SetState, D-01), and not reflection-scanned since it is one
+        // static catalog, not per-action handler classes, so it is registered here directly.
+        services.AddSingleton<IDebloatCatalog, DebloatCatalog>();
+
         return services;
     }
 }

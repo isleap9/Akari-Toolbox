@@ -50,6 +50,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Debloat's embedded action scripts (DEBLOAT-01): 25 direct carries from the
+         predecessor plus 3 branch-extracted replacements (D-03/D-06/D-08), split one file
+         per script/branch matching Phase 2's proven convention. This plan (03-01) embeds
+         only the tracer's one real action; later Wave 2-6 plans append more
+         <EmbeddedResource> lines to this same ItemGroup. -->
+    <EmbeddedResource Include="Resources\DebloatScripts\telemetry.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\telemetry-undo.ps1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\AkariToolbox.Framework\AkariToolbox.Framework.csproj" />
   </ItemGroup>
 
