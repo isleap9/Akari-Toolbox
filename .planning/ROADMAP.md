@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. User can complete the two-phase guided Defender-disable workflow (tamper protection phase, then real-time protection phase) with explicit warnings at each phase, ported as a direct carry-over of the predecessor's existing logic
   5. The app shell uses native WinUI 3 Fluent 2 controls and Mica backdrop/theming (no WPF-UI theme carried over), background operations (tweak state reads, async callbacks) update the UI without cross-thread crashes, and file/folder picker operations work correctly while the app runs elevated
 
-**Plans:** 2/7 plans executed
+**Plans:** 6/7 plans executed
 Plans:
 **Wave 1**
 
@@ -46,10 +46,10 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-03-PLAN.md — Elevation-safe file/folder picker (Microsoft.Windows.Storage.Pickers) + debug smoke test
-- [ ] 01-04-PLAN.md — 22 registry-only tweak handlers (batches A/B)
-- [ ] 01-05-PLAN.md — 8 service-backed + bcdedit/DISM-hybrid tweak handlers
-- [ ] 01-06-PLAN.md — Defender two-phase disable workflow (byte-for-byte port) + minimal PostInstallService
+- [x] 01-03-PLAN.md — Elevation-safe file/folder picker (Microsoft.Windows.Storage.Pickers) + debug smoke test
+- [x] 01-04-PLAN.md — 22 registry-only tweak handlers (batches A/B)
+- [x] 01-05-PLAN.md — 8 service-backed + bcdedit/DISM-hybrid tweak handlers
+- [x] 01-06-PLAN.md — Defender two-phase disable workflow (byte-for-byte port) + minimal PostInstallService
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -110,7 +110,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Akari OS Tweaks | 2/7 | In Progress|  |
+| 1. Foundation & Akari OS Tweaks | 6/7 | In Progress|  |
 | 2. Gaming Tweaks | 0/TBD | Not started | - |
 | 3. Debloat | 0/TBD | Not started | - |
 | 4. Downloads & Misc | 0/TBD | Not started | - |
