@@ -130,6 +130,74 @@ public class GamingWindowsTweaksTests
         Assert.Equal("devpowersavings", handler.Key);
     }
 
+    // ---------- NetAdapterPowerSavingsTweakHandler (Task 2) ----------
+
+    private const string NetworkAdapterClassGuid = @"SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}";
+
+    private static readonly string[] ExpectedRegSzValueNames =
+    [
+        "AdvancedEEE", "*EEE", "EEELinkAdvertisement", "SipsEnabled", "ULPMode", "GigaLite",
+        "EnableGreenEthernet", "PowerSavingMode", "S5WakeOnLan", "*WakeOnMagicPacket",
+        "*ModernStandbyWoLMagicPacket", "*WakeOnPattern", "WakeOnLink",
+    ];
+
+    [Fact]
+    public void NetAdapterPowerSavings_SetState_true_writes_PnPCapabilities_and_all_RegSz_values_to_every_adapter()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, NetworkAdapterClassGuid, "1234", "5678");
+        var handler = new NetAdapterPowerSavingsTweakHandler(registry);
+
+        handler.SetState(true);
+
+        foreach (var adapter in new[] { "1234", "5678" })
+        {
+            var path = $@"{NetworkAdapterClassGuid}\{adapter}";
+            Assert.Equal(24, registry.GetValue(RegistryHive.LocalMachine, path, "PnPCapabilities"));
+            foreach (var valueName in ExpectedRegSzValueNames)
+            {
+                Assert.Equal("0", registry.GetValue(RegistryHive.LocalMachine, path, valueName));
+            }
+        }
+    }
+
+    [Fact]
+    public void NetAdapterPowerSavings_SetState_false_deletes_all_13_values_from_every_adapter()
+    {
+        var registry = new FakeRegistryService();
+        registry.SetSubKeyNames(RegistryHive.LocalMachine, NetworkAdapterClassGuid, "1234");
+        var handler = new NetAdapterPowerSavingsTweakHandler(registry);
+        handler.SetState(true);
+
+        handler.SetState(false);
+
+        const string path = $@"{NetworkAdapterClassGuid}\1234";
+        Assert.True(registry.WasDeleted(RegistryHive.LocalMachine, path, "PnPCapabilities"));
+        foreach (var valueName in ExpectedRegSzValueNames)
+        {
+            Assert.True(registry.WasDeleted(RegistryHive.LocalMachine, path, valueName));
+        }
+    }
+
+    [Fact]
+    public void NetAdapterPowerSavings_GetState_returns_false_when_no_adapters_found()
+    {
+        var registry = new FakeRegistryService();
+        var handler = new NetAdapterPowerSavingsTweakHandler(registry);
+
+        Assert.False(handler.GetState());
+    }
+
+    [Fact]
+    public void NetAdapterPowerSavings_metadata_is_Order_106_Category_Gaming()
+    {
+        var handler = new NetAdapterPowerSavingsTweakHandler(new FakeRegistryService());
+
+        Assert.Equal(106, handler.Order);
+        Assert.Equal(TweakCategory.Gaming, handler.Category);
+        Assert.Equal("netpowersavings", handler.Key);
+    }
+
     private sealed class FakeRegistryService : IRegistryService
     {
         private readonly Dictionary<(RegistryHive Hive, string SubKeyPath, string ValueName), object?> _values = new();

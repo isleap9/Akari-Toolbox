@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.Win32;
 using AkariToolbox.Framework.Services;
 
@@ -147,6 +148,95 @@ public sealed class DevicePowerSavingsTweakHandler(IRegistryService registry) : 
             foreach (var path in DeviceTreeEnumeration.FindChildMatches(registry, root, "WDF"))
             {
                 yield return path;
+            }
+        }
+    }
+}
+
+/// <summary>
+/// Ported from <c>6 Windows/26 Network Adapter Power Savings &amp; Wake.ps1</c>
+/// (02-CONTEXT.md D-07). Enumerates 4-digit adapter subkeys under the network-adapter
+/// device-setup-class GUID, same <c>^\d{4}$</c> filter convention as
+/// <c>GpuAdapterEnumeration</c> in <c>GamingGraphicsTweaks.cs</c>.
+/// </summary>
+internal static class NetworkAdapterEnumeration
+{
+    internal const string NetworkAdapterClassGuid = @"SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}";
+
+    internal static IEnumerable<string> GetAdapterSubKeys(IRegistryService registry) =>
+        registry.GetSubKeyNames(RegistryHive.LocalMachine, NetworkAdapterClassGuid)
+            .Where(name => Regex.IsMatch(name, @"^\d{4}$"));
+}
+
+public sealed class NetAdapterPowerSavingsTweakHandler(IRegistryService registry) : ITweakHandler
+{
+    // Exact value names verified directly against
+    // "26 Network Adapter Power Savings & Wake.ps1" lines 26-61 (this plan's Flagged
+    // Assumption instructs source verification over the plan's own paraphrased list).
+    // Four names carry the NDIS-standardized "*" prefix (a legitimate registry value
+    // name convention for power/wake OIDs, not a typo) and are preserved verbatim.
+    private static readonly string[] RegSzValueNames =
+    [
+        "AdvancedEEE",
+        "*EEE",
+        "EEELinkAdvertisement",
+        "SipsEnabled",
+        "ULPMode",
+        "GigaLite",
+        "EnableGreenEthernet",
+        "PowerSavingMode",
+        "S5WakeOnLan",
+        "*WakeOnMagicPacket",
+        "*ModernStandbyWoLMagicPacket",
+        "*WakeOnPattern",
+        "WakeOnLink",
+    ];
+
+    public string Key => "netpowersavings";
+
+    public string Title => "Network Adapter Power Savings";
+
+    public string Description => "Disable energy-efficient Ethernet and wake-on-LAN features for lower latency";
+
+    public int Order => 106;
+
+    public TweakCategory Category => TweakCategory.Gaming;
+
+    public bool GetState()
+    {
+        var adapter = NetworkAdapterEnumeration.GetAdapterSubKeys(registry).FirstOrDefault();
+        if (adapter is null)
+        {
+            return false;
+        }
+
+        return registry.GetValue(
+            RegistryHive.LocalMachine,
+            $@"{NetworkAdapterEnumeration.NetworkAdapterClassGuid}\{adapter}",
+            "PnPCapabilities") is int v && v == 24;
+    }
+
+    public void SetState(bool enable)
+    {
+        foreach (var adapter in NetworkAdapterEnumeration.GetAdapterSubKeys(registry))
+        {
+            var path = $@"{NetworkAdapterEnumeration.NetworkAdapterClassGuid}\{adapter}";
+
+            if (enable)
+            {
+                registry.SetValue(RegistryHive.LocalMachine, path, "PnPCapabilities", 24, RegistryValueKind.DWord);
+                foreach (var valueName in RegSzValueNames)
+                {
+                    registry.SetValue(RegistryHive.LocalMachine, path, valueName, "0", RegistryValueKind.String);
+                }
+            }
+            else
+            {
+                registry.DeleteValue(RegistryHive.LocalMachine, path, "PnPCapabilities");
+                foreach (var valueName in RegSzValueNames)
+                {
+                    registry.DeleteValue(RegistryHive.LocalMachine, path, valueName);
+                }
             }
         }
     }
