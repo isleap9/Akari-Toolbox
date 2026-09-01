@@ -28,7 +28,7 @@ Requirements for initial release: a feature-parity WinUI 3 MVVM port of AkariOS 
 ### Gaming Tweaks
 
 - [ ] **GAMING-01**: User can toggle gaming/latency/service tweaks (SvcHost split threshold, Win32 priority separation, service configuration dropdowns), with the same real-state and revert behavior as Tweaks (TWEAKS-01/TWEAKS-03)
-- [ ] **GAMING-02**: User can launch quick-access tools for NVIDIA, AMD, and other third-party utilities from a launcher grid
+- [x] ~~**GAMING-02**: User can launch quick-access tools for NVIDIA, AMD, and other third-party utilities from a launcher grid~~ — **Retired 2026-09-01** (Phase 2 discussion): the app's `C:\PostInstall\` asset mirror this grid depended on is deprecated project-wide and no longer maintained by the user; the third-party tool launcher grid is dropped from v1 scope entirely, with no replacement. See `.planning/phases/02-gaming-tweaks/02-CONTEXT.md` D-11/D-12.
 
 ### Debloat
 
@@ -91,7 +91,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | TWEAKS-02 | Phase 1 | Complete |
 | TWEAKS-03 | Phase 1 | Complete |
 | GAMING-01 | Phase 2 | Pending |
-| GAMING-02 | Phase 2 | Pending |
+| GAMING-02 | Phase 2 | Retired (2026-09-01) |
 | DEBLOAT-01 | Phase 3 | Pending |
 | DEBLOAT-02 | Phase 3 | Pending |
 | DEBLOAT-03 | Phase 3 | Pending |
