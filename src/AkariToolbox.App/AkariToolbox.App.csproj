@@ -39,6 +39,11 @@
     <EmbeddedResource Include="Resources\GamingScripts\driverclean-manual.ps1" />
     <EmbeddedResource Include="Resources\GamingScripts\directx.ps1" />
     <EmbeddedResource Include="Resources\GamingScripts\cpp.ps1" />
+    <EmbeddedResource Include="Resources\GamingScripts\driverinstalllatest-nvidia.ps1" />
+    <EmbeddedResource Include="Resources\GamingScripts\driverinstalllatest-amd.ps1" />
+    <EmbeddedResource Include="Resources\GamingScripts\driverinstalllatest-intel.ps1" />
+    <EmbeddedResource Include="Resources\GamingScripts\nvidiasettings-recommended.ps1" />
+    <EmbeddedResource Include="Resources\GamingScripts\nvidiasettings-default.ps1" />
   </ItemGroup>
 
   <ItemGroup>

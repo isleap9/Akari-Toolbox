@@ -75,6 +75,14 @@
                 <Button Content="C++ Redistributables" Command="{x:Bind ViewModel.RunCppCommand}" />
             </StackPanel>
 
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="Driver Install Latest (NVIDIA)" Command="{x:Bind ViewModel.RunDriverInstallLatestNvidiaCommand}" />
+                <Button Content="Driver Install Latest (AMD)" Command="{x:Bind ViewModel.RunDriverInstallLatestAmdCommand}" />
+                <Button Content="Driver Install Latest (Intel)" Command="{x:Bind ViewModel.RunDriverInstallLatestIntelCommand}" />
+                <Button Content="Nvidia Settings (Recommended)" Command="{x:Bind ViewModel.RunNvidiaSettingsRecommendedCommand}" />
+                <Button Content="Nvidia Settings (Default)" Command="{x:Bind ViewModel.RunNvidiaSettingsDefaultCommand}" />
+            </StackPanel>
+
         </StackPanel>
     </ScrollViewer>
 </Page>

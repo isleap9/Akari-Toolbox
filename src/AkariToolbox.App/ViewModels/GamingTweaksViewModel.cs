@@ -138,6 +138,21 @@ public partial class GamingTweaksViewModel : ViewModelBase
     [RelayCommand]
     private Task RunCppAsync() => RunD06ScriptAsync("C++ Redistributables", "cpp.ps1");
 
+    [RelayCommand]
+    private Task RunDriverInstallLatestNvidiaAsync() => RunD06ScriptAsync("Driver Install Latest (NVIDIA)", "driverinstalllatest-nvidia.ps1");
+
+    [RelayCommand]
+    private Task RunDriverInstallLatestAmdAsync() => RunD06ScriptAsync("Driver Install Latest (AMD)", "driverinstalllatest-amd.ps1");
+
+    [RelayCommand]
+    private Task RunDriverInstallLatestIntelAsync() => RunD06ScriptAsync("Driver Install Latest (Intel)", "driverinstalllatest-intel.ps1");
+
+    [RelayCommand]
+    private Task RunNvidiaSettingsRecommendedAsync() => RunD06ScriptAsync("Nvidia Settings (Recommended)", "nvidiasettings-recommended.ps1");
+
+    [RelayCommand]
+    private Task RunNvidiaSettingsDefaultAsync() => RunD06ScriptAsync("Nvidia Settings (Default)", "nvidiasettings-default.ps1");
+
     private Task RunD06ScriptAsync(string displayName, string resourceSuffix)
     {
         _log.Log($"[GAMING] Launching {displayName} — downloaded binary is NOT SHA256/signature-verified before execution (accepted risk, D-06).");
