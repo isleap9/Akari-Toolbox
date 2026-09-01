@@ -108,7 +108,7 @@ Plans:
   2. User sees streamed status/output feedback while a debloat action runs, without the UI freezing or crashing
   3. Debloat page logic lives in a ViewModel/service, not in page code-behind (the predecessor's `DebloatPage.xaml.cs` pattern is not carried over)
 
-**Plans:** 5/7 plans executed
+**Plans:** 6/7 plans executed
 Plans:
 **Wave 1**
 
@@ -132,7 +132,7 @@ Plans:
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [ ] 03-06-PLAN.md — Cleanup replacements: Bloatware/Edge & WebView/Edge Settings branch extraction (D-03/D-06/D-07/D-08)
+- [x] 03-06-PLAN.md — Cleanup replacements: Bloatware/Edge & WebView/Edge Settings branch extraction (D-03/D-06/D-07/D-08)
 
 **Wave 7** *(blocked on Wave 6 completion)*
 
@@ -165,5 +165,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundation & Akari OS Tweaks | 7/7 | Complete    | 2026-09-01 |
 | 2. Gaming Tweaks | 7/7 | Complete    | 2026-09-01 |
-| 3. Debloat | 5/7 | In Progress|  |
+| 3. Debloat | 6/7 | In Progress|  |
 | 4. Downloads & Misc | 0/TBD | Not started | - |
