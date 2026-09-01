@@ -26,6 +26,20 @@ public interface IRegistryService
     IReadOnlyList<string> GetSubKeyNames(RegistryHive hive, string subKeyPath);
 
     /// <summary>
+    /// Deletes <paramref name="subKeyPath"/> and its entire subtree if present; no-op
+    /// (never throws) if it is already absent — mirrors <see cref="DeleteValue"/>'s
+    /// never-throws-on-missing convention (registry-squatting-safe).
+    /// </summary>
+    void DeleteSubKeyTree(RegistryHive hive, string subKeyPath);
+
+    /// <summary>
+    /// Opens (creating if needed) <paramref name="subKeyPath"/> with no value set — used
+    /// for the "delete then recreate empty" pattern (e.g. AMD Settings' Notification
+    /// subkey). Idempotent: a no-op if the subkey already exists.
+    /// </summary>
+    void CreateSubKey(RegistryHive hive, string subKeyPath);
+
+    /// <summary>
     /// Opens (creating if needed) a sub-key under the real interactive user's HKCU hive,
     /// even though this process is elevated (whose own <c>Registry.CurrentUser</c> may
     /// resolve to a different hive). Ported from the predecessor's
