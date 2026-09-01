@@ -33,9 +33,13 @@ public interface IScriptRunner
     /// Generalizes the extract-to-temp-then-run pattern first proven privately in
     /// <c>DefenderTweakHandler.ExtractEmbeddedAsync</c>, now promoted to a shared primitive
     /// per this class's own doc comment ("A later phase that needs to run an embedded script
-    /// should add that capability then") — this is that phase. Throws
+    /// should add that capability then") — this is that phase. Resolves the resource by
+    /// checking the implementing type's own assembly first, then every other non-dynamic
+    /// assembly loaded in the current <c>AppDomain</c> — so resources embedded in a
+    /// different project (e.g. <c>AkariToolbox.App</c>'s <c>Resources/GamingScripts/*.ps1</c>)
+    /// resolve correctly without callers needing to know which assembly declared them. Throws
     /// <see cref="FileNotFoundException"/> if no embedded resource matches
-    /// <paramref name="resourceSuffix"/>.
+    /// <paramref name="resourceSuffix"/> anywhere.
     /// </summary>
     Task<int> RunEmbeddedScriptAsync(string resourceSuffix, string? arguments = null, TimeSpan? timeout = null);
 }

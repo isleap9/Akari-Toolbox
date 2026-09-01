@@ -31,6 +31,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- D-06 network-dependent one-shot scripts (02-CONTEXT.md), split one embedded resource
+         per source menu branch and run via IScriptRunner.RunEmbeddedScriptAsync. Ported
+         exactly as authored, with NO added SHA256/signature verification for v1 — explicit
+         accepted user decision, not an oversight (see 02-06-PLAN.md, D-06). -->
+    <EmbeddedResource Include="Resources\GamingScripts\driverclean-auto.ps1" />
+    <EmbeddedResource Include="Resources\GamingScripts\driverclean-manual.ps1" />
+    <EmbeddedResource Include="Resources\GamingScripts\directx.ps1" />
+    <EmbeddedResource Include="Resources\GamingScripts\cpp.ps1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\AkariToolbox.Framework\AkariToolbox.Framework.csproj" />
   </ItemGroup>
 

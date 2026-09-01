@@ -63,6 +63,18 @@
                     MinWidth="260" />
             </StackPanel>
 
+            <TextBlock
+                Text="Driver Tools (downloads third-party binaries — not integrity-verified)"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                Margin="0,16,0,0" />
+
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="Driver Clean (DDU Auto)" Command="{x:Bind ViewModel.RunDriverCleanAutoAsyncCommand}" />
+                <Button Content="Driver Clean (DDU Manual)" Command="{x:Bind ViewModel.RunDriverCleanManualAsyncCommand}" />
+                <Button Content="DirectX" Command="{x:Bind ViewModel.RunDirectXAsyncCommand}" />
+                <Button Content="C++ Redistributables" Command="{x:Bind ViewModel.RunCppAsyncCommand}" />
+            </StackPanel>
+
         </StackPanel>
     </ScrollViewer>
 </Page>

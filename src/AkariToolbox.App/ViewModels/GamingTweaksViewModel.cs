@@ -26,6 +26,7 @@ public partial class GamingTweaksViewModel : ViewModelBase
     private readonly ITweakCatalog _catalog;
     private readonly ILogConsoleService _log;
     private readonly IGamingDropdownService _dropdownService;
+    private readonly IScriptRunner _scriptRunner;
     private readonly DispatcherQueue _dispatcher;
 
     // Guards OnSelectedSvcHostIndexChanged/OnSelectedWin32PriorityIndexChanged so the
@@ -34,11 +35,12 @@ public partial class GamingTweaksViewModel : ViewModelBase
     // Set true only after both indices have been assigned.
     private bool _initialized;
 
-    public GamingTweaksViewModel(ITweakCatalog catalog, ILogConsoleService log, IGamingDropdownService dropdownService)
+    public GamingTweaksViewModel(ITweakCatalog catalog, ILogConsoleService log, IGamingDropdownService dropdownService, IScriptRunner scriptRunner)
     {
         _catalog = catalog;
         _log = log;
         _dropdownService = dropdownService;
+        _scriptRunner = scriptRunner;
         _dispatcher = DispatcherQueue.GetForCurrentThread();
         Title = "Gaming Tweaks";
 
@@ -119,6 +121,28 @@ public partial class GamingTweaksViewModel : ViewModelBase
     [RelayCommand]
     private void OpenAdvancedGraphicsSettings() =>
         Process.Start(new ProcessStartInfo("ms-settings:display-advancedgraphics") { UseShellExecute = true });
+
+    // D-06 network-dependent one-shot actions — each launches a driver/tool install script
+    // ported exactly as authored (no added SHA256/signature verification for v1, per the
+    // explicit 02-CONTEXT.md D-06 decision). The pre-launch log line surfaces that accepted
+    // risk at the moment of action, not just in a code comment nobody reads at runtime.
+    [RelayCommand]
+    private Task RunDriverCleanAutoAsync() => RunD06ScriptAsync("Driver Clean (DDU Auto)", "driverclean-auto.ps1");
+
+    [RelayCommand]
+    private Task RunDriverCleanManualAsync() => RunD06ScriptAsync("Driver Clean (DDU Manual)", "driverclean-manual.ps1");
+
+    [RelayCommand]
+    private Task RunDirectXAsync() => RunD06ScriptAsync("DirectX", "directx.ps1");
+
+    [RelayCommand]
+    private Task RunCppAsync() => RunD06ScriptAsync("C++ Redistributables", "cpp.ps1");
+
+    private Task RunD06ScriptAsync(string displayName, string resourceSuffix)
+    {
+        _log.Log($"[GAMING] Launching {displayName} — downloaded binary is NOT SHA256/signature-verified before execution (accepted risk, D-06).");
+        return _scriptRunner.RunEmbeddedScriptAsync(resourceSuffix);
+    }
 
     private void OnTweakItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {

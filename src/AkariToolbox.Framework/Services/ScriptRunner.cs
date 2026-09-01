@@ -108,9 +108,13 @@ public sealed class ScriptRunner(ILogConsoleService log) : IScriptRunner
 
     public async Task<int> RunEmbeddedScriptAsync(string resourceSuffix, string? arguments = null, TimeSpan? timeout = null)
     {
-        var asm = typeof(ScriptRunner).Assembly;
-        var name = asm.GetManifestResourceNames()
-            .FirstOrDefault(n => n.EndsWith(resourceSuffix, StringComparison.OrdinalIgnoreCase))
+        // Search typeof(ScriptRunner).Assembly (Framework) first — preserves the original,
+        // test-proven resolution contract for resources embedded alongside ScriptRunner
+        // itself (e.g. the exit7.ps1 fixture) — then fall back to every other non-dynamic
+        // assembly currently loaded in the AppDomain. This lets embedded resources live in
+        // AkariToolbox.App (e.g. Plan 02-06's Resources/GamingScripts/*.ps1) without callers
+        // needing to know which assembly actually declared them.
+        var (asm, name) = FindEmbeddedResource(resourceSuffix)
             ?? throw new FileNotFoundException($"Embedded resource not found: {resourceSuffix}");
 
         var temp = Path.Combine(Path.GetTempPath(), $"AkariToolbox-{Guid.NewGuid():N}-{resourceSuffix}");
@@ -129,5 +133,50 @@ public sealed class ScriptRunner(ILogConsoleService log) : IScriptRunner
         {
             try { if (File.Exists(temp)) File.Delete(temp); } catch { /* best-effort temp cleanup */ }
         }
+    }
+
+    /// <summary>
+    /// Locates an embedded resource whose manifest name ends with <paramref name="resourceSuffix"/>,
+    /// checking <see cref="ScriptRunner"/>'s own assembly first, then every other non-dynamic
+    /// assembly loaded in the current <see cref="AppDomain"/>. Returns <c>null</c> if no match
+    /// is found anywhere.
+    /// </summary>
+    private static (System.Reflection.Assembly Assembly, string Name)? FindEmbeddedResource(string resourceSuffix)
+    {
+        var primary = typeof(ScriptRunner).Assembly;
+        var primaryMatch = primary.GetManifestResourceNames()
+            .FirstOrDefault(n => n.EndsWith(resourceSuffix, StringComparison.OrdinalIgnoreCase));
+        if (primaryMatch is not null)
+        {
+            return (primary, primaryMatch);
+        }
+
+        foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            if (asm.IsDynamic || asm == primary)
+            {
+                continue;
+            }
+
+            string? match;
+            try
+            {
+                match = asm.GetManifestResourceNames()
+                    .FirstOrDefault(n => n.EndsWith(resourceSuffix, StringComparison.OrdinalIgnoreCase));
+            }
+            catch (NotSupportedException)
+            {
+                // Some dynamically-generated or reflection-only assemblies don't support
+                // manifest resource enumeration — skip them rather than fail the search.
+                continue;
+            }
+
+            if (match is not null)
+            {
+                return (asm, match);
+            }
+        }
+
+        return null;
     }
 }
