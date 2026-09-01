@@ -75,8 +75,8 @@ public sealed class DefenderTweakHandler(IPostInstallService postInstall, ILogCo
     // Mirrors the predecessor's own `SetDefender(bool disable) => _ = SetDefenderAsync(disable);`
     // shape exactly (TweakService.cs:828) — ITweakHandler.SetState is a synchronous contract
     // member and this tweak's real work is deliberately fire-and-forget, same as upstream.
-    // The DefenderStateValue flag itself is written/cleared from inside SetDefenderAsync, at
-    // the same points the predecessor called SaveState("DisableDefender")/ClearState("DisableDefender").
+    // The DefenderStateValue flag itself is written/removed from inside SetDefenderAsync, at
+    // the same points the predecessor persisted/cleared its own equivalent "DisableDefender" flag.
     public void SetState(bool disable) => _ = SetDefenderAsync(disable);
 
     private async Task SetDefenderAsync(bool disable)
