@@ -37,9 +37,9 @@ public class GamingDropdownServiceTests
         var service = new GamingDropdownService(new FakeRegistryService());
 
         Assert.Equal(13, service.Win32PriorityPresets.Count);
-        Assert.Equal("Short, Fixed, High boost", service.Win32PriorityPresets[0].Label);
+        Assert.Equal("Short, Fixed, High boost (2A)", service.Win32PriorityPresets[0].Label);
         Assert.Equal(0x2A, service.Win32PriorityPresets[0].ValueHex);
-        Assert.Equal("Legacy/Advanced", service.Win32PriorityPresets[^1].Label);
+        Assert.Equal("Legacy/Advanced (06)", service.Win32PriorityPresets[^1].Label);
         Assert.Equal(0x06, service.Win32PriorityPresets[^1].ValueHex);
     }
 
@@ -126,21 +126,21 @@ public class GamingDropdownServiceTests
     public void GetWin32PriorityPresetIndex_returns_exact_match_index()
     {
         var registry = new FakeRegistryService();
-        registry.Seed(RegistryHive.LocalMachine, Win32PriorityControlPath, Win32PriorityValueName, 0x18);
+        registry.Seed(RegistryHive.LocalMachine, Win32PriorityControlPath, Win32PriorityValueName, 0x28);
         var service = new GamingDropdownService(registry);
 
-        Assert.Equal(8, service.GetWin32PriorityPresetIndex()); // "Long, Fixed, No boost"
+        Assert.Equal(2, service.GetWin32PriorityPresetIndex()); // "Short, Fixed, No boost (28)"
     }
 
     [Fact]
     public void GetWin32PriorityPresetIndex_ties_break_toward_lower_preset()
     {
-        // Exactly between 0x18=24 (index 8) and 0x1A=26 (index 6); 39 isn't a preset value.
+        // Exactly between 0x26=38 (index 3) and 0x28=40 (index 2); 39 isn't a preset value.
         var registry = new FakeRegistryService();
         registry.Seed(RegistryHive.LocalMachine, Win32PriorityControlPath, Win32PriorityValueName, 39);
         var service = new GamingDropdownService(registry);
 
-        Assert.Equal(3, service.GetWin32PriorityPresetIndex()); // "Short, Variable, High boost" (0x26=38), lower than 40
+        Assert.Equal(3, service.GetWin32PriorityPresetIndex()); // "Short, Variable, High boost (26)" (0x26=38), lower than 40
     }
 
     [Fact]
@@ -149,7 +149,7 @@ public class GamingDropdownServiceTests
         var registry = new FakeRegistryService();
         var service = new GamingDropdownService(registry);
 
-        Assert.Equal(12, service.GetWin32PriorityPresetIndex()); // "Legacy/Advanced" (0x06=6) is nearest to 0
+        Assert.Equal(12, service.GetWin32PriorityPresetIndex()); // "Legacy/Advanced (06)" (0x06=6) is nearest to 0
     }
 
     [Fact]
@@ -158,7 +158,7 @@ public class GamingDropdownServiceTests
         var registry = new FakeRegistryService();
         var service = new GamingDropdownService(registry);
 
-        service.SetWin32PriorityPreset(0); // "Short, Fixed, High boost"
+        service.SetWin32PriorityPreset(0); // "Short, Fixed, High boost (2A)"
 
         Assert.Equal(0x2A, registry.GetValue(RegistryHive.LocalMachine, Win32PriorityControlPath, Win32PriorityValueName));
         Assert.Equal(0, registry.DeleteValueCallCount);

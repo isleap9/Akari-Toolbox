@@ -9,7 +9,9 @@ namespace AkariToolbox.App.Services;
 /// semantics, unlike <see cref="ITweakCatalog"/> (see
 /// <see cref="IGamingDropdownService"/>'s doc comment for why this is not an
 /// <see cref="ITweakHandler"/>). Preset lists are the D-09 checkpoint's approved
-/// "research-proposed" expanded lists (02-05-PLAN.md).
+/// "research-proposed" expanded lists (02-05-PLAN.md); Win32Priority labels
+/// carry a parenthetical hex reference (e.g. "(2A)") per explicit user request
+/// post-merge, so each preset is still traceable to its raw registry value.
 /// </summary>
 public sealed class GamingDropdownService(IRegistryService registry) : IGamingDropdownService
 {
@@ -35,19 +37,19 @@ public sealed class GamingDropdownService(IRegistryService registry) : IGamingDr
 
     public IReadOnlyList<(string Label, int ValueHex)> Win32PriorityPresets { get; } =
     [
-        ("Short, Fixed, High boost", 0x2A),
-        ("Short, Fixed, Medium boost", 0x29),
-        ("Short, Fixed, No boost", 0x28),
-        ("Short, Variable, High boost", 0x26),
-        ("Short, Variable, Medium boost", 0x25),
-        ("Short, Variable, No boost", 0x24),
-        ("Long, Fixed, High boost", 0x1A),
-        ("Long, Fixed, Medium boost", 0x19),
-        ("Long, Fixed, No boost", 0x18),
-        ("Long, Variable, High boost", 0x16),
-        ("Long, Variable, Medium boost", 0x15),
-        ("Long, Variable, No boost", 0x14),
-        ("Legacy/Advanced", 0x06),
+        ("Short, Fixed, High boost (2A)", 0x2A),
+        ("Short, Fixed, Medium boost (29)", 0x29),
+        ("Short, Fixed, No boost (28)", 0x28),
+        ("Short, Variable, High boost (26)", 0x26),
+        ("Short, Variable, Medium boost (25)", 0x25),
+        ("Short, Variable, No boost (24)", 0x24),
+        ("Long, Fixed, High boost (1A)", 0x1A),
+        ("Long, Fixed, Medium boost (19)", 0x19),
+        ("Long, Fixed, No boost (18)", 0x18),
+        ("Long, Variable, High boost (16)", 0x16),
+        ("Long, Variable, Medium boost (15)", 0x15),
+        ("Long, Variable, No boost (14)", 0x14),
+        ("Legacy/Advanced (06)", 0x06),
     ];
 
     public int GetSvcHostPresetIndex()
