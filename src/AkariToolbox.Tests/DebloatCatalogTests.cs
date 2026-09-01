@@ -133,6 +133,27 @@ public class DebloatCatalogTests
     }
 
     [Fact]
+    public void Cleanup_direct_carry_actions_have_resolvable_resources()
+    {
+        var catalog = new DebloatCatalog();
+        var resourceNames = typeof(AppEntry).Assembly.GetManifestResourceNames();
+
+        var diskCleanupAction = catalog.Actions.Single(a => a.Key == "diskcleanup");
+        var tempFilesAction = catalog.Actions.Single(a => a.Key == "tempfiles");
+        var removeOneDriveAction = catalog.Actions.Single(a => a.Key == "removeonedrive");
+
+        Assert.Contains(resourceNames, n => n.EndsWith(diskCleanupAction.RunResourceSuffix, StringComparison.OrdinalIgnoreCase));
+        Assert.Null(diskCleanupAction.UndoResourceSuffix);
+
+        Assert.Contains(resourceNames, n => n.EndsWith(tempFilesAction.RunResourceSuffix, StringComparison.OrdinalIgnoreCase));
+        Assert.Null(tempFilesAction.UndoResourceSuffix);
+
+        Assert.Contains(resourceNames, n => n.EndsWith(removeOneDriveAction.RunResourceSuffix, StringComparison.OrdinalIgnoreCase));
+        Assert.NotNull(removeOneDriveAction.UndoResourceSuffix);
+        Assert.Contains(resourceNames, n => n.EndsWith(removeOneDriveAction.UndoResourceSuffix!, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task DebloatViewModel_run_action_invokes_script_runner_with_correct_suffix()
     {
         var scriptRunner = new FakeScriptRunner();

@@ -108,6 +108,14 @@
     <EmbeddedResource Include="Resources\DebloatScripts\widgets.ps1" />
     <EmbeddedResource Include="Resources\DebloatScripts\widgets-undo.ps1" />
     <EmbeddedResource Include="Resources\DebloatScripts\oosu.ps1" />
+    <!-- 03-05: Cleanup category's 3 direct-carry actions (Disk Cleanup, Temporary Files,
+         OneDrive Remove). Disk Cleanup and Temporary Files are Run-only (no Undo, matching
+         DebloatCatalog's UndoResourceSuffix: null); OneDrive Remove is a Run+Undo pair
+         behind the D-11 confirmation gate. -->
+    <EmbeddedResource Include="Resources\DebloatScripts\diskcleanup.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\tempfiles.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\removeonedrive.ps1" />
+    <EmbeddedResource Include="Resources\DebloatScripts\removeonedrive-undo.ps1" />
   </ItemGroup>
 
   <ItemGroup>
