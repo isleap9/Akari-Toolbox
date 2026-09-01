@@ -89,6 +89,22 @@ public class DebloatCatalogTests
     }
 
     [Fact]
+    public void SystemPerformance_category_all_actions_have_resolvable_resources()
+    {
+        var catalog = new DebloatCatalog();
+        var resourceNames = typeof(AppEntry).Assembly.GetManifestResourceNames();
+
+        var systemPerformanceActions = catalog.Actions.Where(a => a.Category == "System & Performance");
+
+        Assert.All(systemPerformanceActions, action =>
+        {
+            Assert.Contains(resourceNames, n => n.EndsWith(action.RunResourceSuffix, StringComparison.OrdinalIgnoreCase));
+            Assert.NotNull(action.UndoResourceSuffix);
+            Assert.Contains(resourceNames, n => n.EndsWith(action.UndoResourceSuffix!, StringComparison.OrdinalIgnoreCase));
+        });
+    }
+
+    [Fact]
     public async Task DebloatViewModel_run_action_invokes_script_runner_with_correct_suffix()
     {
         var scriptRunner = new FakeScriptRunner();
