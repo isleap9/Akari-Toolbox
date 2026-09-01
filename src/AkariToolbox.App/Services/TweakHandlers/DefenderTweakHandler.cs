@@ -5,19 +5,32 @@ using AkariToolbox.Framework.Services;
 namespace AkariToolbox.App.Services.TweakHandlers;
 
 // ITweakHandler here is a thin routing wrapper only; SetDefenderAsync's internals below
-// are an unmodified port per D-01 — see 01-RESEARCH.md 'Defender carry-over scope'.
+// are a port of the predecessor's TweakService.cs per D-01 — see 01-RESEARCH.md 'Defender
+// carry-over scope'.
 /// <summary>
 /// The two-phase Windows Defender disable/re-enable workflow (TWEAKS-02) — the 32nd and
 /// final tweak. Per D-01 (CONTEXT.md, an explicit, twice-repeated user directive) this is
 /// NOT decomposed into the registry/service-primitive pattern the other 31 handlers use;
-/// <see cref="SetDefenderAsync"/> and everything it calls is a byte-for-byte port of the
-/// predecessor's <c>TweakService.cs</c> (<c>SetDefenderAsync</c>, <c>DefenderScheduleCleanup</c>,
-/// <c>IsDefenderTamperProtectionOn</c>, <c>DefenderBuildServiceBat</c>,
-/// <c>DefenderRunElevatedPsFileAsync</c>, <c>DefenderRunElevatedPsAsync</c>,
-/// <c>DefenderRunAsTrustedInstallerAsync</c>) — only the logging mechanism changes
-/// (the predecessor's static logger call is replaced by the injected
-/// <see cref="ILogConsoleService"/>), plus a new, not-ported SHA256 integrity gate
-/// (T-01-SC) added ahead of the Tamper Protection check.
+/// <see cref="SetDefenderAsync"/> and everything it calls remains a port of the
+/// predecessor's <c>TweakService.cs</c> two-phase Defender workflow (Tamper Protection
+/// gate, cab+ps1 install, post-reboot phase 2), plus the SHA256 integrity gate (T-01-SC)
+/// added ahead of the Tamper Protection check.
+///
+/// The *elevation mechanism* was deliberately replaced (per explicit project-owner
+/// direction, closing CR-01/CR-03 from 01-REVIEW.md) with a native SYSTEM-impersonation
+/// port (<see cref="ElevationService.RunAsSystem"/>, adapted from the sibling AkariTool
+/// repo) in place of the predecessor's <c>MinSudo.exe</c>/<c>PowerRun.exe</c> external
+/// binaries — this eliminates the unverified-elevated-binary-execution risk entirely for
+/// the Defender path (no external executable is launched to gain SYSTEM/TrustedInstaller
+/// rights any more) and also closes CR-01 (the fire-and-forget <c>SetState</c> that
+/// defeated <see cref="TweakCatalog"/>'s per-key serialization), since the native path no
+/// longer needs the generated-.bat-plus-RunOnce indirection that motivated the original
+/// fire-and-forget shape. This is not a decomposition into the <see cref="ITweakHandler"/>
+/// registry/service-primitive pattern (that remains out of scope, SEC-01/v2) — it is an
+/// internal implementation swap of one specific mechanism (privilege escalation) inside
+/// the still-special-cased Defender handler. The overall two-phase Defender *workflow*
+/// shape (Tamper Protection gate, cab+ps1 install, RunOnce-scheduled phase 2) is unchanged
+/// from the predecessor's.
 /// </summary>
 public sealed class DefenderTweakHandler(IPostInstallService postInstall, ILogConsoleService log, IRegistryService registry) : ITweakHandler
 {
@@ -72,32 +85,30 @@ public sealed class DefenderTweakHandler(IPostInstallService postInstall, ILogCo
     public bool GetState() =>
         registry.GetValue(RegistryHive.CurrentUser, DefenderStateKey, DefenderStateValue) is int v && v != 0;
 
-    // Mirrors the predecessor's own `SetDefender(bool disable) => _ = SetDefenderAsync(disable);`
-    // shape exactly (TweakService.cs:828) — ITweakHandler.SetState is a synchronous contract
-    // member and this tweak's real work is deliberately fire-and-forget, same as upstream.
-    // The DefenderStateValue flag itself is written/removed from inside SetDefenderAsync, at
-    // the same points the predecessor persisted/cleared its own equivalent "DisableDefender" flag.
-    public void SetState(bool disable) => _ = SetDefenderAsync(disable);
+    // CR-01 fix (01-REVIEW.md): must block for the duration of the operation, matching
+    // every other handler's contract, so TweakCatalog.SetStateAsync's per-key semaphore
+    // (held for the duration of `Task.Run(() => handler.SetState(enabled))`) actually
+    // serializes concurrent Defender toggles instead of releasing almost instantly while
+    // the real work continues in the background.
+    public void SetState(bool disable) => SetDefenderAsync(disable).GetAwaiter().GetResult();
 
     private async Task SetDefenderAsync(bool disable)
     {
         try
         {
-            // Auto-download required files if missing (matches Akari Tool Premium).
-            // On AkariOS, all files already exist and this returns instantly.
-            // On a fresh VM / stock Windows, this fetches ~30MB from GitHub.
-            bool filesReady = disable
-                ? await postInstall.EnsureDefenderFilesAsync()
-                : await postInstall.EnsureMinSudoAsync();
-
-            if (!filesReady)
-            {
-                log.Log("[DEFENDER] Could not obtain required files. Check your internet connection and try again.");
-                return;
-            }
-
             if (disable)
             {
+                // Auto-download required files if missing (matches Akari Tool Premium).
+                // On AkariOS, all files already exist and this returns instantly.
+                // On a fresh VM / stock Windows, this fetches ~30MB from GitHub.
+                bool filesReady = await postInstall.EnsureDefenderFilesAsync();
+
+                if (!filesReady)
+                {
+                    log.Log("[DEFENDER] Could not obtain required files. Check your internet connection and try again.");
+                    return;
+                }
+
                 if (GetState()) return;
 
                 log.Log("[DEFENDER] Disabling Windows Defender...");
@@ -135,8 +146,12 @@ public sealed class DefenderTweakHandler(IPostInstallService postInstall, ILogCo
                 await DefenderRunElevatedPsFileAsync(
                     Path.Combine(postInstall.LocalRoot, @"Defender\DisableDefender.ps1"));
 
-                log.Log("[DEFENDER] Scheduling post-reboot service cleanup...");
-                await DefenderScheduleCleanup();
+                // CR-01/CR-03 fix: schedule the native post-reboot phase 2 via a RunOnce
+                // entry that re-launches this app itself (--defender-phase2), instead of
+                // generating an AkariDefenderCleanup.bat full of unverified PowerRun.exe
+                // invocations.
+                log.Log("[DEFENDER] Scheduling native post-reboot phase 2...");
+                DefenderPhase2Scheduler.ScheduleRunOnce();
 
                 registry.SetValue(RegistryHive.CurrentUser, DefenderStateKey, DefenderStateValue, 1, RegistryValueKind.DWord);
                 log.Log("[DEFENDER] Phase 1 complete. Please restart now.");
@@ -144,6 +159,10 @@ public sealed class DefenderTweakHandler(IPostInstallService postInstall, ILogCo
             }
             else
             {
+                // No PostInstall dependency for re-enable: native SYSTEM impersonation
+                // needs no downloaded file (CR-01/CR-03 fix removes the prior
+                // postInstall.EnsureMinSudoAsync() gate here — that only existed to fetch
+                // MinSudo.exe for the now-removed TrustedInstaller .bat path).
                 log.Log("[DEFENDER] Re-enabling Windows Defender...");
                 log.Log("[DEFENDER] Restoring Defender package (30-60s)...");
 
@@ -151,8 +170,27 @@ public sealed class DefenderTweakHandler(IPostInstallService postInstall, ILogCo
                     $"if (Test-Path '{WinNoDefenderCab}') " +
                     $"{{ Remove-WindowsPackage -Online -PackagePath '{WinNoDefenderCab}' -NoRestart }}");
 
-                log.Log("[DEFENDER] Restoring Defender services...");
-                await DefenderRunAsTrustedInstallerAsync(DefenderBuildServiceBat(startValue: 2));
+                log.Log("[DEFENDER] Restoring Defender services (native SYSTEM writes)...");
+                var restoreOk = ElevationService.RunAsSystem(() =>
+                {
+                    foreach (var svc in DefenderServices)
+                    {
+                        try
+                        {
+                            Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\{svc}",
+                                "Start", 2, RegistryValueKind.DWord);
+                        }
+                        catch (Exception ex)
+                        {
+                            log.Log($"[DEFENDER]   {svc} FAILED — {ex.Message}");
+                        }
+                    }
+                }, log.Log);
+
+                if (!restoreOk)
+                {
+                    log.Log("[DEFENDER] ERROR: Could not acquire SYSTEM to restore Defender services.");
+                }
 
                 registry.DeleteValue(RegistryHive.CurrentUser, DefenderStateKey, DefenderStateValue);
                 log.Log("[DEFENDER] Defender re-enabled. Restart required.");
@@ -164,80 +202,124 @@ public sealed class DefenderTweakHandler(IPostInstallService postInstall, ILogCo
         }
     }
 
-    private async Task DefenderScheduleCleanup()
+    /// <summary>
+    /// The real post-reboot phase-2 work — equivalent to the sibling AkariTool repo's
+    /// <c>DefenderService.RunPhase2Native</c>. With ELAM lifted after the phase-1 reboot,
+    /// writes every Defender service key to Start=4, disables real-time monitoring, strips
+    /// SmartScreen (registry + binary takeover), sets CI/policy + DeviceGuard keys, and
+    /// disables the Defender scheduled tasks — all inside a single native SYSTEM
+    /// impersonation (no PowerRun.exe/MinSudo.exe). A failure on one step is logged and
+    /// does not abort the rest. Intended to be invoked headlessly when the app is
+    /// relaunched with the <c>--defender-phase2</c> argument that
+    /// <see cref="DefenderPhase2Scheduler.ScheduleRunOnce"/> schedules.
+    /// </summary>
+    public static void RunPhase2Native(Action<string> log)
     {
-        var batPath = Path.Combine(postInstall.LocalRoot, @"Defender\AkariDefenderCleanup.bat");
-        var sysCmd = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
-        var powerRun = postInstall.PowerRunPath;
+        // Belt-and-braces: RunOnce already self-clears when Windows runs it, but clear it
+        // explicitly too, matching the reference implementation.
+        DefenderPhase2Scheduler.ClearRunOnce();
 
-        var lines = new List<string>
+        bool ok = ElevationService.RunAsSystem(() =>
         {
-            "@echo off",
-            ":: AkariTool — Defender Phase 2 cleanup (runs once after reboot)",
-            "",
-            ":: Disable real-time monitoring first",
-            @"PowerShell -NonInteractive -NoLogo -NoProfile -C ""Set-MpPreference -DisableRealtimeMonitoring 1"" >NUL 2>nul",
-            "",
-            ":: Kill all Defender service registry keys (ControlSet001)",
-        };
+            // 1. ELAM service keys -> Start=4 (disabled). Post-reboot these are writable.
+            log("[PHASE2] Setting Defender service keys to Start=4...");
+            foreach (var svc in DefenderServices)
+            {
+                try
+                {
+                    Registry.SetValue($@"HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\{svc}",
+                        "Start", 4, RegistryValueKind.DWord);
+                    log($"[PHASE2]   {svc} Start=4 OK");
+                }
+                catch (Exception ex) { log($"[PHASE2]   {svc} Start=4 FAILED — {ex.Message}"); }
+            }
 
-        foreach (var cmd in DefenderBuildServiceBat(startValue: 4))
-            lines.Add($@"""{powerRun}"" /SW:0 ""{sysCmd}"" /c {cmd}");
+            // 2. Disable real-time monitoring (ordinary elevated-context PowerShell call —
+            // not MinSudo/PowerRun; this whole block already runs as SYSTEM).
+            log("[PHASE2] Disabling real-time monitoring...");
+            RunProcess("powershell.exe",
+                "-NonInteractive -NoLogo -NoProfile -C \"Set-MpPreference -DisableRealtimeMonitoring 1\"", log);
 
-        lines.AddRange(new[]
+            // 3. Remove SecurityHealth systray Run entry.
+            log("[PHASE2] Removing SecurityHealth Run entry...");
+            try
+            {
+                using var run = Registry.LocalMachine.OpenSubKey(
+                    @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", writable: true);
+                run?.DeleteValue("SecurityHealth", throwOnMissingValue: false);
+            }
+            catch (Exception ex) { log($"[PHASE2]   SecurityHealth delete FAILED — {ex.Message}"); }
+
+            // 4. SmartScreen takeover — registry (native) + binary rename (stock tools).
+            log("[PHASE2] Disabling SmartScreen...");
+            Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer",
+                "SmartScreenEnabled", "Off", RegistryValueKind.String);
+            Registry.SetValue(@"HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\System",
+                "EnableSmartScreen", 0, RegistryValueKind.DWord);
+            Registry.SetValue(@"HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows Defender\SmartScreen",
+                "ConfigureAppInstallControlEnabled", 0, RegistryValueKind.DWord);
+            Registry.SetValue(@"HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows Defender\SmartScreen",
+                "EnableSmartScreen", 0, RegistryValueKind.DWord);
+            Registry.SetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\AppHost",
+                "EnableWebContentEvaluation", 0, RegistryValueKind.DWord);
+
+            var sys32 = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            var smartScreen = Path.Combine(sys32, "smartscreen.exe");
+            var smartScreenOld = Path.Combine(sys32, "smartscreen.exe.old");
+            RunProcess("taskkill.exe", "/f /im smartscreen.exe", log);
+            if (!File.Exists(smartScreenOld) && File.Exists(smartScreen))
+            {
+                RunProcess("takeown.exe", $"/F \"{smartScreen}\" /A", log);
+                RunProcess("icacls.exe", $"\"{smartScreen}\" /grant Administrators:F", log);
+                try
+                {
+                    File.Copy(smartScreen, smartScreenOld, overwrite: false);
+                    File.Delete(smartScreen);
+                    log("[PHASE2]   smartscreen.exe renamed to .old");
+                }
+                catch (Exception ex) { log($"[PHASE2]   smartscreen.exe takeover FAILED — {ex.Message}"); }
+            }
+
+            // 5. CI/Policy + DeviceGuard keys.
+            log("[PHASE2] Setting CI/Policy and DeviceGuard keys...");
+            Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\CI\Policy",
+                "VerifiedAndReputablePolicyState", 0, RegistryValueKind.DWord);
+            Registry.SetValue(@"HKEY_LOCAL_MACHINE\Software\Microsoft\Windows Defender",
+                "PUAProtection", 0, RegistryValueKind.DWord);
+            Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\CI\Config",
+                "VulnerableDriverBlocklistEnable", 0, RegistryValueKind.DWord);
+            Registry.SetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity",
+                "Enabled", 0, RegistryValueKind.DWord);
+
+            // 6. Disable Defender scheduled tasks.
+            log("[PHASE2] Disabling Defender scheduled tasks...");
+            foreach (var task in DefenderScheduledTasks)
+                RunProcess("schtasks.exe", $"/change /disable /TN \"{task}\"", log);
+        }, log);
+
+        log(ok ? "[PHASE2] Native phase-2 SYSTEM block completed."
+               : "[PHASE2] Native phase-2 FAILED to acquire SYSTEM — see errors above.");
+    }
+
+    /// <summary>Synchronous process run for the headless/native phase-2 path; logs a non-zero exit code.</summary>
+    private static void RunProcess(string file, string args, Action<string> log)
+    {
+        try
         {
-            "",
-            ":: Remove SecurityHealth from Run key",
-            $@"""{powerRun}"" /SW:0 ""{sysCmd}"" /c Reg.exe delete ""HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run"" /v ""SecurityHealth"" /f",
-            "",
-            ":: Disable SmartScreen binary",
-            $@"""{powerRun}"" /SW:0 ""{sysCmd}"" /c taskkill /f /im smartscreen.exe",
-            $@"if not exist ""%systemroot%\system32\smartscreen.exe.old"" if exist ""%systemroot%\system32\smartscreen.exe"" (",
-            $@"  ""{powerRun}"" /SW:0 ""{sysCmd}"" /c takeown /F ""%systemroot%\system32\smartscreen.exe"" /A",
-            $@"  ""{powerRun}"" /SW:0 ""{sysCmd}"" /c icacls ""%systemroot%\system32\smartscreen.exe"" /grant Administrators:F",
-            $@"  ""{powerRun}"" /SW:0 ""{sysCmd}"" /c copy ""%systemroot%\system32\smartscreen.exe"" ""%systemroot%\system32\smartscreen.exe.old"" /v",
-            $@"  ""{powerRun}"" /SW:0 ""{sysCmd}"" /c del ""%systemroot%\system32\smartscreen.exe""",
-            ")",
-            "",
-            ":: SmartScreen registry keys",
-            $@"""{powerRun}"" /SW:0 ""{sysCmd}"" /c Reg.exe add ""HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer"" /v ""SmartScreenEnabled"" /t REG_SZ /d ""Off"" /f",
-            $@"""{powerRun}"" /SW:0 ""{sysCmd}"" /c Reg.exe add ""HKLM\Software\Policies\Microsoft\System"" /v ""EnableSmartScreen"" /t REG_DWORD /d ""0"" /f",
-            $@"""{powerRun}"" /SW:0 ""{sysCmd}"" /c Reg.exe add ""HKLM\Software\Policies\Microsoft\Windows Defender\SmartScreen"" /v ""ConfigureAppInstallControlEnabled"" /t REG_DWORD /d ""0"" /f",
-            $@"""{powerRun}"" /SW:0 ""{sysCmd}"" /c Reg.exe add ""HKLM\Software\Policies\Microsoft\Windows Defender\SmartScreen"" /v ""EnableSmartScreen"" /t REG_DWORD /d ""0"" /f",
-            $@"""{powerRun}"" /SW:0 ""{sysCmd}"" /c Reg.exe add ""HKCU\Software\Microsoft\Windows\CurrentVersion\AppHost"" /v ""EnableWebContentEvaluation"" /t REG_DWORD /d ""0"" /f",
-            "",
-            ":: CI/Policy and DeviceGuard keys",
-            $@"""{powerRun}"" /SW:0 ""{sysCmd}"" /c Reg.exe add ""HKLM\SYSTEM\ControlSet001\Control\CI\Policy"" /v ""VerifiedAndReputablePolicyState"" /t REG_DWORD /d ""0"" /f",
-            $@"""{powerRun}"" /SW:0 ""{sysCmd}"" /c Reg.exe add ""HKLM\Software\Microsoft\Windows Defender"" /v ""PUAProtection"" /t REG_DWORD /d ""0"" /f",
-            $@"""{powerRun}"" /SW:0 ""{sysCmd}"" /c Reg.exe add ""HKLM\SYSTEM\ControlSet001\Control\CI\Config"" /v ""VulnerableDriverBlocklistEnable"" /t REG_DWORD /d ""0"" /f",
-            $@"""{powerRun}"" /SW:0 ""{sysCmd}"" /c Reg.exe add ""HKLM\SYSTEM\ControlSet001\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity"" /v ""Enabled"" /t REG_DWORD /d ""0"" /f",
-            "",
-            ":: Disable Defender scheduled tasks",
-        });
-
-        foreach (var task in DefenderScheduledTasks)
-            lines.Add($@"""{powerRun}"" /SW:0 ""{sysCmd}"" /c schtasks.exe /change /disable /TN ""{task}""");
-
-        lines.AddRange(new[]
-        {
-            "",
-            ":: Self-cleanup",
-            $@"Reg.exe delete ""HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"" /v ""AkariDefenderCleanup"" /f >NUL 2>nul",
-            $@"(del /f /q ""%~f0"") >NUL 2>nul",
-        });
-
-        await File.WriteAllLinesAsync(batPath, lines);
-
-        var cmdExe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe");
-        registry.SetValue(
-            RegistryHive.LocalMachine,
-            @"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce",
-            "AkariDefenderCleanup",
-            $"\"{cmdExe}\" /c \"{batPath}\"",
-            RegistryValueKind.String);
-
-        log.Log($"[DEFENDER] Phase 2 bat written to: {batPath}");
-        log.Log("[DEFENDER] It will run automatically on next login.");
+            var psi = new ProcessStartInfo
+            {
+                FileName = file,
+                Arguments = args,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            };
+            using var proc = Process.Start(psi)!;
+            proc.WaitForExit();
+            if (proc.ExitCode != 0) log($"[PHASE2]   '{file} {args}' exit code {proc.ExitCode}");
+        }
+        catch (Exception ex) { log($"[PHASE2]   '{file} {args}' threw — {ex.Message}"); }
     }
 
     private bool IsDefenderTamperProtectionOn()
@@ -253,12 +335,6 @@ public sealed class DefenderTweakHandler(IPostInstallService postInstall, ILogCo
             return true;
         }
     }
-
-    private static string[] DefenderBuildServiceBat(int startValue) =>
-        DefenderServices
-            .Select(svc =>
-                $@"Reg.exe add ""HKLM\SYSTEM\ControlSet001\Services\{svc}"" /v ""Start"" /t REG_DWORD /d ""{startValue}"" /f")
-            .ToArray();
 
     // This IS a second elevation prompt even though the app is already elevated; this is
     // intentional pre-existing predecessor behavior (RESEARCH "Known Threat Patterns"
@@ -286,29 +362,5 @@ public sealed class DefenderTweakHandler(IPostInstallService postInstall, ILogCo
             CreateNoWindow = true,
         };
         await Process.Start(psi)!.WaitForExitAsync();
-    }
-
-    private async Task DefenderRunAsTrustedInstallerAsync(IEnumerable<string> commands)
-    {
-        var tmp = Path.Combine(Path.GetTempPath(), $"AkariDef-{Guid.NewGuid():N}.bat");
-        try
-        {
-            var lines = new List<string> { "@echo off" };
-            lines.AddRange(commands);
-            await File.WriteAllLinesAsync(tmp, lines);
-
-            var psi = new ProcessStartInfo
-            {
-                FileName = postInstall.MinSudoPath,
-                Arguments = $"--NoLogo --TrustedInstaller --Privileged cmd /c \"{tmp}\"",
-                UseShellExecute = true,
-                CreateNoWindow = false,
-            };
-            await Process.Start(psi)!.WaitForExitAsync();
-        }
-        finally
-        {
-            try { File.Delete(tmp); } catch { /* best-effort temp cleanup, matches predecessor */ }
-        }
     }
 }

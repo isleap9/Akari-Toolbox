@@ -25,8 +25,6 @@ public sealed class PostInstallService(IHttpClientFactory httpClientFactory, ILo
 
     public string LocalRoot => @"C:\PostInstall";
 
-    public string MinSudoPath => Path.Combine(LocalRoot, @"Tweaks\MinSudo.exe");
-    public string PowerRunPath => Path.Combine(LocalRoot, @"Tweaks\PowerRun.exe");
     public string NoDefenderPath => Path.Combine(LocalRoot, @"Defender\NoDefender.cab");
 
     // Full asset manifest — copied verbatim from the predecessor's PostInstallService.cs
@@ -184,29 +182,20 @@ public sealed class PostInstallService(IHttpClientFactory httpClientFactory, ILo
         "Tweaks/serviwin.exe",
     };
 
-    public bool MinSudoPresent => File.Exists(MinSudoPath);
-    public bool PowerRunPresent => File.Exists(PowerRunPath);
     public bool NoDefenderPresent => File.Exists(NoDefenderPath);
 
     public bool IsFullyInstalled =>
         AllFiles.All(f => File.Exists(Path.Combine(LocalRoot, f.Replace('/', '\\'))));
 
-    public async Task<bool> EnsureMinSudoAsync()
-    {
-        if (MinSudoPresent) return true;
-        return await EnsurePostInstallAsync();
-    }
-
     public async Task<bool> EnsureDefenderFilesAsync()
     {
+        // 01-REVIEW.md CR-01/CR-03 fix: the native SYSTEM-impersonation Defender path no
+        // longer reads MinSudo.exe/PowerRun.exe/DisableDefenderServices.bat/
+        // EnableDefender.ps1/EnableDefenderServices.bat, so readiness only requires the
+        // two files the disable flow actually touches (NoDefender.cab + DisableDefender.ps1).
         bool defenderReady =
-            MinSudoPresent &&
-            PowerRunPresent &&
             File.Exists(Path.Combine(LocalRoot, @"Defender\NoDefender.cab")) &&
-            File.Exists(Path.Combine(LocalRoot, @"Defender\DisableDefender.ps1")) &&
-            File.Exists(Path.Combine(LocalRoot, @"Defender\DisableDefenderServices.bat")) &&
-            File.Exists(Path.Combine(LocalRoot, @"Defender\EnableDefender.ps1")) &&
-            File.Exists(Path.Combine(LocalRoot, @"Defender\EnableDefenderServices.bat"));
+            File.Exists(Path.Combine(LocalRoot, @"Defender\DisableDefender.ps1"));
 
         if (defenderReady)
         {

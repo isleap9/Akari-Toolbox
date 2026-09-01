@@ -3,35 +3,30 @@ namespace AkariToolbox.App.Services;
 /// <summary>
 /// Minimal, injectable port of the predecessor's <c>static PostInstallService</c> —
 /// covers only the subset of members <see cref="TweakHandlers.DefenderTweakHandler"/>
-/// needs (<see cref="EnsureDefenderFilesAsync"/>/<see cref="EnsureMinSudoAsync"/>), not
-/// the full ~130-entry Downloads-page asset mirror (that remains Phase 4/DOWNLOADS-01
-/// scope). Converted from the predecessor's static class to an injectable singleton to
-/// fit this app's DI-first convention — a structural adaptation, not a behavior change.
+/// needs (<see cref="EnsureDefenderFilesAsync"/>), not the full ~130-entry Downloads-page
+/// asset mirror (that remains Phase 4/DOWNLOADS-01 scope). Converted from the
+/// predecessor's static class to an injectable singleton to fit this app's DI-first
+/// convention — a structural adaptation, not a behavior change.
+///
+/// <see cref="MinSudoPath"/>/<see cref="PowerRunPath"/>/<c>EnsureMinSudoAsync</c> and
+/// their presence flags were removed (01-REVIEW.md CR-01/CR-03 fix): the Defender
+/// handler's elevation mechanism was replaced with a native SYSTEM-impersonation port
+/// (<see cref="ElevationService"/>) that no longer launches MinSudo.exe/PowerRun.exe,
+/// so nothing in this app reads those two paths any more.
 /// </summary>
 public interface IPostInstallService
 {
     /// <summary>Local mirror root — <c>C:\PostInstall</c>, unchanged from the predecessor.</summary>
     string LocalRoot { get; }
 
-    string MinSudoPath { get; }
-
-    string PowerRunPath { get; }
-
     string NoDefenderPath { get; }
-
-    bool MinSudoPresent { get; }
-
-    bool PowerRunPresent { get; }
 
     bool NoDefenderPresent { get; }
 
     /// <summary>True when every entry in the full PostInstall asset manifest is present locally.</summary>
     bool IsFullyInstalled { get; }
 
-    /// <summary>Ensures <see cref="MinSudoPath"/> is present, downloading the full manifest if not.</summary>
-    Task<bool> EnsureMinSudoAsync();
-
-    /// <summary>Ensures the 5 Defender-specific files are present, downloading the full manifest if not.</summary>
+    /// <summary>Ensures the Defender-specific files are present, downloading the full manifest if not.</summary>
     Task<bool> EnsureDefenderFilesAsync();
 
     /// <summary>Downloads any missing files in the full manifest from the pinned GitHub PostInstall repo.</summary>
