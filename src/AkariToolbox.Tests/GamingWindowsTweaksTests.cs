@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using AkariToolbox.App.Services;
 using AkariToolbox.App.Services.TweakHandlers;
 using AkariToolbox.Framework.Services;
@@ -264,6 +265,316 @@ public class GamingWindowsTweaksTests
         Assert.Equal(108, handler.Order);
         Assert.Equal(TweakCategory.Gaming, handler.Category);
         Assert.Equal("writecacheflush", handler.Key);
+    }
+
+    // ---------- NetworkIpv4OnlyTweakHandler (Task 1) ----------
+
+    private static readonly string[] ExpectedDisableComponentIds =
+    [
+        "ms_lldp", "ms_lltdio", "ms_implat", "ms_rspndr", "ms_tcpip6", "ms_server", "ms_msclient", "ms_pacer",
+    ];
+
+    [Fact]
+    public void NetworkIpv4Only_SetState_true_disables_the_8_documented_component_ids()
+    {
+        var scriptRunner = new FakeScriptRunner();
+        var handler = new NetworkIpv4OnlyTweakHandler(scriptRunner);
+
+        handler.SetState(true);
+
+        var disableCalls = scriptRunner.Calls
+            .Where(c => c.FileName == "powershell.exe" && c.Arguments.Contains("Disable-NetAdapterBinding", StringComparison.Ordinal))
+            .ToList();
+        Assert.Equal(8, disableCalls.Count);
+        foreach (var id in ExpectedDisableComponentIds)
+        {
+            Assert.Single(disableCalls, c => c.Arguments.EndsWith($"{id}\"", StringComparison.Ordinal));
+        }
+    }
+
+    [Fact]
+    public void NetworkIpv4Only_SetState_false_enables_exactly_9_component_ids_including_ms_tcpip()
+    {
+        var scriptRunner = new FakeScriptRunner();
+        var handler = new NetworkIpv4OnlyTweakHandler(scriptRunner);
+
+        handler.SetState(false);
+
+        var enableCalls = scriptRunner.Calls
+            .Where(c => c.FileName == "powershell.exe" && c.Arguments.Contains("Enable-NetAdapterBinding", StringComparison.Ordinal))
+            .ToList();
+        Assert.Equal(9, enableCalls.Count);
+        foreach (var id in ExpectedDisableComponentIds)
+        {
+            Assert.Single(enableCalls, c => c.Arguments.EndsWith($"{id}\"", StringComparison.Ordinal));
+        }
+
+        // ms_tcpip is the 9th ID, absent from the On/disable branch — assert it is present
+        // exactly once and distinct from ms_tcpip6 (EndsWith avoids a Contains false-match).
+        Assert.Single(enableCalls, c => c.Arguments.EndsWith("ms_tcpip\"", StringComparison.Ordinal));
+        Assert.Single(enableCalls, c => c.Arguments.EndsWith("ms_tcpip6\"", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void NetworkIpv4Only_GetState_returns_true_when_ms_tcpip6_binding_is_disabled()
+    {
+        var scriptRunner = new FakeScriptRunner { CaptureOutputResponder = (_, _) => "False" };
+        var handler = new NetworkIpv4OnlyTweakHandler(scriptRunner);
+
+        Assert.True(handler.GetState());
+    }
+
+    [Fact]
+    public void NetworkIpv4Only_GetState_returns_false_when_binding_enabled_or_unparseable()
+    {
+        var enabledRunner = new FakeScriptRunner { CaptureOutputResponder = (_, _) => "True" };
+        Assert.False(new NetworkIpv4OnlyTweakHandler(enabledRunner).GetState());
+
+        var emptyRunner = new FakeScriptRunner { CaptureOutputResponder = (_, _) => string.Empty };
+        Assert.False(new NetworkIpv4OnlyTweakHandler(emptyRunner).GetState());
+    }
+
+    [Fact]
+    public void NetworkIpv4Only_metadata_is_Order_107_Category_Gaming()
+    {
+        var handler = new NetworkIpv4OnlyTweakHandler(new FakeScriptRunner());
+
+        Assert.Equal(107, handler.Order);
+        Assert.Equal(TweakCategory.Gaming, handler.Category);
+        Assert.Equal("netipv4only", handler.Key);
+    }
+
+    // ---------- PowerPlanTweakHandler (Task 2) ----------
+
+    private const string PowerPlanExportDirName = "AkariToolbox-PowerPlanBackup";
+
+    private static string PowerPlanExportDir() => Path.Combine(Path.GetTempPath(), PowerPlanExportDirName);
+
+    private static void CleanupPowerPlanExportDir()
+    {
+        try
+        {
+            var dir = PowerPlanExportDir();
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+        }
+        catch
+        {
+            // Best-effort test cleanup only.
+        }
+    }
+
+    [Fact]
+    public void PowerPlan_SetState_true_exports_every_existing_scheme_before_any_delete_call()
+    {
+        CleanupPowerPlanExportDir();
+        try
+        {
+            var registry = new FakeRegistryService();
+            var scriptRunner = new FakeScriptRunner
+            {
+                CaptureOutputResponder = (_, arguments) => arguments == "/L"
+                    ? "Power Scheme GUID: 381b4222-f694-41f0-9685-ff5bb260df2e  (Balanced)\r\n" +
+                      "Power Scheme GUID: a1841308-3541-4fab-bc81-f71556f20b4a  (Power saver)\r\n"
+                    : string.Empty,
+            };
+            var handler = new PowerPlanTweakHandler(scriptRunner, registry, new FakeLogConsoleService());
+
+            handler.SetState(true);
+
+            var exportIndexes = IndexesWhere(scriptRunner.Calls, c => c.Arguments.StartsWith("-export", StringComparison.Ordinal));
+            var deleteIndexes = IndexesWhere(scriptRunner.Calls, c => c.Arguments.StartsWith("/delete", StringComparison.Ordinal));
+
+            Assert.Equal(2, exportIndexes.Count);
+            Assert.Equal(2, deleteIndexes.Count);
+            Assert.True(exportIndexes.Max() < deleteIndexes.Min());
+        }
+        finally
+        {
+            CleanupPowerPlanExportDir();
+        }
+    }
+
+    [Fact]
+    public void PowerPlan_SetState_false_falls_back_to_restoredefaultschemes_when_no_session_export_exists()
+    {
+        CleanupPowerPlanExportDir();
+        try
+        {
+            var registry = new FakeRegistryService();
+            var scriptRunner = new FakeScriptRunner();
+            var log = new FakeLogConsoleService();
+            var handler = new PowerPlanTweakHandler(scriptRunner, registry, log);
+
+            handler.SetState(false);
+
+            Assert.Contains(scriptRunner.Calls, c => c.FileName == "powercfg" && c.Arguments == "-restoredefaultschemes");
+            Assert.DoesNotContain(scriptRunner.Calls, c => c.Arguments.StartsWith("-import", StringComparison.Ordinal));
+            Assert.NotEmpty(log.Messages);
+        }
+        finally
+        {
+            CleanupPowerPlanExportDir();
+        }
+    }
+
+    [Fact]
+    public void PowerPlan_SetState_false_imports_session_backup_instead_of_restoredefaultschemes_when_export_exists()
+    {
+        CleanupPowerPlanExportDir();
+        var exportDir = PowerPlanExportDir();
+        Directory.CreateDirectory(exportDir);
+        File.WriteAllText(Path.Combine(exportDir, "381b4222-f694-41f0-9685-ff5bb260df2e.pow"), "fake-pow-contents");
+
+        try
+        {
+            var registry = new FakeRegistryService();
+            var scriptRunner = new FakeScriptRunner();
+            var handler = new PowerPlanTweakHandler(scriptRunner, registry, new FakeLogConsoleService());
+
+            handler.SetState(false);
+
+            Assert.Contains(scriptRunner.Calls, c => c.FileName == "powercfg" && c.Arguments.StartsWith("-import", StringComparison.Ordinal));
+            Assert.DoesNotContain(scriptRunner.Calls, c => c.Arguments == "-restoredefaultschemes");
+            Assert.False(Directory.Exists(exportDir));
+        }
+        finally
+        {
+            CleanupPowerPlanExportDir();
+        }
+    }
+
+    [Fact]
+    public void PowerPlan_GetState_returns_true_when_active_scheme_output_contains_custom_guid()
+    {
+        var scriptRunner = new FakeScriptRunner
+        {
+            CaptureOutputResponder = (_, arguments) => arguments == "/getactivescheme"
+                ? "Power Scheme GUID: 99999999-9999-9999-9999-999999999999  (Akari Toolbox Gaming)"
+                : string.Empty,
+        };
+        var handler = new PowerPlanTweakHandler(scriptRunner, new FakeRegistryService(), new FakeLogConsoleService());
+
+        Assert.True(handler.GetState());
+    }
+
+    [Fact]
+    public void PowerPlan_metadata_is_Order_109_Category_Gaming()
+    {
+        var handler = new PowerPlanTweakHandler(new FakeScriptRunner(), new FakeRegistryService(), new FakeLogConsoleService());
+
+        Assert.Equal(109, handler.Order);
+        Assert.Equal(TweakCategory.Gaming, handler.Category);
+        Assert.Equal("powerplan", handler.Key);
+    }
+
+    private static List<int> IndexesWhere(IReadOnlyList<(string FileName, string Arguments)> calls, Func<(string FileName, string Arguments), bool> predicate) =>
+        calls.Select((call, index) => (call, index)).Where(x => predicate(x.call)).Select(x => x.index).ToList();
+
+    // ---------- TimerResolutionTweakHandler (Task 3) ----------
+
+    private const string KernelKey = @"SYSTEM\CurrentControlSet\Control\Session Manager\kernel";
+    private const string CscPath = @"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe";
+
+    [Fact]
+    public void TimerResolution_SetState_true_logs_failure_and_skips_compilation_when_csc_missing()
+    {
+        var scriptRunner = new FakeScriptRunner();
+        var log = new FakeLogConsoleService();
+        var handler = new TimerResolutionTweakHandler(
+            scriptRunner, new FakeRegistryService(), new FakeWindowsServiceController(), log,
+            fileExists: _ => false);
+
+        handler.SetState(true);
+
+        Assert.DoesNotContain(scriptRunner.Calls, c => c.FileName == CscPath);
+        Assert.NotEmpty(log.Messages);
+    }
+
+    [Fact]
+    public void TimerResolution_SetState_true_compiles_via_csc_when_compiler_present()
+    {
+        var scriptRunner = new FakeScriptRunner();
+        var handler = new TimerResolutionTweakHandler(
+            scriptRunner, new FakeRegistryService(), new FakeWindowsServiceController(), new FakeLogConsoleService(),
+            fileExists: _ => true,
+            writeAllText: (_, _) => { });
+
+        handler.SetState(true);
+
+        var compileCall = Assert.Single(scriptRunner.Calls, c => c.FileName == CscPath);
+        Assert.Contains(@"C:\Windows\SetTimerResolutionService.exe", compileCall.Arguments, StringComparison.Ordinal);
+        Assert.Contains(@"C:\Windows\SetTimerResolutionService.cs", compileCall.Arguments, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TimerResolution_GetState_returns_true_only_when_GlobalTimerResolutionRequests_equals_1()
+    {
+        var registry = new FakeRegistryService();
+        var handler = new TimerResolutionTweakHandler(new FakeScriptRunner(), registry, new FakeWindowsServiceController(), new FakeLogConsoleService());
+
+        registry.Seed(RegistryHive.LocalMachine, KernelKey, "GlobalTimerResolutionRequests", 1);
+        Assert.True(handler.GetState());
+
+        registry.Seed(RegistryHive.LocalMachine, KernelKey, "GlobalTimerResolutionRequests", 0);
+        Assert.False(handler.GetState());
+    }
+
+    [Fact]
+    public void TimerResolution_metadata_is_Order_110_Category_Gaming()
+    {
+        var handler = new TimerResolutionTweakHandler(new FakeScriptRunner(), new FakeRegistryService(), new FakeWindowsServiceController(), new FakeLogConsoleService());
+
+        Assert.Equal(110, handler.Order);
+        Assert.Equal(TweakCategory.Gaming, handler.Category);
+        Assert.Equal("timerresolution", handler.Key);
+    }
+
+    private sealed class FakeWindowsServiceController : IWindowsServiceController
+    {
+        private readonly Dictionary<string, int> _startTypes = new(StringComparer.OrdinalIgnoreCase);
+
+        public int? GetStartType(string serviceName) =>
+            _startTypes.TryGetValue(serviceName, out var value) ? value : null;
+
+        public void SetStartType(string serviceName, int startValue) => _startTypes[serviceName] = startValue;
+    }
+
+    private sealed class FakeLogConsoleService : ILogConsoleService
+    {
+        public ObservableCollection<string> Lines { get; } = new();
+
+        public List<string> Messages { get; } = new();
+
+        public void Log(string message)
+        {
+            Messages.Add(message);
+            Lines.Add(message);
+        }
+    }
+
+    private sealed class FakeScriptRunner : IScriptRunner
+    {
+        public List<(string FileName, string Arguments)> Calls { get; } = new();
+
+        public Func<string, string, string>? CaptureOutputResponder { get; set; }
+
+        public Task<int> RunProcessAsync(string fileName, string arguments, TimeSpan? timeout = null)
+        {
+            Calls.Add((fileName, arguments));
+            return Task.FromResult(0);
+        }
+
+        public Task<string> RunProcessCaptureOutputAsync(string fileName, string arguments, TimeSpan? timeout = null)
+        {
+            Calls.Add((fileName, arguments));
+            return Task.FromResult(CaptureOutputResponder?.Invoke(fileName, arguments) ?? string.Empty);
+        }
+
+        public Task<int> RunEmbeddedScriptAsync(string resourceSuffix, string? arguments = null, TimeSpan? timeout = null) =>
+            throw new NotSupportedException("Not needed for Gaming Windows tests.");
     }
 
     private sealed class FakeRegistryService : IRegistryService

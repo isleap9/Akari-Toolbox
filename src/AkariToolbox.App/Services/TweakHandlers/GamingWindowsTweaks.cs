@@ -308,3 +308,587 @@ public sealed class WriteCacheFlushTweakHandler(IRegistryService registry) : ITw
     private IEnumerable<string> DiskMatches() =>
         ScsiNvmeRoots.SelectMany(root => DeviceTreeEnumeration.FindChildMatches(registry, root, "Disk"));
 }
+
+/// <summary>
+/// Ported from <c>6 Windows/27 Network IPv4 Only.ps1</c> (02-CONTEXT.md D-07). No raw
+/// registry access — shells to PowerShell's <c>NetAdapterBinding</c> cmdlets exclusively,
+/// matching the source script's own approach exactly (it never touches the registry
+/// directly for this tweak). The On and Off component-ID lists are deliberately
+/// asymmetric: Off re-enables the same 8 IDs the On branch disables, plus a 9th
+/// (<c>ms_tcpip</c>) that the On branch never touches — matching
+/// <c>27 ...:27,53</c>'s own lists exactly, not a copy-paste oversight.
+/// </summary>
+public sealed class NetworkIpv4OnlyTweakHandler(IScriptRunner scriptRunner) : ITweakHandler
+{
+    private static readonly string[] BindingComponentIds =
+    [
+        "ms_lldp", "ms_lltdio", "ms_implat", "ms_rspndr", "ms_tcpip6", "ms_server", "ms_msclient", "ms_pacer",
+    ];
+
+    public string Key => "netipv4only";
+
+    public string Title => "Force IPv4-Only Networking";
+
+    public string Description => "Disable IPv6 and other non-essential network bindings for lower latency";
+
+    public int Order => 107;
+
+    public TweakCategory Category => TweakCategory.Gaming;
+
+    public bool GetState()
+    {
+        var output = scriptRunner.RunProcessCaptureOutputAsync(
+                "powershell.exe",
+                "-NoProfile -Command \"(Get-NetAdapterBinding -Name '*' -ComponentID ms_tcpip6 | Select-Object -First 1).Enabled\"")
+            .GetAwaiter().GetResult();
+
+        // A disabled binding means the tweak is "on" — treat any unparseable/empty
+        // output (e.g. no adapters present) as "off" rather than throwing.
+        return string.Equals(output.Trim(), "False", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public void SetState(bool enable)
+    {
+        var cmdlet = enable ? "Disable-NetAdapterBinding" : "Enable-NetAdapterBinding";
+        var ids = enable ? BindingComponentIds : [.. BindingComponentIds, "ms_tcpip"];
+
+        foreach (var id in ids)
+        {
+            scriptRunner.RunProcessAsync(
+                    "powershell.exe",
+                    $"-NoProfile -Command \"{cmdlet} -Name '*' -ComponentID {id}\"")
+                .GetAwaiter().GetResult();
+        }
+    }
+}
+
+/// <summary>
+/// Ported from <c>6 Windows/29 Power Plan.ps1</c> (02-CONTEXT.md D-07) — the phase's most
+/// consequential handler. As authored, the source script's "revert" (Off branch) is
+/// <c>powercfg -restoredefaultschemes</c>, which deletes every power scheme on the system
+/// (including ones this app never touched) and restores only the 3 Windows-shipped
+/// defaults. RESEARCH.md Assumption A4 flags this as unsatisfiable for GAMING-01's literal
+/// "same real-state and revert behavior as Tweaks" requirement, so this handler is
+/// deliberately hardened beyond the source script (this plan's Flagged Assumptions,
+/// resolved not deferred): every pre-existing scheme is exported via
+/// <c>powercfg -export</c> to a per-session temp folder BEFORE any <c>powercfg /delete</c>
+/// call, and Off imports them back via <c>powercfg -import</c> rather than the destructive
+/// <c>-restoredefaultschemes</c> call. The naive destructive fallback only runs — and is
+/// logged as such — when no session-scoped export exists (e.g. the app restarted since
+/// SetState(true) last ran; the export is session-scoped, matching this codebase's existing
+/// session-scoped <c>_priorState</c> convention, not a permanent on-disk backup).
+///
+/// [Rule 3 - Blocking] This plan's Task 2 action text declares the constructor as
+/// <c>(IScriptRunner, IRegistryService)</c>, but its own SetState(false) fallback text
+/// requires logging via <see cref="ILogConsoleService"/> when no session export exists —
+/// added here to make that possible, matching Task 3's constructor, which already
+/// includes it.
+/// </summary>
+public sealed class PowerPlanTweakHandler(IScriptRunner scriptRunner, IRegistryService registry, ILogConsoleService log) : ITweakHandler
+{
+    private const string CustomSchemeGuid = "99999999-9999-9999-9999-999999999999";
+    private const string UltimatePerformanceBaseGuid = "e9a42b02-d5df-448d-aa00-03f14749eb61";
+
+    private const string PowerKey = @"SYSTEM\CurrentControlSet\Control\Power";
+    private const string FlyoutMenuSettingsKey = @"Software\Microsoft\Windows\CurrentVersion\Explorer\FlyoutMenuSettings";
+    private const string SessionManagerPowerKey = @"SYSTEM\CurrentControlSet\Control\Session Manager\Power";
+    private const string PowerThrottlingKey = @"SYSTEM\CurrentControlSet\Control\Power\PowerThrottling";
+
+    // Every powercfg /setacvalueindex + /setdcvalueindex pair the On branch applies against
+    // the custom scheme, ported verbatim from 29 Power Plan.ps1:65-227 (SubGroup GUID,
+    // Setting GUID, Value string kept exactly as authored — the source itself mixes
+    // "0x........" and bare zero-padded decimal forms).
+    private static readonly (string SubGroup, string Setting, string Value)[] AcDcValueIndexPairs =
+    [
+        ("0012ee47-9041-4b5d-9b77-535fba8b1442", "6738e2c4-e8a5-4a42-b16a-e040e769756e", "0x00000000"), // hard disk turn off after
+        ("0d7dbae2-4294-402a-ba8e-26777e8488cd", "309dce9b-bef4-4119-9921-a851fb12f0f4", "001"), // desktop background slideshow paused
+        ("19cbb8fa-5279-450e-9fac-8a3d5fedd0c1", "12bbebe6-58d6-4636-95bb-3217ef867c1a", "000"), // wireless adapter power saving mode maximum performance
+        ("238c9fa8-0aad-41ed-83f4-97be242c8f20", "29f6c1db-86da-48c5-9fdb-f2b67b1f44da", "0x00000000"), // sleep after
+        ("238c9fa8-0aad-41ed-83f4-97be242c8f20", "94ac6d29-73ce-41a6-809f-6363ba21b47e", "000"), // allow hybrid sleep off
+        ("238c9fa8-0aad-41ed-83f4-97be242c8f20", "9d7815a6-7ee4-497e-8888-515a05f02364", "0x00000000"), // hibernate after
+        ("238c9fa8-0aad-41ed-83f4-97be242c8f20", "bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d", "000"), // allow wake timers disable
+        ("2a737441-1930-4402-8d77-b2bebba308a3", "0853a681-27c8-4100-a2fd-82013e970683", "0x00000000"), // hub selective suspend timeout 0
+        ("2a737441-1930-4402-8d77-b2bebba308a3", "48e6b7a6-50f5-4782-a5d4-53bb8f07e226", "000"), // usb selective suspend setting disabled
+        ("2a737441-1930-4402-8d77-b2bebba308a3", "d4e98f31-5ffe-4ce1-be31-1b38b384c009", "000"), // usb 3 link power management off
+        ("4f971e89-eebd-4455-a8de-9e59040e7347", "a7066653-8d6c-40a8-910e-a1f54b84c7e5", "002"), // power buttons and lid: start menu power button shut down
+        ("501a4d13-42af-4429-9fd1-a8218c268e20", "ee12f906-d277-404b-b6da-e5fa1a576df5", "000"), // pci express link state power management off
+        ("54533251-82be-4824-96c1-47b60b740d00", "893dee8e-2bef-41e0-89c6-b55d0929964c", "0x00000064"), // minimum processor state 100%
+        ("54533251-82be-4824-96c1-47b60b740d00", "94d3a615-a899-4ac5-ae2b-e4d8f634367f", "001"), // system cooling policy active
+        ("54533251-82be-4824-96c1-47b60b740d00", "bc5038f7-23e0-4960-96da-33abaf5935ec", "0x00000064"), // maximum processor state 100%
+        ("54533251-82be-4824-96c1-47b60b740d00", "0cc5b647-c1df-4637-891a-dec35c318583", "0x00000064"), // processor performance core parking min cores 100%
+        ("54533251-82be-4824-96c1-47b60b740d00", "ea062031-0e34-4ff1-9b6d-eb1059334028", "0x00000064"), // processor performance core parking max cores 100%
+        ("7516b95f-f776-4464-8c53-06167f40cc99", "3c0bc021-c8a8-4e07-a973-6b14cbcb2b7e", "600"), // turn off display after 10 min (oled protection)
+        ("7516b95f-f776-4464-8c53-06167f40cc99", "aded5e82-b909-4619-9949-f5d71dac0bcb", "0x00000064"), // display brightness 100%
+        ("7516b95f-f776-4464-8c53-06167f40cc99", "f1fbfde2-a960-4165-9f88-50667911ce96", "0x00000064"), // dimmed display brightness 100%
+        ("7516b95f-f776-4464-8c53-06167f40cc99", "fbd9aa66-9553-4097-ba44-ed6e9d65eab8", "000"), // enable adaptive brightness off
+        ("9596fb26-9850-41fd-ac3e-f7c3c00afd4b", "10778347-1370-4ee0-8bbd-33bdacaade49", "001"), // video playback quality bias: performance bias
+        ("9596fb26-9850-41fd-ac3e-f7c3c00afd4b", "34c7b99f-9a6d-4b3c-8dc7-b6693b78cef4", "000"), // when playing video: optimize video quality off
+        ("44f3beca-a7c0-460e-9df2-bb8b99e0cba6", "3619c3f2-afb2-4afc-b0e9-e7fef372de36", "002"), // intel(r) graphics power plan maximum performance
+        ("c763b4ec-0e50-4b6b-9bed-2b92a6ee884e", "7ec1751b-60ed-4588-afb5-9819d3d77d90", "003"), // amd power slider overlay best performance
+        ("f693fb01-e858-4f00-b20f-f30e12ac06d6", "191f65b5-d45c-4a4f-8aae-1ab8bfd980e6", "001"), // ati powerplay settings maximize performance
+        ("e276e160-7cb0-43c6-b20b-73f5dce39954", "a1662ab2-9d34-4e53-ba8b-2639b9e20857", "003"), // switchable dynamic graphics global settings maximize performance
+        ("e73a048d-bf27-4f12-9731-8b2076e8891f", "5dbb7c9f-38e9-40d2-9749-4f8a0e9f640f", "000"), // critical battery notification off
+        ("e73a048d-bf27-4f12-9731-8b2076e8891f", "637ea02f-bbcb-4015-8e2c-a1c7b9c0b546", "000"), // critical battery action do nothing
+        ("e73a048d-bf27-4f12-9731-8b2076e8891f", "8183ba9a-e910-48da-8769-14ae6dc1170a", "0x00000000"), // low battery level 0%
+        ("e73a048d-bf27-4f12-9731-8b2076e8891f", "9a66d8d7-4ff7-4ef9-b5a2-5a326ca2a469", "0x00000000"), // critical battery level 0%
+        ("e73a048d-bf27-4f12-9731-8b2076e8891f", "bcded951-187b-4d05-bccc-f7e51960c258", "000"), // low battery notification off
+        ("e73a048d-bf27-4f12-9731-8b2076e8891f", "d8742dcb-3e6a-4b3c-b3fe-374623cdcf06", "000"), // low battery action do nothing
+        ("e73a048d-bf27-4f12-9731-8b2076e8891f", "f3c5027d-cd16-4930-aa6b-90db844a8f00", "0x00000000"), // reserve battery level 0%
+        ("de830923-a562-41af-a086-e3a2c6bad2da", "13d09884-f74e-474a-a852-b6bde8ad03a8", "0x00000064"), // low screen brightness when using battery saver disable
+        ("de830923-a562-41af-a086-e3a2c6bad2da", "e69653ca-cf7f-4f05-aa73-cb833fa90ad4", "0x00000000"), // turn battery saver on automatically: never
+    ];
+
+    // The 4 PowerSettings "Attributes" visibility keys the source toggles hidden(1)/shown(0),
+    // 29 Power Plan.ps1:95,106,134,142 (On, unhide) and :257,260,263,266 (Off, re-hide).
+    private static readonly (string SubGroup, string Setting)[] AttributesVisibilityKeys =
+    [
+        ("2a737441-1930-4402-8d77-b2bebba308a3", "0853a681-27c8-4100-a2fd-82013e970683"), // hub selective suspend timeout
+        ("2a737441-1930-4402-8d77-b2bebba308a3", "d4e98f31-5ffe-4ce1-be31-1b38b384c009"), // usb 3 link power management
+        ("54533251-82be-4824-96c1-47b60b740d00", "0cc5b647-c1df-4637-891a-dec35c318583"), // processor performance core parking min cores
+        ("54533251-82be-4824-96c1-47b60b740d00", "ea062031-0e34-4ff1-9b6d-eb1059334028"), // processor performance core parking max cores
+    ];
+
+    public string Key => "powerplan";
+
+    public string Title => "Gaming Power Plan";
+
+    public string Description => "Create and activate a custom high-performance power scheme, disabling hibernate/sleep/fast-boot/power-throttling";
+
+    public int Order => 109;
+
+    public TweakCategory Category => TweakCategory.Gaming;
+
+    // "Is the app's own custom scheme currently active" — an approximation of "real prior
+    // state", not a literal snapshot, matching how VpnTweakHandler/BluetoothTweakHandler
+    // already document the same GetState caveat (Phase 1 STATE.md).
+    public bool GetState()
+    {
+        var output = scriptRunner.RunProcessCaptureOutputAsync("powercfg", "/getactivescheme").GetAwaiter().GetResult();
+        return output.Contains(CustomSchemeGuid, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public void SetState(bool enable)
+    {
+        if (enable)
+        {
+            EnableInternal();
+        }
+        else
+        {
+            DisableInternal();
+        }
+    }
+
+    private void EnableInternal()
+    {
+        var listOutput = scriptRunner.RunProcessCaptureOutputAsync("powercfg", "/L").GetAwaiter().GetResult();
+        var existingSchemeGuids = ParseSchemeGuids(listOutput)
+            .Where(guid => !string.Equals(guid, CustomSchemeGuid, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        // Assumption A4 hardening — export every pre-existing scheme BEFORE any delete
+        // call, never present in the source script.
+        var exportDir = GetExportDir();
+        Directory.CreateDirectory(exportDir);
+        foreach (var guid in existingSchemeGuids)
+        {
+            var exportPath = Path.Combine(exportDir, $"{guid}.pow");
+            scriptRunner.RunProcessAsync("powercfg", $"-export \"{exportPath}\" {guid}").GetAwaiter().GetResult();
+        }
+
+        scriptRunner.RunProcessAsync("powercfg", $"/duplicatescheme {UltimatePerformanceBaseGuid} {CustomSchemeGuid}").GetAwaiter().GetResult();
+        scriptRunner.RunProcessAsync("powercfg", $"/setactive {CustomSchemeGuid}").GetAwaiter().GetResult();
+
+        foreach (var guid in existingSchemeGuids)
+        {
+            scriptRunner.RunProcessAsync("powercfg", $"/delete {guid}").GetAwaiter().GetResult();
+        }
+
+        scriptRunner.RunProcessAsync("powercfg", "/hibernate off").GetAwaiter().GetResult();
+        registry.SetValue(RegistryHive.LocalMachine, PowerKey, "HibernateEnabled", 0, RegistryValueKind.DWord);
+        registry.SetValue(RegistryHive.LocalMachine, PowerKey, "HibernateEnabledDefault", 0, RegistryValueKind.DWord);
+        registry.SetValue(RegistryHive.LocalMachine, FlyoutMenuSettingsKey, "ShowLockOption", 0, RegistryValueKind.DWord);
+        registry.SetValue(RegistryHive.LocalMachine, FlyoutMenuSettingsKey, "ShowSleepOption", 0, RegistryValueKind.DWord);
+        registry.SetValue(RegistryHive.LocalMachine, SessionManagerPowerKey, "HiberbootEnabled", 0, RegistryValueKind.DWord);
+        registry.SetValue(RegistryHive.LocalMachine, PowerThrottlingKey, "PowerThrottlingOff", 1, RegistryValueKind.DWord);
+
+        foreach (var (subGroup, setting) in AttributesVisibilityKeys)
+        {
+            registry.SetValue(RegistryHive.LocalMachine, PowerSettingsPath(subGroup, setting), "Attributes", 0, RegistryValueKind.DWord);
+        }
+
+        foreach (var (subGroup, setting, value) in AcDcValueIndexPairs)
+        {
+            scriptRunner.RunProcessAsync("powercfg", $"/setacvalueindex {CustomSchemeGuid} {subGroup} {setting} {value}").GetAwaiter().GetResult();
+            scriptRunner.RunProcessAsync("powercfg", $"/setdcvalueindex {CustomSchemeGuid} {subGroup} {setting} {value}").GetAwaiter().GetResult();
+        }
+    }
+
+    private void DisableInternal()
+    {
+        var exportDir = GetExportDir();
+        var exportedFiles = Directory.Exists(exportDir) ? Directory.GetFiles(exportDir, "*.pow") : [];
+
+        if (exportedFiles.Length > 0)
+        {
+            foreach (var file in exportedFiles)
+            {
+                scriptRunner.RunProcessAsync("powercfg", $"-import \"{file}\"").GetAwaiter().GetResult();
+            }
+
+            // Re-activate a restored scheme before deleting the app's own custom scheme —
+            // powercfg refuses to delete the currently active scheme.
+            var restoredGuid = Path.GetFileNameWithoutExtension(exportedFiles[0]);
+            scriptRunner.RunProcessAsync("powercfg", $"/setactive {restoredGuid}").GetAwaiter().GetResult();
+            scriptRunner.RunProcessAsync("powercfg", $"/delete {CustomSchemeGuid}").GetAwaiter().GetResult();
+
+            try { Directory.Delete(exportDir, recursive: true); } catch { /* best-effort cleanup */ }
+        }
+        else
+        {
+            log.Log("[POWER-PLAN] No session-scoped power-scheme backup found — falling back to powercfg -restoredefaultschemes (destructive: restores only the 3 Windows-shipped default schemes; any other pre-existing custom scheme is unrecoverable).");
+            scriptRunner.RunProcessAsync("powercfg", "-restoredefaultschemes").GetAwaiter().GetResult();
+        }
+
+        scriptRunner.RunProcessAsync("powercfg", "/hibernate on").GetAwaiter().GetResult();
+        registry.DeleteValue(RegistryHive.LocalMachine, PowerKey, "HibernateEnabled");
+        registry.SetValue(RegistryHive.LocalMachine, PowerKey, "HibernateEnabledDefault", 1, RegistryValueKind.DWord);
+        registry.DeleteSubKeyTree(RegistryHive.LocalMachine, FlyoutMenuSettingsKey);
+        registry.SetValue(RegistryHive.LocalMachine, SessionManagerPowerKey, "HiberbootEnabled", 1, RegistryValueKind.DWord);
+        registry.DeleteSubKeyTree(RegistryHive.LocalMachine, PowerThrottlingKey);
+
+        foreach (var (subGroup, setting) in AttributesVisibilityKeys)
+        {
+            registry.SetValue(RegistryHive.LocalMachine, PowerSettingsPath(subGroup, setting), "Attributes", 1, RegistryValueKind.DWord);
+        }
+    }
+
+    private static string PowerSettingsPath(string subGroup, string setting) =>
+        $@"SYSTEM\CurrentControlSet\Control\Power\PowerSettings\{subGroup}\{setting}";
+
+    // Per-session (not permanent) export folder — matches this codebase's existing
+    // session-scoped _priorState convention (RESEARCH.md Assumption A4).
+    private static string GetExportDir() =>
+        Path.Combine(Path.GetTempPath(), "AkariToolbox-PowerPlanBackup");
+
+    private static IReadOnlyList<string> ParseSchemeGuids(string powercfgListOutput) =>
+        Regex.Matches(powercfgListOutput, @"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
+            .Select(m => m.Value)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+}
+
+/// <summary>
+/// Ported from <c>6 Windows/30 Timer Resolution.ps1</c> (02-CONTEXT.md D-07). On enable,
+/// writes a fixed, compile-time C# source literal (<see cref="ServiceSourceCode"/>, never
+/// built from user/download input — this plan's threat model T-02-10) to disk, compiles it
+/// via a hardcoded <c>csc.exe</c> path, and installs/starts the resulting service via
+/// PowerShell cmdlets (mirroring the source script's own <c>New-Service</c>/<c>Set-Service</c>
+/// calls almost verbatim, minus the <c>Read-Host</c> menu and its error-suppressing flags —
+/// service-lifecycle failures now surface through <see cref="IScriptRunner"/>'s own
+/// captured-stdout/stderr logging instead of being swallowed). A missing compiler produces a
+/// visible, logged failure via <see cref="ILogConsoleService"/> BEFORE any compilation is
+/// attempted (RESEARCH.md Pitfall 3) — probed through an injectable <c>fileExists</c> seam
+/// so unit tests never touch the real filesystem for that check.
+/// </summary>
+public sealed class TimerResolutionTweakHandler(
+    IScriptRunner scriptRunner,
+    IRegistryService registry,
+    IWindowsServiceController serviceController,
+    ILogConsoleService log,
+    Func<string, bool>? fileExists = null,
+    Action<string, string>? writeAllText = null) : ITweakHandler
+{
+    private const string CscPath = @"C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe";
+    private const string CsSourcePath = @"C:\Windows\SetTimerResolutionService.cs";
+    private const string CompiledExePath = @"C:\Windows\SetTimerResolutionService.exe";
+    private const string ServiceName = "Set Timer Resolution Service";
+    private const string KernelKey = @"SYSTEM\CurrentControlSet\Control\Session Manager\kernel";
+
+    private readonly Func<string, bool> _fileExists = fileExists ?? File.Exists;
+    private readonly Action<string, string> _writeAllText = writeAllText ?? File.WriteAllText;
+
+    public string Key => "timerresolution";
+
+    public string Title => "High-Precision Timer Resolution";
+
+    public string Description => "Compile and install a background service that forces the OS's minimum timer resolution";
+
+    public int Order => 110;
+
+    public TweakCategory Category => TweakCategory.Gaming;
+
+    public bool GetState() =>
+        registry.GetValue(RegistryHive.LocalMachine, KernelKey, "GlobalTimerResolutionRequests") is int v && v == 1;
+
+    public void SetState(bool enable)
+    {
+        if (enable)
+        {
+            EnableInternal();
+        }
+        else
+        {
+            DisableInternal();
+        }
+    }
+
+    private void EnableInternal()
+    {
+        // Pitfall 3 fix — probe BEFORE compiling and log visibly on failure, unlike the
+        // source script's own silent-failure error handling throughout.
+        if (!_fileExists(CscPath))
+        {
+            log.Log("[TIMER-RES] csc.exe not found at expected path — Timer Resolution toggle cannot be applied on this machine.");
+            return;
+        }
+
+        _writeAllText(CsSourcePath, ServiceSourceCode);
+
+        scriptRunner.RunProcessAsync(CscPath, $"-out:{CompiledExePath} {CsSourcePath}").GetAwaiter().GetResult();
+
+        try { if (File.Exists(CsSourcePath)) { File.Delete(CsSourcePath); } } catch { /* best-effort cleanup */ }
+
+        // Remove a stale prior install before re-registering (30 Timer Resolution.ps1:228-231).
+        // No error-suppressing flag on Get-Service: a missing service just yields $null (no
+        // terminating error), and IScriptRunner itself captures/logs stderr rather than
+        // silently dropping it — the source script's own suppression is not carried over.
+        scriptRunner.RunProcessAsync(
+                "powershell.exe",
+                $"-NoProfile -Command \"if (Get-Service -Name '{ServiceName}') {{ sc.exe delete '{ServiceName}' | Out-Null; Start-Sleep -Seconds 2 }}\"")
+            .GetAwaiter().GetResult();
+
+        scriptRunner.RunProcessAsync(
+                "powershell.exe",
+                $"-NoProfile -Command \"New-Service -Name '{ServiceName}' -BinaryPathName '{CompiledExePath}' | Out-Null\"")
+            .GetAwaiter().GetResult();
+
+        serviceController.SetStartType(ServiceName, 2); // Auto — replaces Set-Service -StartupType Auto
+
+        scriptRunner.RunProcessAsync(
+                "powershell.exe",
+                $"-NoProfile -Command \"Set-Service -Name '{ServiceName}' -Status Running\"")
+            .GetAwaiter().GetResult();
+
+        registry.SetValue(RegistryHive.LocalMachine, KernelKey, "GlobalTimerResolutionRequests", 1, RegistryValueKind.DWord);
+    }
+
+    private void DisableInternal()
+    {
+        serviceController.SetStartType(ServiceName, 4); // Disabled — replaces Set-Service -StartupType Disabled
+
+        scriptRunner.RunProcessAsync(
+                "powershell.exe",
+                $"-NoProfile -Command \"Set-Service -Name '{ServiceName}' -Status Stopped\"")
+            .GetAwaiter().GetResult();
+
+        scriptRunner.RunProcessAsync("sc.exe", $"delete \"{ServiceName}\"").GetAwaiter().GetResult();
+
+        try { if (File.Exists(CompiledExePath)) { File.Delete(CompiledExePath); } } catch { /* best-effort cleanup */ }
+
+        registry.DeleteValue(RegistryHive.LocalMachine, KernelKey, "GlobalTimerResolutionRequests");
+    }
+
+    // Ported verbatim from 30 Timer Resolution.ps1:23-217 (the $csfile here-string) — a
+    // fixed compile-time literal, never built from user/download input (threat model
+    // T-02-10). Internally names the service "STR" (a source-authored mismatch against the
+    // "Set Timer Resolution Service" name PowerShell registers it under — not fixed here,
+    // ported exactly as authored per D-07's "exactly as authored" philosophy).
+    private const string ServiceSourceCode = """
+using System;
+using System.Runtime.InteropServices;
+using System.ServiceProcess;
+using System.ComponentModel;
+using System.Configuration.Install;
+using System.Collections.Generic;
+using System.Reflection;
+using System.IO;
+using System.Management;
+using System.Threading;
+using System.Diagnostics;
+[assembly: AssemblyVersion("2.1")]
+[assembly: AssemblyProduct("Set Timer Resolution service")]
+namespace WindowsService
+{
+    class WindowsService : ServiceBase
+    {
+        public WindowsService()
+        {
+            this.ServiceName = "STR";
+            this.EventLog.Log = "Application";
+            this.CanStop = true;
+            this.CanHandlePowerEvent = false;
+            this.CanHandleSessionChangeEvent = false;
+            this.CanPauseAndContinue = false;
+            this.CanShutdown = false;
+        }
+        static void Main()
+        {
+            ServiceBase.Run(new WindowsService());
+        }
+        protected override void OnStart(string[] args)
+        {
+            base.OnStart(args);
+            ReadProcessList();
+            NtQueryTimerResolution(out this.MinimumResolution, out this.MaximumResolution, out this.DefaultResolution);
+            if(null != this.EventLog)
+                try { this.EventLog.WriteEntry(String.Format("Minimum={0}; Maximum={1}; Default={2}; Processes='{3}'", this.MinimumResolution, this.MaximumResolution, this.DefaultResolution, null != this.ProcessesNames ? String.Join("','", this.ProcessesNames) : "")); }
+                catch {}
+            if(null == this.ProcessesNames)
+            {
+                SetMaximumResolution();
+                return;
+            }
+            if(0 == this.ProcessesNames.Count)
+            {
+                return;
+            }
+            this.ProcessStartDelegate = new OnProcessStart(this.ProcessStarted);
+            try
+            {
+                String query = String.Format("SELECT * FROM __InstanceCreationEvent WITHIN 0.5 WHERE (TargetInstance isa \"Win32_Process\") AND (TargetInstance.Name=\"{0}\")", String.Join("\" OR TargetInstance.Name=\"", this.ProcessesNames));
+                this.startWatch = new ManagementEventWatcher(query);
+                this.startWatch.EventArrived += this.startWatch_EventArrived;
+                this.startWatch.Start();
+            }
+            catch(Exception ee)
+            {
+                if(null != this.EventLog)
+                    try { this.EventLog.WriteEntry(ee.ToString(), EventLogEntryType.Error); }
+                    catch {}
+            }
+        }
+        protected override void OnStop()
+        {
+            if(null != this.startWatch)
+            {
+                this.startWatch.Stop();
+            }
+
+            base.OnStop();
+        }
+        ManagementEventWatcher startWatch;
+        void startWatch_EventArrived(object sender, EventArrivedEventArgs e)
+        {
+            try
+            {
+                ManagementBaseObject process = (ManagementBaseObject)e.NewEvent.Properties["TargetInstance"].Value;
+                UInt32 processId = (UInt32)process.Properties["ProcessId"].Value;
+                this.ProcessStartDelegate.BeginInvoke(processId, null, null);
+            }
+            catch(Exception ee)
+            {
+                if(null != this.EventLog)
+                    try { this.EventLog.WriteEntry(ee.ToString(), EventLogEntryType.Warning); }
+                    catch {}
+
+            }
+        }
+        [DllImport("kernel32.dll", SetLastError=true)]
+        static extern Int32 WaitForSingleObject(IntPtr Handle, Int32 Milliseconds);
+        [DllImport("kernel32.dll", SetLastError=true)]
+        static extern IntPtr OpenProcess(UInt32 DesiredAccess, Int32 InheritHandle, UInt32 ProcessId);
+        [DllImport("kernel32.dll", SetLastError=true)]
+        static extern Int32 CloseHandle(IntPtr Handle);
+        const UInt32 SYNCHRONIZE = 0x00100000;
+        delegate void OnProcessStart(UInt32 processId);
+        OnProcessStart ProcessStartDelegate = null;
+        void ProcessStarted(UInt32 processId)
+        {
+            SetMaximumResolution();
+            IntPtr processHandle = IntPtr.Zero;
+            try
+            {
+                processHandle = OpenProcess(SYNCHRONIZE, 0, processId);
+                if(processHandle != IntPtr.Zero)
+                    WaitForSingleObject(processHandle, -1);
+            }
+            catch(Exception ee)
+            {
+                if(null != this.EventLog)
+                    try { this.EventLog.WriteEntry(ee.ToString(), EventLogEntryType.Warning); }
+                    catch {}
+            }
+            finally
+            {
+                if(processHandle != IntPtr.Zero)
+                    CloseHandle(processHandle);
+            }
+            SetDefaultResolution();
+        }
+        List<String> ProcessesNames = null;
+        void ReadProcessList()
+        {
+            String iniFilePath = Assembly.GetExecutingAssembly().Location + ".ini";
+            if(File.Exists(iniFilePath))
+            {
+                this.ProcessesNames = new List<String>();
+                String[] iniFileLines = File.ReadAllLines(iniFilePath);
+                foreach(var line in iniFileLines)
+                {
+                    String[] names = line.Split(new char[] {',', ' ', ';'} , StringSplitOptions.RemoveEmptyEntries);
+                    foreach(var name in names)
+                    {
+                        String lwr_name = name.ToLower();
+                        if(!lwr_name.EndsWith(".exe"))
+                            lwr_name += ".exe";
+                        if(!this.ProcessesNames.Contains(lwr_name))
+                            this.ProcessesNames.Add(lwr_name);
+                    }
+                }
+            }
+        }
+        [DllImport("ntdll.dll", SetLastError=true)]
+        static extern int NtSetTimerResolution(uint DesiredResolution, bool SetResolution, out uint CurrentResolution);
+        [DllImport("ntdll.dll", SetLastError=true)]
+        static extern int NtQueryTimerResolution(out uint MinimumResolution, out uint MaximumResolution, out uint ActualResolution);
+        uint DefaultResolution = 0;
+        uint MinimumResolution = 0;
+        uint MaximumResolution = 0;
+        long processCounter = 0;
+        void SetMaximumResolution()
+        {
+            long counter = Interlocked.Increment(ref this.processCounter);
+            if(counter <= 1)
+            {
+                uint actual = 0;
+                NtSetTimerResolution(this.MaximumResolution, true, out actual);
+                if(null != this.EventLog)
+                    try { this.EventLog.WriteEntry(String.Format("Actual resolution = {0}", actual)); }
+                    catch {}
+            }
+        }
+        void SetDefaultResolution()
+        {
+            long counter = Interlocked.Decrement(ref this.processCounter);
+            if(counter < 1)
+            {
+                uint actual = 0;
+                NtSetTimerResolution(this.DefaultResolution, true, out actual);
+                if(null != this.EventLog)
+                    try { this.EventLog.WriteEntry(String.Format("Actual resolution = {0}", actual)); }
+                    catch {}
+            }
+        }
+    }
+    [RunInstaller(true)]
+    public class WindowsServiceInstaller : Installer
+    {
+        public WindowsServiceInstaller()
+        {
+            ServiceProcessInstaller serviceProcessInstaller =
+                               new ServiceProcessInstaller();
+            ServiceInstaller serviceInstaller = new ServiceInstaller();
+            serviceProcessInstaller.Account = ServiceAccount.LocalSystem;
+            serviceProcessInstaller.Username = null;
+            serviceProcessInstaller.Password = null;
+            serviceInstaller.DisplayName = "Set Timer Resolution Service";
+            serviceInstaller.StartType = ServiceStartMode.Automatic;
+            serviceInstaller.ServiceName = "STR";
+            this.Installers.Add(serviceProcessInstaller);
+            this.Installers.Add(serviceInstaller);
+        }
+    }
+}
+""";
+}
