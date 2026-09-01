@@ -44,6 +44,9 @@
     <EmbeddedResource Include="Resources\GamingScripts\driverinstalllatest-intel.ps1" />
     <EmbeddedResource Include="Resources\GamingScripts\nvidiasettings-recommended.ps1" />
     <EmbeddedResource Include="Resources\GamingScripts\nvidiasettings-default.ps1" />
+    <EmbeddedResource Include="Resources\GamingScripts\driverinstalldebloat-nvidia.ps1" />
+    <EmbeddedResource Include="Resources\GamingScripts\driverinstalldebloat-amd.ps1" />
+    <EmbeddedResource Include="Resources\GamingScripts\driverinstalldebloat-intel.ps1" />
   </ItemGroup>
 
   <ItemGroup>

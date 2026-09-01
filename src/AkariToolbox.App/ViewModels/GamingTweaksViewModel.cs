@@ -153,6 +153,15 @@ public partial class GamingTweaksViewModel : ViewModelBase
     [RelayCommand]
     private Task RunNvidiaSettingsDefaultAsync() => RunD06ScriptAsync("Nvidia Settings (Default)", "nvidiasettings-default.ps1");
 
+    [RelayCommand]
+    private Task RunDriverInstallDebloatNvidiaAsync() => RunD06ScriptAsync("Driver Install Debloat & Settings (NVIDIA)", "driverinstalldebloat-nvidia.ps1");
+
+    [RelayCommand]
+    private Task RunDriverInstallDebloatAmdAsync() => RunD06ScriptAsync("Driver Install Debloat & Settings (AMD)", "driverinstalldebloat-amd.ps1");
+
+    [RelayCommand]
+    private Task RunDriverInstallDebloatIntelAsync() => RunD06ScriptAsync("Driver Install Debloat & Settings (Intel)", "driverinstalldebloat-intel.ps1");
+
     private Task RunD06ScriptAsync(string displayName, string resourceSuffix)
     {
         _log.Log($"[GAMING] Launching {displayName} — downloaded binary is NOT SHA256/signature-verified before execution (accepted risk, D-06).");

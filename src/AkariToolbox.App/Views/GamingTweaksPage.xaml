@@ -83,6 +83,12 @@
                 <Button Content="Nvidia Settings (Default)" Command="{x:Bind ViewModel.RunNvidiaSettingsDefaultCommand}" />
             </StackPanel>
 
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="Driver Install Debloat &amp; Settings (NVIDIA)" Command="{x:Bind ViewModel.RunDriverInstallDebloatNvidiaCommand}" />
+                <Button Content="Driver Install Debloat &amp; Settings (AMD)" Command="{x:Bind ViewModel.RunDriverInstallDebloatAmdCommand}" />
+                <Button Content="Driver Install Debloat &amp; Settings (Intel)" Command="{x:Bind ViewModel.RunDriverInstallDebloatIntelCommand}" />
+            </StackPanel>
+
         </StackPanel>
     </ScrollViewer>
 </Page>
