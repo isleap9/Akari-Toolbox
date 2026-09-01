@@ -105,6 +105,34 @@ public class DebloatCatalogTests
     }
 
     [Fact]
+    public void ExplorerUi_category_all_actions_have_resolvable_resources()
+    {
+        var catalog = new DebloatCatalog();
+        var resourceNames = typeof(AppEntry).Assembly.GetManifestResourceNames();
+
+        var explorerUiActions = catalog.Actions.Where(a => a.Category == "Explorer & UI");
+
+        Assert.All(explorerUiActions, action =>
+        {
+            Assert.Contains(resourceNames, n => n.EndsWith(action.RunResourceSuffix, StringComparison.OrdinalIgnoreCase));
+            Assert.NotNull(action.UndoResourceSuffix);
+            Assert.Contains(resourceNames, n => n.EndsWith(action.UndoResourceSuffix!, StringComparison.OrdinalIgnoreCase));
+        });
+    }
+
+    [Fact]
+    public void Tools_category_action_has_resolvable_run_resource_and_no_undo()
+    {
+        var catalog = new DebloatCatalog();
+        var resourceNames = typeof(AppEntry).Assembly.GetManifestResourceNames();
+
+        var oosuAction = catalog.Actions.Single(a => a.Key == "oosu");
+
+        Assert.Contains(resourceNames, n => n.EndsWith(oosuAction.RunResourceSuffix, StringComparison.OrdinalIgnoreCase));
+        Assert.Null(oosuAction.UndoResourceSuffix);
+    }
+
+    [Fact]
     public async Task DebloatViewModel_run_action_invokes_script_runner_with_correct_suffix()
     {
         var scriptRunner = new FakeScriptRunner();
