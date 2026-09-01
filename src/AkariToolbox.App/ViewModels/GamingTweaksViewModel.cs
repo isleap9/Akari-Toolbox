@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Dispatching;
 using AkariToolbox.App.Models;
 using AkariToolbox.App.Services;
@@ -56,6 +58,19 @@ public partial class GamingTweaksViewModel : ViewModelBase
     }
 
     public ObservableCollection<TweakItem> Tweaks { get; } = [];
+
+    // D-05 one-shot shortcuts (12 Resolution Refresh Rate.ps1 / 13 Hags Windowed.ps1) —
+    // plain ms-settings: URI launches, not ITweakHandlers: no menu, no elevation check,
+    // no state. The shell-execute-through-explorer launch style below is borrowed from
+    // DefenderTweakHandler.DefenderRunElevatedPsFileAsync, the only other call site in
+    // this codebase using that same ProcessStartInfo shape.
+    [RelayCommand]
+    private void OpenDisplaySettings() =>
+        Process.Start(new ProcessStartInfo("ms-settings:display") { UseShellExecute = true });
+
+    [RelayCommand]
+    private void OpenAdvancedGraphicsSettings() =>
+        Process.Start(new ProcessStartInfo("ms-settings:display-advancedgraphics") { UseShellExecute = true });
 
     private void OnTweakItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {

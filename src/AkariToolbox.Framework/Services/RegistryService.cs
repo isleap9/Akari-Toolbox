@@ -60,6 +60,12 @@ public sealed class RegistryService : IRegistryService
         parent?.DeleteSubKeyTree(name, throwOnMissingSubKey: false);
     }
 
+    public void CreateSubKey(RegistryHive hive, string subKeyPath)
+    {
+        using var baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64);
+        using var subKey = baseKey.CreateSubKey(subKeyPath, writable: true);
+    }
+
     public RegistryKey OpenRealUserHive(string subKeyPath)
     {
         // WR-01 fix (01-REVIEW.md): dispose the Process object and close the native

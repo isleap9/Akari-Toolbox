@@ -38,6 +38,16 @@ public interface IRegistryService
         throw new NotSupportedException($"{nameof(DeleteSubKeyTree)} is not implemented by this {nameof(IRegistryService)}.");
 
     /// <summary>
+    /// Opens (creating if needed) <paramref name="subKeyPath"/> with no value set — used
+    /// for the "delete then recreate empty" pattern (e.g. AMD Settings' Notification
+    /// subkey). Idempotent: a no-op if the subkey already exists. Declared as a default
+    /// interface member for the same reason as <see cref="DeleteSubKeyTree"/> — test
+    /// doubles that predate this member and never exercise it do not need updating.
+    /// </summary>
+    void CreateSubKey(RegistryHive hive, string subKeyPath) =>
+        throw new NotSupportedException($"{nameof(CreateSubKey)} is not implemented by this {nameof(IRegistryService)}.");
+
+    /// <summary>
     /// Opens (creating if needed) a sub-key under the real interactive user's HKCU hive,
     /// even though this process is elevated (whose own <c>Registry.CurrentUser</c> may
     /// resolve to a different hive). Ported from the predecessor's

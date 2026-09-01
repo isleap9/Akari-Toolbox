@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Microsoft.Win32;
 using AkariToolbox.Framework.Services;
@@ -179,5 +180,222 @@ public sealed class MsiModeTweakHandler(IRegistryService registry, IScriptRunner
             "-NoProfile -Command \"(Get-PnpDevice -Class Display).InstanceId\"");
 
         return output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    }
+}
+
+/// <summary>
+/// Ported from <c>5 Graphics/6 Intel Settings.ps1</c> (02-CONTEXT.md D-04). Unlike the
+/// other Graphics handlers, this one's on/off shape is asymmetric — creates a whole
+/// <c>3DKeys</c> child subkey per adapter on the On branch, deletes the entire subkey
+/// (not individual values) on the Off branch, matching <c>6 Intel Settings.ps1</c>'s own
+/// asymmetric create-vs-delete-subkey shape. Targets <c>CurrentControlSet</c>, deviating
+/// from the source script's own hardcoded legacy control-set number (RESEARCH.md
+/// Pitfall 1).
+/// </summary>
+public sealed class IntelSettingsTweakHandler(IRegistryService registry) : ITweakHandler
+{
+    public string Key => "gpuintelsettings";
+
+    public string Title => "Intel Graphics Settings";
+
+    public string Description => "Enable async flip mode and low-latency mode on Intel GPUs";
+
+    public int Order => 104;
+
+    public TweakCategory Category => TweakCategory.Gaming;
+
+    public bool GetState()
+    {
+        var adapters = GpuAdapterEnumeration.GetGpuAdapterSubKeys(registry).ToList();
+        if (adapters.Count == 0)
+        {
+            return false;
+        }
+
+        return adapters.All(adapter =>
+            registry.GetValue(
+                RegistryHive.LocalMachine,
+                BuildKeysPath(adapter),
+                "Global_AsyncFlipMode") is int v && v == 2);
+    }
+
+    public void SetState(bool enabled)
+    {
+        foreach (var adapter in GpuAdapterEnumeration.GetGpuAdapterSubKeys(registry))
+        {
+            var keysPath = BuildKeysPath(adapter);
+
+            if (enabled)
+            {
+                registry.SetValue(RegistryHive.LocalMachine, keysPath, "Global_AsyncFlipMode", 2, RegistryValueKind.DWord);
+                registry.SetValue(RegistryHive.LocalMachine, keysPath, "Global_LowLatency", 0, RegistryValueKind.DWord);
+            }
+            else
+            {
+                registry.DeleteSubKeyTree(RegistryHive.LocalMachine, keysPath);
+            }
+        }
+    }
+
+    private static string BuildKeysPath(string adapter) =>
+        $@"{GpuAdapterEnumeration.GpuDisplayClassGuid}\{adapter}\3DKeys";
+}
+
+/// <summary>
+/// Converts a hex string (pairs of hex characters, as authored in <c>reg.exe /t
+/// REG_BINARY /d "..."</c> syntax) into a <see cref="byte"/> array — matches how
+/// <c>reg.exe</c> itself parses its data argument. Shared by every REG_BINARY value in
+/// <see cref="AmdSettingsTweakHandler"/>'s value table so the conversion is written once,
+/// not scattered as manual byte-array literals (RESEARCH.md Don't Hand-Roll table).
+/// </summary>
+internal static class RegistryBinaryHelpers
+{
+    internal static byte[] HexStringToBytes(string hex)
+    {
+        var bytes = new byte[hex.Length / 2];
+        for (var i = 0; i < bytes.Length; i++)
+        {
+            bytes[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
+        }
+
+        return bytes;
+    }
+}
+
+/// <summary>
+/// Ported from <c>5 Graphics/5 Amd Settings.ps1</c> (02-CONTEXT.md D-04) — the largest and
+/// most complex Gaming toggle: 10 fixed <c>HKCU\Software\AMD\{CN,AIM,DVR}</c> values plus
+/// per-adapter registry paths under the shared GPU Display class GUID
+/// (<see cref="GpuAdapterEnumeration"/>). Targets <c>CurrentControlSet</c> throughout,
+/// deviating from the source script's own hardcoded legacy control-set number
+/// (RESEARCH.md Pitfall 1).
+/// </summary>
+public sealed class AmdSettingsTweakHandler(IRegistryService registry) : ITweakHandler
+{
+    private const string Cn = @"Software\AMD\CN";
+    private const string Aim = @"Software\AMD\AIM";
+    private const string Dvr = @"Software\AMD\DVR";
+
+    public string Key => "gpuamdsettings";
+
+    public string Title => "AMD Software Settings";
+
+    public string Description => "Apply recommended AMD Radeon Software tweaks (disables telemetry/overlays, sets performance registry keys)";
+
+    public int Order => 103;
+
+    public TweakCategory Category => TweakCategory.Gaming;
+
+    public bool GetState() =>
+        registry.GetValue(RegistryHive.CurrentUser, Cn, "AutoUpdate") is int v && v == 0;
+
+    public void SetState(bool enabled)
+    {
+        if (enabled)
+        {
+            ApplyOn();
+        }
+        else
+        {
+            ApplyOff();
+        }
+    }
+
+    private void ApplyOn()
+    {
+        registry.SetValue(RegistryHive.CurrentUser, Cn, "AutoUpdate", 0, RegistryValueKind.DWord);
+        registry.SetValue(RegistryHive.CurrentUser, Aim, "LaunchBugTool", 0, RegistryValueKind.DWord);
+        registry.SetValue(RegistryHive.CurrentUser, Dvr, "HotkeysDisabled", 1, RegistryValueKind.DWord);
+        registry.SetValue(RegistryHive.CurrentUser, Cn, "SystemTray", "false", RegistryValueKind.String);
+        registry.SetValue(RegistryHive.CurrentUser, Dvr, "ShowRSOverlay", "false", RegistryValueKind.String);
+        registry.SetValue(RegistryHive.CurrentUser, Cn, "RSXBrowserUnavailable", "true", RegistryValueKind.String);
+        registry.SetValue(RegistryHive.CurrentUser, Cn, "AllowWebContent", "false", RegistryValueKind.String);
+        registry.SetValue(RegistryHive.CurrentUser, Cn, "CN_Hide_Toast_Notification", "true", RegistryValueKind.String);
+        registry.SetValue(RegistryHive.CurrentUser, Cn, "AnimationEffect", "false", RegistryValueKind.String);
+        registry.SetValue(RegistryHive.CurrentUser, Cn, "WizardProfile", "PROFILE_CUSTOM", RegistryValueKind.String);
+
+        foreach (var adapter in GpuAdapterEnumeration.GetGpuAdapterSubKeys(registry))
+        {
+            var adapterPath = $@"{GpuAdapterEnumeration.GpuDisplayClassGuid}\{adapter}";
+            var umdPath = $@"{adapterPath}\UMD";
+
+            registry.SetValue(RegistryHive.LocalMachine, umdPath, "VSyncControl", RegistryBinaryHelpers.HexStringToBytes("3000"), RegistryValueKind.Binary);
+            registry.SetValue(RegistryHive.LocalMachine, umdPath, "TFQ", RegistryBinaryHelpers.HexStringToBytes("3200"), RegistryValueKind.Binary);
+            registry.SetValue(RegistryHive.LocalMachine, umdPath, "Tessellation", RegistryBinaryHelpers.HexStringToBytes("3100"), RegistryValueKind.Binary);
+            registry.SetValue(RegistryHive.LocalMachine, umdPath, "Tessellation_OPTION", RegistryBinaryHelpers.HexStringToBytes("3200"), RegistryValueKind.Binary);
+
+            registry.SetValue(RegistryHive.LocalMachine, $@"{adapterPath}\power_v1", "abmlevel", RegistryBinaryHelpers.HexStringToBytes("00000000"), RegistryValueKind.Binary);
+            registry.SetValue(RegistryHive.LocalMachine, adapterPath, "IsAutoDefault", RegistryBinaryHelpers.HexStringToBytes("00000000"), RegistryValueKind.Binary);
+            registry.SetValue(RegistryHive.LocalMachine, adapterPath, "IsComponentControl", RegistryBinaryHelpers.HexStringToBytes("0f000000"), RegistryValueKind.Binary);
+        }
+
+        registry.SetValue(RegistryHive.CurrentUser, $@"{Cn}\CustomResolutions", "EulaAccepted", "true", RegistryValueKind.String);
+        registry.SetValue(RegistryHive.CurrentUser, $@"{Cn}\DisplayOverride", "EulaAccepted", "true", RegistryValueKind.String);
+
+        registry.DeleteSubKeyTree(RegistryHive.CurrentUser, $@"{Cn}\Notification");
+        registry.CreateSubKey(RegistryHive.CurrentUser, $@"{Cn}\Notification");
+
+        registry.SetValue(RegistryHive.CurrentUser, $@"{Cn}\FreeSync", "AlreadyNotified", 1, RegistryValueKind.DWord);
+        registry.SetValue(RegistryHive.CurrentUser, $@"{Cn}\OverlayNotification", "AlreadyNotified", 1, RegistryValueKind.DWord);
+        registry.SetValue(RegistryHive.CurrentUser, $@"{Cn}\VirtualSuperResolution", "AlreadyNotified", 1, RegistryValueKind.DWord);
+
+        TryRestartRadeonSoftware();
+    }
+
+    private void ApplyOff()
+    {
+        registry.DeleteValue(RegistryHive.CurrentUser, Cn, "AutoUpdate");
+        registry.SetValue(RegistryHive.CurrentUser, Aim, "LaunchBugTool", 1, RegistryValueKind.DWord);
+        registry.DeleteValue(RegistryHive.CurrentUser, Dvr, "HotkeysDisabled");
+        registry.DeleteValue(RegistryHive.CurrentUser, Cn, "SystemTray");
+        registry.DeleteValue(RegistryHive.CurrentUser, Dvr, "ShowRSOverlay");
+        registry.DeleteValue(RegistryHive.CurrentUser, Cn, "RSXBrowserUnavailable");
+        registry.DeleteValue(RegistryHive.CurrentUser, Cn, "AllowWebContent");
+        registry.DeleteValue(RegistryHive.CurrentUser, Cn, "CN_Hide_Toast_Notification");
+        registry.DeleteValue(RegistryHive.CurrentUser, Cn, "AnimationEffect");
+        registry.DeleteValue(RegistryHive.CurrentUser, Cn, "WizardProfile");
+
+        foreach (var adapter in GpuAdapterEnumeration.GetGpuAdapterSubKeys(registry))
+        {
+            var adapterPath = $@"{GpuAdapterEnumeration.GpuDisplayClassGuid}\{adapter}";
+            var umdPath = $@"{adapterPath}\UMD";
+
+            registry.SetValue(RegistryHive.LocalMachine, umdPath, "VSyncControl", RegistryBinaryHelpers.HexStringToBytes("31000000"), RegistryValueKind.Binary);
+            registry.DeleteValue(RegistryHive.LocalMachine, umdPath, "TFQ");
+            registry.SetValue(RegistryHive.LocalMachine, umdPath, "Tessellation", RegistryBinaryHelpers.HexStringToBytes("360034000000"), RegistryValueKind.Binary);
+            registry.SetValue(RegistryHive.LocalMachine, umdPath, "Tessellation_OPTION", RegistryBinaryHelpers.HexStringToBytes("30000000"), RegistryValueKind.Binary);
+
+            registry.DeleteValue(RegistryHive.LocalMachine, $@"{adapterPath}\power_v1", "abmlevel");
+            registry.SetValue(RegistryHive.LocalMachine, adapterPath, "IsAutoDefault", 1, RegistryValueKind.DWord);
+            registry.SetValue(RegistryHive.LocalMachine, adapterPath, "IsComponentControl", RegistryBinaryHelpers.HexStringToBytes("00000000"), RegistryValueKind.Binary);
+        }
+
+        registry.DeleteSubKeyTree(RegistryHive.CurrentUser, $@"{Cn}\CustomResolutions");
+        registry.DeleteSubKeyTree(RegistryHive.CurrentUser, $@"{Cn}\DisplayOverride");
+        registry.DeleteSubKeyTree(RegistryHive.CurrentUser, $@"{Cn}\Notification");
+        registry.DeleteSubKeyTree(RegistryHive.CurrentUser, $@"{Cn}\FreeSync");
+        registry.DeleteSubKeyTree(RegistryHive.CurrentUser, $@"{Cn}\OverlayNotification");
+        registry.DeleteSubKeyTree(RegistryHive.CurrentUser, $@"{Cn}\VirtualSuperResolution");
+    }
+
+    // Best-effort, non-blocking (5 Amd Settings.ps1:22-24): restart RadeonSoftware.exe so
+    // settings stick. Never throws — AMD Radeon Software isn't guaranteed to be installed
+    // or running on this machine.
+    private static void TryRestartRadeonSoftware()
+    {
+        try
+        {
+            foreach (var process in Process.GetProcessesByName("RadeonSoftware"))
+            {
+                using (process)
+                {
+                    process.Kill();
+                }
+            }
+        }
+        catch
+        {
+            // Best-effort only — must never fail SetState.
+        }
     }
 }
