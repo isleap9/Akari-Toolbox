@@ -1,4 +1,8 @@
 # Enable Consumer Features (Tips, Suggestions, Promotions)
+$policyPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent"
+If (Test-Path $policyPath) {
+    Remove-ItemProperty -Path $policyPath -Name "DisableWindowsConsumerFeatures" -Force -ErrorAction SilentlyContinue
+}
 $regKeys = @(
     @{Path="HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"; Name="ShowSyncProviderNotifications"; Value=1; Type="DWord"},
     @{Path="HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"; Name="ContentDeliveryAllowed"; Value=1; Type="DWord"},
@@ -13,4 +17,4 @@ foreach ($key in $regKeys) {
     If (!(Test-Path $key.Path)) { New-Item -Path $key.Path -Force | Out-Null }
     Set-ItemProperty -Path $key.Path -Name $key.Name -Value $key.Value -Type $key.Type -Force
 }
-Write-Host "Consumer Features enabled."
+Write-Host "Consumer Features restored to default."

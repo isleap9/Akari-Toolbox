@@ -48,6 +48,24 @@ public class DebloatScriptRegressionTests
         key?.DeleteValue(valueName, throwOnMissingValue: false);
     }
 
+    private static object? ReadHkcu(string subKeyPath, string valueName)
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(subKeyPath);
+        return key?.GetValue(valueName);
+    }
+
+    private static void WriteHkcu(string subKeyPath, string valueName, object value, RegistryValueKind kind)
+    {
+        using var key = Registry.CurrentUser.CreateSubKey(subKeyPath, writable: true);
+        key!.SetValue(valueName, value, kind);
+    }
+
+    private static void DeleteHkcuIfPresent(string subKeyPath, string valueName)
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(subKeyPath, writable: true);
+        key?.DeleteValue(valueName, throwOnMissingValue: false);
+    }
+
     [Fact]
     public async Task LocationTracking_run_then_undo_restores_the_three_guaranteed_HKLM_values()
     {
@@ -131,6 +149,122 @@ public class DebloatScriptRegressionTests
 
             if (beforeMaps is not null) WriteHklm(mapsPath, "AutoUpdateEnabled", beforeMaps, RegistryValueKind.DWord);
             else DeleteHklmIfPresent(mapsPath, "AutoUpdateEnabled");
+        }
+    }
+
+    [Fact]
+    public async Task ConsumerFeatures_run_then_undo_restores_DisableWindowsConsumerFeatures_policy()
+    {
+        if (!IsElevated())
+        {
+            Console.WriteLine("SKIPPED (requires elevation): ConsumerFeatures_run_then_undo_restores_DisableWindowsConsumerFeatures_policy");
+            return;
+        }
+
+        const string policyPath = @"SOFTWARE\Policies\Microsoft\Windows\CloudContent";
+        var before = ReadHklm(policyPath, "DisableWindowsConsumerFeatures");
+
+        try
+        {
+            var runner = CreateRunner();
+
+            var runExitCode = await runner.RunEmbeddedScriptAsync("consumerfeatures.ps1");
+            Assert.Equal(0, runExitCode);
+            Assert.Equal(1, ReadHklm(policyPath, "DisableWindowsConsumerFeatures"));
+
+            var undoExitCode = await runner.RunEmbeddedScriptAsync("consumerfeatures-undo.ps1");
+            Assert.Equal(0, undoExitCode);
+            Assert.Null(ReadHklm(policyPath, "DisableWindowsConsumerFeatures"));
+        }
+        finally
+        {
+            if (before is not null) WriteHklm(policyPath, "DisableWindowsConsumerFeatures", before, RegistryValueKind.DWord);
+            else DeleteHklmIfPresent(policyPath, "DisableWindowsConsumerFeatures");
+        }
+    }
+
+    [Fact]
+    public async Task Ps7Telemetry_run_then_undo_restores_the_machine_scope_env_var()
+    {
+        if (!IsElevated())
+        {
+            Console.WriteLine("SKIPPED (requires elevation): Ps7Telemetry_run_then_undo_restores_the_machine_scope_env_var");
+            return;
+        }
+
+        var before = Environment.GetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", EnvironmentVariableTarget.Machine);
+
+        try
+        {
+            var runner = CreateRunner();
+
+            var runExitCode = await runner.RunEmbeddedScriptAsync("ps7telemetry.ps1");
+            Assert.Equal(0, runExitCode);
+            Assert.Equal("1", Environment.GetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", EnvironmentVariableTarget.Machine));
+
+            var undoExitCode = await runner.RunEmbeddedScriptAsync("ps7telemetry-undo.ps1");
+            Assert.Equal(0, undoExitCode);
+            Assert.Null(Environment.GetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", EnvironmentVariableTarget.Machine));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", before, EnvironmentVariableTarget.Machine);
+        }
+    }
+
+    [Fact]
+    public async Task Wpbt_run_then_undo_restores_DisableWpbtExecution()
+    {
+        if (!IsElevated())
+        {
+            Console.WriteLine("SKIPPED (requires elevation): Wpbt_run_then_undo_restores_DisableWpbtExecution");
+            return;
+        }
+
+        const string sessionManagerPath = @"SYSTEM\CurrentControlSet\Control\Session Manager";
+        var before = ReadHklm(sessionManagerPath, "DisableWpbtExecution");
+
+        try
+        {
+            var runner = CreateRunner();
+
+            var runExitCode = await runner.RunEmbeddedScriptAsync("wpbt.ps1");
+            Assert.Equal(0, runExitCode);
+            Assert.Equal(1, ReadHklm(sessionManagerPath, "DisableWpbtExecution"));
+
+            var undoExitCode = await runner.RunEmbeddedScriptAsync("wpbt-undo.ps1");
+            Assert.Equal(0, undoExitCode);
+            Assert.Null(ReadHklm(sessionManagerPath, "DisableWpbtExecution"));
+        }
+        finally
+        {
+            if (before is not null) WriteHklm(sessionManagerPath, "DisableWpbtExecution", before, RegistryValueKind.DWord);
+            else DeleteHklmIfPresent(sessionManagerPath, "DisableWpbtExecution");
+        }
+    }
+
+    [Fact]
+    public async Task FolderDiscovery_run_then_undo_restores_FolderType_under_HKCU()
+    {
+        const string bagsPath = @"Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell";
+        var before = ReadHkcu(bagsPath, "FolderType");
+
+        try
+        {
+            var runner = CreateRunner();
+
+            var runExitCode = await runner.RunEmbeddedScriptAsync("folderdiscovery.ps1");
+            Assert.Equal(0, runExitCode);
+            Assert.Equal("NotSpecified", ReadHkcu(bagsPath, "FolderType"));
+
+            var undoExitCode = await runner.RunEmbeddedScriptAsync("folderdiscovery-undo.ps1");
+            Assert.Equal(0, undoExitCode);
+            Assert.Null(ReadHkcu(bagsPath, "FolderType"));
+        }
+        finally
+        {
+            if (before is not null) WriteHkcu(bagsPath, "FolderType", before, RegistryValueKind.String);
+            else DeleteHkcuIfPresent(bagsPath, "FolderType");
         }
     }
 }
