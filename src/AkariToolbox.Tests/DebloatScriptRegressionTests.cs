@@ -164,7 +164,24 @@ public class DebloatScriptRegressionTests
         Skip.IfNot(IsElevated(), "requires elevation");
 
         const string policyPath = @"SOFTWARE\Policies\Microsoft\Windows\CloudContent";
+        const string explorerAdvancedPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced";
+        const string contentDeliveryPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager";
+
         var before = ReadHklm(policyPath, "DisableWindowsConsumerFeatures");
+
+        // consumerfeatures-undo.ps1 unconditionally writes these 8 HKCU values as a
+        // documented "supplementary step" (03-REVIEW.md WR-01) in addition to reversing
+        // the one HKLM policy value this fact asserts on. They must be snapshotted and
+        // restored too, or every elevated run of this test permanently flips these
+        // content-delivery/suggested-apps settings on the executing user's machine.
+        var beforeShowSync = ReadHkcu(explorerAdvancedPath, "ShowSyncProviderNotifications");
+        var beforeContentDeliveryAllowed = ReadHkcu(contentDeliveryPath, "ContentDeliveryAllowed");
+        var beforeOemPreInstalledAppsEnabled = ReadHkcu(contentDeliveryPath, "OemPreInstalledAppsEnabled");
+        var beforePreInstalledAppsEnabled = ReadHkcu(contentDeliveryPath, "PreInstalledAppsEnabled");
+        var beforePreInstalledAppsEverEnabled = ReadHkcu(contentDeliveryPath, "PreInstalledAppsEverEnabled");
+        var beforeSilentInstallAppsEnabled = ReadHkcu(contentDeliveryPath, "SilentInstallAppsEnabled");
+        var beforeSoftLandingEnabled = ReadHkcu(contentDeliveryPath, "SoftLandingEnabled");
+        var beforeSubscribedContentEnabled = ReadHkcu(contentDeliveryPath, "SubscribedContentEnabled");
 
         try
         {
@@ -177,11 +194,43 @@ public class DebloatScriptRegressionTests
             var undoExitCode = await runner.RunEmbeddedScriptAsync("consumerfeatures-undo.ps1");
             Assert.Equal(0, undoExitCode);
             Assert.Null(ReadHklm(policyPath, "DisableWindowsConsumerFeatures"));
+            Assert.Equal(1, ReadHkcu(explorerAdvancedPath, "ShowSyncProviderNotifications"));
+            Assert.Equal(1, ReadHkcu(contentDeliveryPath, "ContentDeliveryAllowed"));
+            Assert.Equal(1, ReadHkcu(contentDeliveryPath, "OemPreInstalledAppsEnabled"));
+            Assert.Equal(1, ReadHkcu(contentDeliveryPath, "PreInstalledAppsEnabled"));
+            Assert.Equal(1, ReadHkcu(contentDeliveryPath, "PreInstalledAppsEverEnabled"));
+            Assert.Equal(1, ReadHkcu(contentDeliveryPath, "SilentInstallAppsEnabled"));
+            Assert.Equal(1, ReadHkcu(contentDeliveryPath, "SoftLandingEnabled"));
+            Assert.Equal(1, ReadHkcu(contentDeliveryPath, "SubscribedContentEnabled"));
         }
         finally
         {
             if (before is not null) WriteHklm(policyPath, "DisableWindowsConsumerFeatures", before, RegistryValueKind.DWord);
             else DeleteHklmIfPresent(policyPath, "DisableWindowsConsumerFeatures");
+
+            if (beforeShowSync is not null) WriteHkcu(explorerAdvancedPath, "ShowSyncProviderNotifications", beforeShowSync, RegistryValueKind.DWord);
+            else DeleteHkcuIfPresent(explorerAdvancedPath, "ShowSyncProviderNotifications");
+
+            if (beforeContentDeliveryAllowed is not null) WriteHkcu(contentDeliveryPath, "ContentDeliveryAllowed", beforeContentDeliveryAllowed, RegistryValueKind.DWord);
+            else DeleteHkcuIfPresent(contentDeliveryPath, "ContentDeliveryAllowed");
+
+            if (beforeOemPreInstalledAppsEnabled is not null) WriteHkcu(contentDeliveryPath, "OemPreInstalledAppsEnabled", beforeOemPreInstalledAppsEnabled, RegistryValueKind.DWord);
+            else DeleteHkcuIfPresent(contentDeliveryPath, "OemPreInstalledAppsEnabled");
+
+            if (beforePreInstalledAppsEnabled is not null) WriteHkcu(contentDeliveryPath, "PreInstalledAppsEnabled", beforePreInstalledAppsEnabled, RegistryValueKind.DWord);
+            else DeleteHkcuIfPresent(contentDeliveryPath, "PreInstalledAppsEnabled");
+
+            if (beforePreInstalledAppsEverEnabled is not null) WriteHkcu(contentDeliveryPath, "PreInstalledAppsEverEnabled", beforePreInstalledAppsEverEnabled, RegistryValueKind.DWord);
+            else DeleteHkcuIfPresent(contentDeliveryPath, "PreInstalledAppsEverEnabled");
+
+            if (beforeSilentInstallAppsEnabled is not null) WriteHkcu(contentDeliveryPath, "SilentInstallAppsEnabled", beforeSilentInstallAppsEnabled, RegistryValueKind.DWord);
+            else DeleteHkcuIfPresent(contentDeliveryPath, "SilentInstallAppsEnabled");
+
+            if (beforeSoftLandingEnabled is not null) WriteHkcu(contentDeliveryPath, "SoftLandingEnabled", beforeSoftLandingEnabled, RegistryValueKind.DWord);
+            else DeleteHkcuIfPresent(contentDeliveryPath, "SoftLandingEnabled");
+
+            if (beforeSubscribedContentEnabled is not null) WriteHkcu(contentDeliveryPath, "SubscribedContentEnabled", beforeSubscribedContentEnabled, RegistryValueKind.DWord);
+            else DeleteHkcuIfPresent(contentDeliveryPath, "SubscribedContentEnabled");
         }
     }
 
