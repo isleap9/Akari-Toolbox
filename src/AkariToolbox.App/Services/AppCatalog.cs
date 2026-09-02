@@ -13,7 +13,11 @@ namespace AkariToolbox.App.Services;
 ///
 /// "28 vs 29" note (correcting 04-RESEARCH.md's approximate count): the predecessor's
 /// <c>SeedApps</c> array actually holds 29 rows, not 28. Plan 04-03 appends 13 more rows
-/// on top of this base catalog.
+/// on top of this base catalog (42 total): Frame View, Roblox, Battle.net, Electronic
+/// Arts, League of Legends (NA), Rockstar Games, Ubisoft Connect, Valorant (NA), OBS
+/// Studio, Onboard Memory Manager, PotPlayer, Nvidia App (msstore), and Escape From
+/// Tarkov (direct-CDN exception, D-03) — Epic Games Launcher and GOG Galaxy are
+/// deliberately NOT re-added since they already exist above (04-RESEARCH.md Pitfall 4).
 /// </remarks>
 public sealed class AppCatalog : IAppCatalog
 {
@@ -57,5 +61,8 @@ public sealed class AppCatalog : IAppCatalog
         new("VLC Media Player", "Plays virtually any audio or video format", "Utilities", "VideoLAN.VLC"),
         new("ShareX", "Powerful screen capture and screen recording tool", "Utilities", "ShareX.ShareX"),
         new("PowerToys", "Windows system utilities for power users", "Utilities", "Microsoft.PowerToys"),
+
+        // Plan 04-03 additions (13 new rows, 42 total) — Utilities: Frame View
+        new("Frame View", "NVIDIA's lightweight FPS/performance overlay and benchmarking tool", "Utilities", "Nvidia.FrameView", HardeningResourceSuffix: "frameview-harden.ps1"),
     ];
 }

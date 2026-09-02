@@ -142,6 +142,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- 04-03: D-04 per-app post-install hardening scripts for the 13 new Downloads-catalog
+         apps — Start-Menu-shortcut-cleanup-only scripts (OS-standard ProgramData/AppData
+         paths, never the app's own winget install path, per 04-RESEARCH.md Pitfall 1), plus
+         one D-03 direct-CDN-install exception script (eft-install.ps1) for Escape From
+         Tarkov, which has no winget package. Source: `4 Installers/1 Installers.ps1`. -->
+    <EmbeddedResource Include="Resources\DownloadsScripts\frameview-harden.ps1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\AkariToolbox.Framework\AkariToolbox.Framework.csproj" />
   </ItemGroup>
 
