@@ -1,10 +1,6 @@
 # Enable Location Tracking - Undo
-$regKeys = @(
-    @{Path="HKLM:\SOFTWARE\Policies\Microsoft\Windows\LocationAndSensors"; Name="DisableLocation"; Value=0},
-    @{Path="HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location"; Name="Value"; Value="Allow"}
-)
-foreach ($key in $regKeys) {
-    If (!(Test-Path $key.Path)) { New-Item -Path $key.Path -Force | Out-Null }
-    Set-ItemProperty -Path $key.Path -Name $key.Name -Value $key.Value -Type DWord -Force
-}
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location" -Name "Value" -Value "Allow" -Force
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Sensor\Overrides\{BFA794E4-F964-4FDB-90F6-51056BFE4B44}" -Name "SensorPermissionState" -Value 1 -Type DWord -Force
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\lfsvc\Service\Configuration" -Name "Status" -Value 1 -Type DWord -Force
+Set-ItemProperty -Path "HKLM:\SYSTEM\Maps" -Name "AutoUpdateEnabled" -Value 1 -Type DWord -Force
 Write-Host "Location tracking enabled."

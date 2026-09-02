@@ -26,7 +26,7 @@ public class DebloatCatalogTests
 
     private static readonly string[] ExpectedConfirmationRequiredKeys =
     [
-        "disablebitlocker", "hibernation", "bloatware", "removeonedrive", "edgewebview",
+        "disablebitlocker", "hibernation", "bloatware", "removeonedrive", "edgewebview", "storesearch",
     ];
 
     [Fact]

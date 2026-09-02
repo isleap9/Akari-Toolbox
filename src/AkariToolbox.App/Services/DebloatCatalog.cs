@@ -40,7 +40,7 @@ public sealed class DebloatCatalog : IDebloatCatalog
         new("disablebgapps", "Background Apps — Disable", "Stops all Microsoft Store apps from running in the background",
             "Privacy & Telemetry", "disablebgapps.ps1", "disablebgapps-undo.ps1", RequiresConfirmation: false),
         new("storesearch", "Store Search — Disable", "Hides Microsoft Store results from Start Menu search",
-            "Privacy & Telemetry", "storesearch.ps1", "storesearch-undo.ps1", RequiresConfirmation: false),
+            "Privacy & Telemetry", "storesearch.ps1", "storesearch-undo.ps1", RequiresConfirmation: true),
 
         // System & Performance (8)
         new("visualeffects", "Visual Effects — Best Perf", "Disables animations and visual fluff for max speed",

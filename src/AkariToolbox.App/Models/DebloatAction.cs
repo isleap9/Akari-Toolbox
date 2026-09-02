@@ -13,8 +13,12 @@ namespace AkariToolbox.App.Models;
 /// <param name="RunResourceSuffix">Embedded resource suffix passed to <c>IScriptRunner.RunEmbeddedScriptAsync</c> for the forward (Run) direction.</param>
 /// <param name="UndoResourceSuffix">Embedded resource suffix for the Undo direction, or <c>null</c> if this action has no Undo.</param>
 /// <param name="RequiresConfirmation">
-/// True for the 5 D-11 risk-classified actions (BitLocker, Bloatware, Edge &amp; WebView
-/// removal, Hibernation, OneDrive removal) — gates only the Run (forward) direction.
+/// True for the 6 risk-classified actions: the original 5 D-11 actions (BitLocker,
+/// Bloatware, Edge &amp; WebView removal, Hibernation, OneDrive removal) plus
+/// <c>storesearch</c>, added post-launch per 03-REVIEW.md CR-03 — its Run script applies an
+/// effectively irreversible-by-average-user <c>icacls /deny Everyone:F</c> ACL change and
+/// previously shipped with both a broken Undo and no confirmation gate. Gates only the Run
+/// (forward) direction.
 /// </param>
 /// <param name="UndoDownloadsUnverifiedBinary">
 /// D-10 accepted-risk flag: true for the 2 actions whose Undo branch downloads an
