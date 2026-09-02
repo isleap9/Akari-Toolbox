@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text.Json;
 using AkariToolbox.Framework.Services;
 
 namespace AkariToolbox.App.Services;
@@ -180,6 +181,18 @@ public sealed class PostInstallService(IHttpClientFactory httpClientFactory, ILo
         "Tweaks/serviwin.exe",
     };
 
+    /// <summary>
+    /// Test seam (matches the project's existing <c>InternalsVisibleTo("AkariToolbox.Tests")</c>
+    /// pattern) — the single source of truth for both the manifest-authoring step and
+    /// <c>PostInstallIntegrityTests</c>' completeness test, so <c>Resources/PostInstallManifest.json</c>
+    /// can never silently drift out of sync with <see cref="AllFiles"/>.
+    /// </summary>
+    internal static IReadOnlyList<string> RelativeFilePaths => AllFiles;
+
+    // Lazily-loaded, populated once from the embedded Resources/PostInstallManifest.json
+    // (D-07/D-08). Maps each AllFiles relative path to its pinned lowercase-hex SHA256 digest.
+    private Dictionary<string, string>? _manifest;
+
     public bool IsFullyInstalled =>
         AllFiles.All(f => File.Exists(Path.Combine(LocalRoot, f.Replace('/', '\\'))));
 
@@ -193,6 +206,8 @@ public sealed class PostInstallService(IHttpClientFactory httpClientFactory, ILo
 
         log.Log("[POSTINSTALL] Downloading PostInstall folder from GitHub (~30 MB)...");
 
+        var manifest = LoadManifest();
+
         int downloaded = 0, skipped = 0, failed = 0;
 
         foreach (var relativePath in AllFiles)
@@ -205,12 +220,20 @@ public sealed class PostInstallService(IHttpClientFactory httpClientFactory, ILo
                 continue;
             }
 
+            var label = Path.GetFileName(relativePath);
+
+            if (!manifest.TryGetValue(relativePath, out var expectedSha256))
+            {
+                log.Log($"[POSTINSTALL] No pinned SHA256 in manifest for {relativePath} — skipping (treated as failed).");
+                failed++;
+                continue;
+            }
+
             var urlPath = string.Join("/",
                 relativePath.Split('/').Select(Uri.EscapeDataString));
             var url = RawBase + urlPath;
 
-            var label = Path.GetFileName(relativePath);
-            bool ok = await DownloadFileAsync(url, localPath, label);
+            bool ok = await DownloadFileAsync(url, localPath, label, expectedSha256);
             if (ok) downloaded++;
             else failed++;
         }
@@ -223,7 +246,36 @@ public sealed class PostInstallService(IHttpClientFactory httpClientFactory, ILo
         return failed == 0;
     }
 
-    private async Task<bool> DownloadFileAsync(string url, string destPath, string label)
+    /// <summary>
+    /// Loads and caches the embedded SHA256 manifest, resolved by manifest-resource-name
+    /// suffix match on <c>"PostInstallManifest.json"</c> — the same resolution convention
+    /// <see cref="AkariToolbox.Framework.Services.ScriptRunner.FindEmbeddedResource"/> uses
+    /// for embedded scripts.
+    /// </summary>
+    private Dictionary<string, string> LoadManifest()
+    {
+        if (_manifest is not null)
+        {
+            return _manifest;
+        }
+
+        var asm = typeof(PostInstallService).Assembly;
+        var resourceName = asm.GetManifestResourceNames()
+            .FirstOrDefault(n => n.EndsWith("PostInstallManifest.json", StringComparison.OrdinalIgnoreCase));
+
+        if (resourceName is null)
+        {
+            log.Log("[POSTINSTALL] Embedded PostInstallManifest.json not found — integrity verification cannot proceed.");
+            _manifest = new Dictionary<string, string>();
+            return _manifest;
+        }
+
+        using var stream = asm.GetManifestResourceStream(resourceName)!;
+        _manifest = JsonSerializer.Deserialize<Dictionary<string, string>>(stream) ?? new Dictionary<string, string>();
+        return _manifest;
+    }
+
+    private async Task<bool> DownloadFileAsync(string url, string destPath, string label, string expectedSha256)
     {
         try
         {
@@ -231,7 +283,15 @@ public sealed class PostInstallService(IHttpClientFactory httpClientFactory, ILo
             var http = httpClientFactory.CreateClient("PostInstall");
             var bytes = await http.GetByteArrayAsync(url);
             await File.WriteAllBytesAsync(destPath, bytes);
-            log.Log($"[POSTINSTALL] OK {label} ({bytes.Length / 1024} KB)");
+
+            if (!await VerifyFileSha256Async(destPath, expectedSha256))
+            {
+                log.Log($"[POSTINSTALL] Integrity check FAILED for {label} — deleting corrupted/tampered file.");
+                File.Delete(destPath);
+                return false;
+            }
+
+            log.Log($"[POSTINSTALL] OK {label} ({bytes.Length / 1024} KB, SHA256 verified)");
             return true;
         }
         catch (Exception ex)
