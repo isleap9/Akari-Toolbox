@@ -67,14 +67,10 @@ public class DebloatScriptRegressionTests
         key?.DeleteValue(valueName, throwOnMissingValue: false);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task LocationTracking_run_then_undo_restores_the_three_guaranteed_HKLM_values()
     {
-        if (!IsElevated())
-        {
-            Console.WriteLine("SKIPPED (requires elevation): LocationTracking_run_then_undo_restores_the_three_guaranteed_HKLM_values");
-            return;
-        }
+        Skip.IfNot(IsElevated(), "requires elevation");
 
         const string consentStorePath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location";
         const string lfsvcPath = @"SYSTEM\CurrentControlSet\Services\lfsvc\Service\Configuration";
@@ -113,14 +109,10 @@ public class DebloatScriptRegressionTests
         }
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task LocationTracking_undo_alone_is_safe_and_idempotent_without_a_prior_run()
     {
-        if (!IsElevated())
-        {
-            Console.WriteLine("SKIPPED (requires elevation): LocationTracking_undo_alone_is_safe_and_idempotent_without_a_prior_run");
-            return;
-        }
+        Skip.IfNot(IsElevated(), "requires elevation");
 
         const string consentStorePath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location";
         const string lfsvcPath = @"SYSTEM\CurrentControlSet\Services\lfsvc\Service\Configuration";
@@ -153,14 +145,10 @@ public class DebloatScriptRegressionTests
         }
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task ConsumerFeatures_run_then_undo_restores_DisableWindowsConsumerFeatures_policy()
     {
-        if (!IsElevated())
-        {
-            Console.WriteLine("SKIPPED (requires elevation): ConsumerFeatures_run_then_undo_restores_DisableWindowsConsumerFeatures_policy");
-            return;
-        }
+        Skip.IfNot(IsElevated(), "requires elevation");
 
         const string policyPath = @"SOFTWARE\Policies\Microsoft\Windows\CloudContent";
         var before = ReadHklm(policyPath, "DisableWindowsConsumerFeatures");
@@ -184,14 +172,10 @@ public class DebloatScriptRegressionTests
         }
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Ps7Telemetry_run_then_undo_restores_the_machine_scope_env_var()
     {
-        if (!IsElevated())
-        {
-            Console.WriteLine("SKIPPED (requires elevation): Ps7Telemetry_run_then_undo_restores_the_machine_scope_env_var");
-            return;
-        }
+        Skip.IfNot(IsElevated(), "requires elevation");
 
         var before = Environment.GetEnvironmentVariable("POWERSHELL_TELEMETRY_OPTOUT", EnvironmentVariableTarget.Machine);
 
@@ -213,14 +197,10 @@ public class DebloatScriptRegressionTests
         }
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Wpbt_run_then_undo_restores_DisableWpbtExecution()
     {
-        if (!IsElevated())
-        {
-            Console.WriteLine("SKIPPED (requires elevation): Wpbt_run_then_undo_restores_DisableWpbtExecution");
-            return;
-        }
+        Skip.IfNot(IsElevated(), "requires elevation");
 
         const string sessionManagerPath = @"SYSTEM\CurrentControlSet\Control\Session Manager";
         var before = ReadHklm(sessionManagerPath, "DisableWpbtExecution");
