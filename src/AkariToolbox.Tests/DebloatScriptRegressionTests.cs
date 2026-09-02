@@ -73,10 +73,12 @@ public class DebloatScriptRegressionTests
         Skip.IfNot(IsElevated(), "requires elevation");
 
         const string consentStorePath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location";
+        const string sensorOverridePath = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Sensor\Overrides\{BFA794E4-F964-4FDB-90F6-51056BFE4B44}";
         const string lfsvcPath = @"SYSTEM\CurrentControlSet\Services\lfsvc\Service\Configuration";
         const string mapsPath = @"SYSTEM\Maps";
 
         var beforeConsentStore = ReadHklm(consentStorePath, "Value");
+        var beforeSensor = ReadHklm(sensorOverridePath, "SensorPermissionState");
         var beforeLfsvc = ReadHklm(lfsvcPath, "Status");
         var beforeMaps = ReadHklm(mapsPath, "AutoUpdateEnabled");
 
@@ -87,12 +89,14 @@ public class DebloatScriptRegressionTests
             var runExitCode = await runner.RunEmbeddedScriptAsync("locationtracking.ps1");
             Assert.Equal(0, runExitCode);
             Assert.Equal("Deny", ReadHklm(consentStorePath, "Value"));
+            Assert.Equal(0, ReadHklm(sensorOverridePath, "SensorPermissionState"));
             Assert.Equal(0, ReadHklm(lfsvcPath, "Status"));
             Assert.Equal(0, ReadHklm(mapsPath, "AutoUpdateEnabled"));
 
             var undoExitCode = await runner.RunEmbeddedScriptAsync("locationtracking-undo.ps1");
             Assert.Equal(0, undoExitCode);
             Assert.Equal("Allow", ReadHklm(consentStorePath, "Value"));
+            Assert.Equal(1, ReadHklm(sensorOverridePath, "SensorPermissionState"));
             Assert.Equal(1, ReadHklm(lfsvcPath, "Status"));
             Assert.Equal(1, ReadHklm(mapsPath, "AutoUpdateEnabled"));
         }
@@ -100,6 +104,9 @@ public class DebloatScriptRegressionTests
         {
             if (beforeConsentStore is not null) WriteHklm(consentStorePath, "Value", beforeConsentStore, RegistryValueKind.String);
             else DeleteHklmIfPresent(consentStorePath, "Value");
+
+            if (beforeSensor is not null) WriteHklm(sensorOverridePath, "SensorPermissionState", beforeSensor, RegistryValueKind.DWord);
+            else DeleteHklmIfPresent(sensorOverridePath, "SensorPermissionState");
 
             if (beforeLfsvc is not null) WriteHklm(lfsvcPath, "Status", beforeLfsvc, RegistryValueKind.DWord);
             else DeleteHklmIfPresent(lfsvcPath, "Status");
@@ -115,10 +122,12 @@ public class DebloatScriptRegressionTests
         Skip.IfNot(IsElevated(), "requires elevation");
 
         const string consentStorePath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location";
+        const string sensorOverridePath = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Sensor\Overrides\{BFA794E4-F964-4FDB-90F6-51056BFE4B44}";
         const string lfsvcPath = @"SYSTEM\CurrentControlSet\Services\lfsvc\Service\Configuration";
         const string mapsPath = @"SYSTEM\Maps";
 
         var beforeConsentStore = ReadHklm(consentStorePath, "Value");
+        var beforeSensor = ReadHklm(sensorOverridePath, "SensorPermissionState");
         var beforeLfsvc = ReadHklm(lfsvcPath, "Status");
         var beforeMaps = ReadHklm(mapsPath, "AutoUpdateEnabled");
 
@@ -129,6 +138,7 @@ public class DebloatScriptRegressionTests
             var undoExitCode = await runner.RunEmbeddedScriptAsync("locationtracking-undo.ps1");
             Assert.Equal(0, undoExitCode);
             Assert.Equal("Allow", ReadHklm(consentStorePath, "Value"));
+            Assert.Equal(1, ReadHklm(sensorOverridePath, "SensorPermissionState"));
             Assert.Equal(1, ReadHklm(lfsvcPath, "Status"));
             Assert.Equal(1, ReadHklm(mapsPath, "AutoUpdateEnabled"));
         }
@@ -136,6 +146,9 @@ public class DebloatScriptRegressionTests
         {
             if (beforeConsentStore is not null) WriteHklm(consentStorePath, "Value", beforeConsentStore, RegistryValueKind.String);
             else DeleteHklmIfPresent(consentStorePath, "Value");
+
+            if (beforeSensor is not null) WriteHklm(sensorOverridePath, "SensorPermissionState", beforeSensor, RegistryValueKind.DWord);
+            else DeleteHklmIfPresent(sensorOverridePath, "SensorPermissionState");
 
             if (beforeLfsvc is not null) WriteHklm(lfsvcPath, "Status", beforeLfsvc, RegistryValueKind.DWord);
             else DeleteHklmIfPresent(lfsvcPath, "Status");
