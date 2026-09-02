@@ -171,6 +171,10 @@ None - no external service configuration required.
 - `T-04-01` (PostInstall download tampering) remains open per this plan's threat model — SHA256 verification is Plan 04-02's scope (D-07); the silent trigger wired here is functionally complete but not yet integrity-verified end-to-end.
 - Manual smoke check (Home → Downloads card, or nav → Downloads, rendering all 29 apps and one PostInstall log line on first visit) is deferred to end-of-phase human verification per `human_verify_mode: end-of-phase` in config.json.
 
+## Self-Check: PASSED
+
+All created files verified present on disk; all 3 commits (`fdbf10b`, `40920d1`, `b42d43f`) verified present in `git log`.
+
 ---
 *Phase: 04-downloads-misc*
 *Completed: 2026-09-02*
