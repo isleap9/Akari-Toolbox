@@ -108,7 +108,7 @@ Plans:
   2. User sees streamed status/output feedback while a debloat action runs, without the UI freezing or crashing
   3. Debloat page logic lives in a ViewModel/service, not in page code-behind (the predecessor's `DebloatPage.xaml.cs` pattern is not carried over)
 
-**Plans:** 7/8 plans executed
+**Plans:** 8/8 plans executed
 Plans:
 **Wave 1**
 
@@ -140,7 +140,7 @@ Plans:
 
 **Wave 8** *(gap closure — 03-VERIFICATION.md, blocked on Wave 7 completion)*
 
-- [ ] 03-08-PLAN.md — Fix 6 broken Undo scripts (CR-01..CR-06: locationtracking/consumerfeatures/storesearch/ps7telemetry/wpbt/folderdiscovery) + storesearch confirmation gate + live registry/env/ACL regression tests
+- [x] 03-08-PLAN.md — Fix 6 broken Undo scripts (CR-01..CR-06: locationtracking/consumerfeatures/storesearch/ps7telemetry/wpbt/folderdiscovery) + storesearch confirmation gate + live registry/env/ACL regression tests
 
 **UI hint**: yes
 
@@ -169,5 +169,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundation & Akari OS Tweaks | 7/7 | Complete    | 2026-09-01 |
 | 2. Gaming Tweaks | 7/7 | Complete    | 2026-09-01 |
-| 3. Debloat | 7/8 | In Progress|  |
+| 3. Debloat | 8/8 | In Progress|  |
 | 4. Downloads & Misc | 0/TBD | Not started | - |
