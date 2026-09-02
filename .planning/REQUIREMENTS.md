@@ -39,12 +39,12 @@ Requirements for initial release: a feature-parity WinUI 3 MVVM port of AkariOS 
 ### Downloads
 
 - [ ] **DOWNLOADS-01**: On first use, the app automatically downloads and mirrors the PostInstall asset folder from GitHub to `C:\PostInstall\` if it's not already present, and is a no-op if it is
-- [ ] **DOWNLOADS-02**: User can access playbooks, drivers, and recommended utility links from the Downloads page
+- [ ] **DOWNLOADS-02**: User can browse and install apps from a winget-backed app-installer catalog on the Downloads page — **wording corrected 2026-09-02** (Phase 4 discussion): the original "playbooks, drivers, and recommended utility links" text was stale copy carried over from the predecessor's Home-card description, not an accurate feature spec. The predecessor's actual `DownloadsViewModel`/`AppInstallerService` (searchable/filterable winget catalog, multi-select install) is ported as this requirement's real implementation, per the user's explicit "keep the downloads the same" decision. See `.planning/phases/04-downloads-misc/04-CONTEXT.md` D-01.
 
 ### Misc
 
 - [ ] **MISC-01**: User can add or remove each of the 12 context-menu entries (classic/legacy Windows context menu)
-- [ ] **MISC-02**: User can access the extra misc tools from the Misc page
+- [x] ~~**MISC-02**: User can access the extra misc tools from the Misc page~~ — **Deferred 2026-09-02** (Phase 4 discussion): no existing implementation exists anywhere (predecessor or the "Ultimate" collection) to port from; user confirmed to defer rather than invent content. Tracked for a future milestone once concrete tool candidates exist — not part of v1 scope. See `.planning/phases/04-downloads-misc/04-CONTEXT.md` D-12.
 
 ## v2 Requirements
 
@@ -98,7 +98,7 @@ Explicitly excluded. Documented to prevent scope creep.
 | DOWNLOADS-01 | Phase 4 | Pending |
 | DOWNLOADS-02 | Phase 4 | Pending |
 | MISC-01 | Phase 4 | Pending |
-| MISC-02 | Phase 4 | Pending |
+| MISC-02 | Phase 4 | Deferred (2026-09-02) |
 
 **Coverage:**
 

@@ -153,11 +153,18 @@ Plans:
 **Success Criteria** (what must be TRUE):
 
   1. On first use, the app automatically downloads and mirrors the PostInstall asset folder from GitHub to `C:\PostInstall\` if it's not already present, and is a no-op if it is
-  2. User can access playbooks, drivers, and recommended utility links from the Downloads page
-  3. User can add or remove each of the 12 context-menu entries (classic/legacy Windows context menu)
-  4. User can access the extra misc tools from the Misc page
+  2. User can browse and install apps (a 42-entry winget-backed catalog: the predecessor's 29 existing apps plus 13 new apps sourced from the "Ultimate" collection) from the Downloads page
+  3. User can add or remove each of the 12 context-menu entries (classic/legacy Windows context menu), plus a 13th classic-context-menu-restore toggle
 
-**Plans**: TBD
+**Note:** MISC-02 (extra misc tools) is deferred per 04-CONTEXT.md D-12 — no existing implementation exists anywhere (predecessor or the "Ultimate" collection) to port from; tracked for a future milestone once concrete tool candidates exist. DOWNLOADS-02's original "playbooks, drivers, and recommended utility links" wording is corrected above per 04-CONTEXT.md D-01 — see REQUIREMENTS.md for both the wording correction and the deferral record.
+
+**Plans**: 4 plans
+Plans:
+- [ ] 04-01-PLAN.md — Downloads page tracer: Model/Service/ViewModel/View/DI/Nav, existing 29-app winget catalog, D-06 PostInstall auto-trigger
+- [ ] 04-02-PLAN.md — PostInstall SHA256 manifest authoring + D-07 integrity gate
+- [ ] 04-03-PLAN.md — Downloads catalog expansion: 13 new apps (D-02/D-03/D-04/D-05)
+- [ ] 04-04-PLAN.md — Misc page: 12 context-menu entries + 13th classic-menu-restore toggle (D-09/D-10/D-11)
+
 **UI hint**: yes
 
 ## Progress
@@ -170,4 +177,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Foundation & Akari OS Tweaks | 7/7 | Complete    | 2026-09-01 |
 | 2. Gaming Tweaks | 7/7 | Complete    | 2026-09-01 |
 | 3. Debloat | 8/8 | Complete    | 2026-09-02 |
-| 4. Downloads & Misc | 0/TBD | Not started | - |
+| 4. Downloads & Misc | 0/4 | Not started | - |
