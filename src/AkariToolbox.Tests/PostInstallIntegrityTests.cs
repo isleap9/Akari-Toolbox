@@ -1,4 +1,6 @@
 using System.Security.Cryptography;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using AkariToolbox.App.Services;
 using AkariToolbox.Framework.Services;
 using Xunit;
@@ -74,5 +76,48 @@ public class PostInstallIntegrityTests
         var result = await service.VerifyFileSha256Async(nonExistentPath, new string('a', 64));
 
         Assert.False(result);
+    }
+
+    /// <summary>
+    /// Loads the embedded <c>Resources/PostInstallManifest.json</c> (D-07/D-08) the same way
+    /// <see cref="PostInstallService"/> itself does — by manifest-resource-name suffix match,
+    /// via <see cref="PostInstallService"/>'s own assembly.
+    /// </summary>
+    private static Dictionary<string, string> LoadEmbeddedManifest()
+    {
+        var asm = typeof(PostInstallService).Assembly;
+        var resourceName = asm.GetManifestResourceNames()
+            .Single(n => n.EndsWith("PostInstallManifest.json", StringComparison.OrdinalIgnoreCase));
+
+        using var stream = asm.GetManifestResourceStream(resourceName)!;
+        return JsonSerializer.Deserialize<Dictionary<string, string>>(stream)!;
+    }
+
+    [Fact]
+    public void PostInstallManifest_key_set_exactly_matches_AllFiles()
+    {
+        var manifest = LoadEmbeddedManifest();
+
+        var manifestKeys = manifest.Keys.OrderBy(k => k, StringComparer.Ordinal);
+        var allFilesKeys = PostInstallService.RelativeFilePaths.OrderBy(k => k, StringComparer.Ordinal);
+
+        Assert.Equal(allFilesKeys, manifestKeys);
+    }
+
+    [Fact]
+    public void PostInstallManifest_has_exactly_147_entries()
+    {
+        var manifest = LoadEmbeddedManifest();
+
+        Assert.Equal(147, manifest.Count);
+    }
+
+    [Fact]
+    public void PostInstallManifest_every_value_is_lowercase_hex_sha256()
+    {
+        var manifest = LoadEmbeddedManifest();
+        var hexPattern = new Regex("^[0-9a-f]{64}$");
+
+        Assert.All(manifest.Values, value => Assert.Matches(hexPattern, value));
     }
 }
