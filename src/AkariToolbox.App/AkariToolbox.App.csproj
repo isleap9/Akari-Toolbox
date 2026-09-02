@@ -31,6 +31,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- D-07/D-08: the PostInstall asset mirror's SHA256 pinning manifest — 147 relative-path
+         to hex-digest entries, authored by downloading and hashing every file from the live
+         isleap9/PostInstall repo this session. Consumed by PostInstallService's verify-or-reject
+         download gate; never fabricated. -->
+    <EmbeddedResource Include="Resources\PostInstallManifest.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- D-06 network-dependent one-shot scripts (02-CONTEXT.md), split one embedded resource
          per source menu branch and run via IScriptRunner.RunEmbeddedScriptAsync. Ported
          exactly as authored, with NO added SHA256/signature verification for v1 — explicit
