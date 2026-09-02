@@ -20,10 +20,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-09-01)
+See: .planning/PROJECT.md (updated 2026-09-02)
 
 **Core value:** Every tweak, debloat action, and downloaded asset must apply correctly, report accurate state, and (where applicable) be safely revertible.
-**Current focus:** Phase 03 — Debloat
+**Current focus:** Phase 4 — Downloads & Misc
 
 ## Current Position
 
@@ -64,12 +64,11 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- Phase 3: Debloat's Run+Undo model has no live-state read-back by design (D-01) — action-log parity with the predecessor, not an `ITweakHandler`-style toggle; means correctness has to be proven by diffing Undo scripts against their paired Run script's actual writes, not a state read-back
+- Phase 3: Initial execution shipped 6 of 25 Undo scripts silently targeting the wrong registry key/hive/env-var/ACL (invisible to the initial `DebloatCatalogTests`, which only asserted resource wiring); closed via gap-closure plan 03-08 + `DebloatScriptRegressionTests` (real registry/env/ACL state assertions)
+- Phase 3: A second code-review pass on the gap-closure fix itself caught 3 further Critical bugs in the *new regression-test suite* (false-Skip-as-Pass elevation guard, incomplete `finally`-block restoration) — lesson: tests added to prove a fix are themselves review-worthy, not exempt because they "add coverage"
 - Phase 2: `TweakCategory` (AkariOS, Gaming) discriminator lets Gaming Tweaks reuse Phase 1's `ITweakHandler`/`TweakCatalog` real-state/revert pattern with zero catalog-interface changes — 11 Gaming handlers (Order 100-110) coexist with 32 AkariOS handlers (Order 0-31), both category-scoped ordering invariants enforced by regression tests
 - Phase 2: GAMING-02 (third-party tool launcher grid) retired with no replacement — the PostInstall asset mirror it depended on is deprecated project-wide (02-CONTEXT.md D-11/D-12)
-- Phase 2: D-06 driver-install scripts ship with no added SHA256/signature verification for v1 (explicit accepted risk, parity with predecessor) — risk surfaced via a pre-launch log line and a UI section header, documented in 02-SECURITY.md
-- Phase 2: Post-execution code review found and fixed 2 critical correctness bugs — `PowerPlanTweakHandler` could delete power schemes on a silently-failed backup export (CR-01), `DefenderTweakHandler` could report Defender re-enabled when SYSTEM-level restore actually failed (CR-02) — both now propagate/verify instead of silently succeeding
-- Phase 1: Defender's elevation mechanism was replaced mid-phase (native SYSTEM impersonation via P/Invoke, no MinSudo.exe/PowerRun.exe) per explicit project-owner direction, closing a code-review finding — security-audited, threats_open: 0
-- Phase 1: TWEAKS-02 (Defender two-phase workflow) keeps its overall shape (Tamper Protection gate, cab+ps1 install, post-reboot phase 2) as a direct carry-over, not decomposed into the ITweakHandler architecture in v1 (SEC-01, v2) — only the elevation/asset-delivery mechanisms changed, not the workflow
 
 ### Pending Todos
 
@@ -91,5 +90,5 @@ Items acknowledged and deferred at milestone close, most recent first:
 ## Session Continuity
 
 Last session: 2026-09-02
-Stopped at: Phase 03 complete, ready to plan Phase 4
-Resume file: C:/Users/isleap/Documents/GitHub/Akari-Toolbox/.planning/phases/03-debloat/03-VERIFICATION.md
+Stopped at: Phase 3 complete (8/8 plans, verified 8/8 must-haves), ready to plan Phase 4 — Downloads & Misc
+Resume file: None
