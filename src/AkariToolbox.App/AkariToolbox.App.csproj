@@ -148,6 +148,11 @@
          one D-03 direct-CDN-install exception script (eft-install.ps1) for Escape From
          Tarkov, which has no winget package. Source: `4 Installers/1 Installers.ps1`. -->
     <EmbeddedResource Include="Resources\DownloadsScripts\frameview-harden.ps1" />
+    <EmbeddedResource Include="Resources\DownloadsScripts\nvidiaapp-harden.ps1" />
+    <EmbeddedResource Include="Resources\DownloadsScripts\potplayer-harden.ps1" />
+    <EmbeddedResource Include="Resources\DownloadsScripts\rockstar-harden.ps1" />
+    <EmbeddedResource Include="Resources\DownloadsScripts\ubisoft-harden.ps1" />
+    <EmbeddedResource Include="Resources\DownloadsScripts\eft-install.ps1" />
   </ItemGroup>
 
   <ItemGroup>

@@ -64,5 +64,31 @@ public sealed class AppCatalog : IAppCatalog
 
         // Plan 04-03 additions (13 new rows, 42 total) — Utilities: Frame View
         new("Frame View", "NVIDIA's lightweight FPS/performance overlay and benchmarking tool", "Utilities", "Nvidia.FrameView", HardeningResourceSuffix: "frameview-harden.ps1"),
+
+        // Plan 04-03 additions — Gaming (8): no hardening unless noted; Battle.net/Electronic
+        // Arts/League of Legends/Valorant have no hardening because their source-script
+        // shortcut/custom-installpath logic is not OS-standard-path-safe (04-RESEARCH.md
+        // Pitfall 1) once winget controls the install location.
+        new("Roblox", "Cross-platform game creation and play platform", "Gaming", "Roblox.Roblox"),
+        new("Battle.net", "Blizzard's game launcher and updater", "Gaming", "Blizzard.BattleNet"),
+        new("Electronic Arts", "EA's desktop app for EA game titles", "Gaming", "ElectronicArts.EADesktop"),
+        new("League of Legends (NA)", "Riot Games' MOBA launcher, NA server", "Gaming", "RiotGames.LeagueOfLegends.NA"),
+        new("Rockstar Games", "Rockstar's game launcher", "Gaming", "RockstarGames.Launcher", HardeningResourceSuffix: "rockstar-harden.ps1"),
+        new("Ubisoft Connect", "Ubisoft's game launcher and social platform", "Gaming", "Ubisoft.Connect", HardeningResourceSuffix: "ubisoft-harden.ps1"),
+        new("Valorant (NA)", "Riot Games' tactical shooter, NA server", "Gaming", "RiotGames.Valorant.NA"),
+        // D-03 direct-CDN exception — no winget package exists for this title
+        // (04-RESEARCH.md live verification); bypasses winget entirely via
+        // DirectInstallResourceSuffix, handled by AppInstallerService.InstallAsync.
+        new("Escape From Tarkov", "Battlestate Games' tactical extraction shooter (installed via direct download — no winget package exists for this title)", "Gaming", "", DirectInstallResourceSuffix: "eft-install.ps1"),
+
+        // Plan 04-03 additions — Utilities (4): Onboard Memory Manager has no hardening
+        // because its source-script custom Program Files (x86) install path is
+        // Pitfall-1-unsafe to port once winget controls the install location. Nvidia App
+        // resolves through the msstore source (no plain winget listing exists) — see Task 3's
+        // blocking human-verify checkpoint for this entry's silent-install verification.
+        new("OBS Studio", "Free, open-source streaming and screen recording software", "Utilities", "OBSProject.OBSStudio"),
+        new("Onboard Memory Manager", "Logitech peripheral onboard-memory configuration utility", "Utilities", "Logitech.OnboardMemoryManager"),
+        new("PotPlayer", "Lightweight, feature-rich media player", "Utilities", "Daum.PotPlayer", HardeningResourceSuffix: "potplayer-harden.ps1"),
+        new("Nvidia App", "NVIDIA's unified GPU driver/control app (Microsoft Store-sourced)", "Utilities", "XP8CLZL93F5Z4P", WingetSource: "msstore", HardeningResourceSuffix: "nvidiaapp-harden.ps1"),
     ];
 }
