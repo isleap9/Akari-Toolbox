@@ -1,4 +1,5 @@
 # Enable Store Search - Undo
+icacls "$Env:LocalAppData\Packages\Microsoft.WindowsStore_8wekyb3d8bbwe\LocalState\store.db" /remove:d Everyone
 $regKeys = @(
     @{Path="HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search"; Name="BingSearchEnabled"; Value=1; Type="DWord"}
 )

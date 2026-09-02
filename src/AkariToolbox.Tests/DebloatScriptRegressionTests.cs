@@ -2,6 +2,7 @@ using System.Security.Principal;
 using Microsoft.Win32;
 using AkariToolbox.Framework.Services;
 using Xunit;
+using AppEntry = AkariToolbox.App.App;
 
 namespace AkariToolbox.Tests;
 
@@ -265,6 +266,52 @@ public class DebloatScriptRegressionTests
         {
             if (before is not null) WriteHkcu(bagsPath, "FolderType", before, RegistryValueKind.String);
             else DeleteHkcuIfPresent(bagsPath, "FolderType");
+        }
+    }
+
+    [Fact]
+    public void StoreSearch_undo_script_contains_the_icacls_remove_deny_fix()
+    {
+        var resourceNames = typeof(AppEntry).Assembly.GetManifestResourceNames();
+        var resourceName = resourceNames.Single(n => n.EndsWith("storesearch-undo.ps1", StringComparison.OrdinalIgnoreCase));
+
+        using var stream = typeof(AppEntry).Assembly.GetManifestResourceStream(resourceName)!;
+        using var reader = new StreamReader(stream, System.Text.Encoding.UTF8);
+        var scriptText = reader.ReadToEnd();
+
+        Assert.Contains("icacls", scriptText, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("/remove:d", scriptText, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Everyone", scriptText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task StoreSearch_icacls_deny_then_remove_d_round_trips_on_a_scratch_file()
+    {
+        var runner = CreateRunner();
+        var scratchPath = Path.Combine(Path.GetTempPath(), $"akaritoolbox-storesearch-acl-test-{Guid.NewGuid():N}.tmp");
+        File.WriteAllText(scratchPath, "akaritoolbox storesearch ACL round-trip scratch file");
+
+        try
+        {
+            // Baseline call — establishes icacls works against this file, no assertion needed.
+            await runner.RunProcessCaptureOutputAsync("icacls", $"\"{scratchPath}\"");
+
+            var denyExitCode = await runner.RunProcessAsync("icacls", $"\"{scratchPath}\" /deny Everyone:F");
+            Assert.Equal(0, denyExitCode);
+
+            var afterDenyOutput = await runner.RunProcessCaptureOutputAsync("icacls", $"\"{scratchPath}\"");
+            Assert.Contains("Everyone", afterDenyOutput, StringComparison.Ordinal);
+            Assert.Contains("(N)", afterDenyOutput, StringComparison.Ordinal);
+
+            var removeExitCode = await runner.RunProcessAsync("icacls", $"\"{scratchPath}\" /remove:d Everyone");
+            Assert.Equal(0, removeExitCode);
+
+            var afterRemoveOutput = await runner.RunProcessCaptureOutputAsync("icacls", $"\"{scratchPath}\"");
+            Assert.DoesNotContain("Everyone", afterRemoveOutput, StringComparison.Ordinal);
+        }
+        finally
+        {
+            File.Delete(scratchPath);
         }
     }
 }
