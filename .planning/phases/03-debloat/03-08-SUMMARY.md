@@ -186,6 +186,15 @@ None - no external service configuration required.
 - Ready for `/gsd-verify-work` or a phase re-verification pass to confirm the gap closure against 03-VERIFICATION.md's original gap list
 - `windowsai.ps1`'s undisclosed process-killing (03-REVIEW.md WR-04) remains explicitly out of scope, as documented in the plan's objective — not a regression introduced or left behind by this plan
 
+## Self-Check: PASSED
+
+- FOUND: src/AkariToolbox.Tests/DebloatScriptRegressionTests.cs
+- FOUND: .planning/phases/03-debloat/03-08-SUMMARY.md
+- FOUND: 7e4348e (Task 1 commit)
+- FOUND: 9524097 (Task 2 commit)
+- FOUND: 6560ef9 (Task 3 commit)
+- FOUND: ea2527f (SUMMARY.md commit)
+
 ---
 *Phase: 03-debloat*
 *Completed: 2026-09-02*
