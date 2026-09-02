@@ -32,9 +32,9 @@ Requirements for initial release: a feature-parity WinUI 3 MVVM port of AkariOS 
 
 ### Debloat
 
-- [ ] **DEBLOAT-01**: User can run each of the 28 PowerShell-backed debloat actions from the Debloat page
-- [ ] **DEBLOAT-02**: User sees streamed status/output feedback while a debloat action runs, without the UI freezing or crashing
-- [ ] **DEBLOAT-03**: Debloat page logic lives in a ViewModel/service, not page code-behind (architecture-debt fix from the predecessor)
+- [x] **DEBLOAT-01**: User can run each of the 28 PowerShell-backed debloat actions from the Debloat page
+- [x] **DEBLOAT-02**: User sees streamed status/output feedback while a debloat action runs, without the UI freezing or crashing
+- [x] **DEBLOAT-03**: Debloat page logic lives in a ViewModel/service, not page code-behind (architecture-debt fix from the predecessor)
 
 ### Downloads
 
@@ -92,9 +92,9 @@ Explicitly excluded. Documented to prevent scope creep.
 | TWEAKS-03 | Phase 1 | Complete |
 | GAMING-01 | Phase 2 | Complete |
 | GAMING-02 | Phase 2 | Retired (2026-09-01) |
-| DEBLOAT-01 | Phase 3 | Gaps Found |
-| DEBLOAT-02 | Phase 3 | Gaps Found |
-| DEBLOAT-03 | Phase 3 | Gaps Found |
+| DEBLOAT-01 | Phase 3 | Complete |
+| DEBLOAT-02 | Phase 3 | Complete |
+| DEBLOAT-03 | Phase 3 | Complete |
 | DOWNLOADS-01 | Phase 4 | Pending |
 | DOWNLOADS-02 | Phase 4 | Pending |
 | MISC-01 | Phase 4 | Pending |
