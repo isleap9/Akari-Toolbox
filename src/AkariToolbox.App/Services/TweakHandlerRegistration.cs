@@ -55,6 +55,12 @@ public static class TweakHandlerServiceCollectionExtensions
         // static catalog, not per-action handler classes, so it is registered here directly.
         services.AddSingleton<IDebloatCatalog, DebloatCatalog>();
 
+        // Downloads' compiled-in 29-app winget catalog (DOWNLOADS-02, D-01) — same
+        // rationale as IDebloatCatalog above: a static catalog, not per-app handler
+        // classes, so it is registered here directly rather than reflection-scanned.
+        services.AddSingleton<IAppCatalog, AppCatalog>();
+        services.AddSingleton<IAppInstallerService, AppInstallerService>();
+
         return services;
     }
 }

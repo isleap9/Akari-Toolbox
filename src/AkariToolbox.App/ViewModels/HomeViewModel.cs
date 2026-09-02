@@ -35,7 +35,7 @@ public partial class HomeViewModel : ViewModelBase
         new HomeCard { Title = "Gaming Tweaks",   Description = "GPU, latency & service tuning for peak FPS",  Glyph = "", Target = typeof(GamingTweaksPage), IsEnabled = true },
         new HomeCard { Title = "Akari OS Tweaks", Description = "Toggle deep system modifications & services", Glyph = "", Target = typeof(AkariOSTweaksPage), IsEnabled = true },
         new HomeCard { Title = "Debloat",         Description = "Run 28 PowerShell-backed debloat actions",    Glyph = "", Target = typeof(DebloatPage), IsEnabled = true },
-        new HomeCard { Title = "Downloads",       Description = "Playbooks, drivers & recommended utilities",  Glyph = "", Target = typeof(HomePage), IsEnabled = false },
+        new HomeCard { Title = "Downloads",       Description = "Playbooks, drivers & recommended utilities",  Glyph = "", Target = typeof(DownloadsPage), IsEnabled = true },
         new HomeCard { Title = "Misc",            Description = "Context-menu entries & extra tools",         Glyph = "", Target = typeof(HomePage), IsEnabled = false },
     ];
 
