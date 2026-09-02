@@ -484,32 +484,37 @@ private void AddClassicContextMenu()
 
 **If this table is empty:** N/A — table is populated above.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **League of Legends / Valorant have no generic winget ID — which region should the catalog default to?**
    - What we know: Confirmed via `winget search` this session — only region-suffixed IDs exist (`RiotGames.LeagueOfLegends.NA/.EU/.EUNE/.JP/.KR/.LA1/.LA2/.OC1/.PBE`, similarly for Valorant `.AP/.BR/.EU/.KR/.LATAM/.NA`).
    - What's unclear: Which region Akari OS's actual user base needs — this is a product/audience question, not a technical one.
    - Recommendation: Default to the `.NA` variant (matching the existing catalog's English-only, US-CDN-sourced app conventions) and label the catalog row "League of Legends (NA)"/"Valorant (NA)" so the region is visible, not hidden. Flag as a locked decision needed from the user during `/gsd-discuss-phase` follow-up or accept as Claude's discretion if not re-opened.
+   - **RESOLVED:** Accepted as Claude's discretion — 04-03-PLAN.md Task 2 defaults both to `.NA` and labels the catalog rows "League of Legends (NA)"/"Valorant (NA)".
 
 2. **Escape From Tarkov has no winget package at all — how should D-03's "winget ID, not CDN download" mandate apply to this one app?**
    - What we know: Confirmed via `winget search "Tarkov"`/`"Escape from Tarkov"`/`"Battlestate"` this session — zero results. Battlestate Games does not publish to winget.
    - What's unclear: Whether the user wants (a) this one app dropped from the 15-app scope entirely (reducing to 12 apps that actually support D-03's mechanism), or (b) this one app kept as an explicit, documented exception to D-03 using the source script's original direct-CDN-download method (`IWR "https://prod.escapefromtarkov.com/launcher/download" -OutFile ...`).
    - Recommendation: Treat as an explicit, single-app exception to D-03 (option b) — the user's D-03 rationale was "consistent single install mechanism," but a hard technical blocker (no winget package exists) is a different situation than a style preference; dropping a named, locked-decision app silently seems worse than one clearly-flagged exception. Confirm with the user during planning if this reasoning is contested.
+   - **RESOLVED:** Option (b) adopted — 04-03-PLAN.md Task 2 implements `eft-install.ps1` as the `DirectInstallResourceSuffix` exception, now also gated by an Authenticode signature-verification check (`Get-AuthenticodeSignature .Status -eq 'Valid'`) before execution, added during plan revision per T-04-09.
 
 3. **"Epic Games" and "GOG Galaxy" in D-02's list are literal duplicates of existing catalog rows — drop them?**
    - What we know: Verified this session — `EpicGames.EpicGamesLauncher` and `GOG.Galaxy` already exist verbatim in the predecessor's ported 28-app catalog (Gaming category), with the exact same winget IDs the new-app research would otherwise produce.
    - What's unclear: Whether this was a deliberate oversight in the CONTEXT.md discussion (the discussion's "9 already-present" count and its 6 named examples don't fully enumerate all 9, missing these two plus Notepad++) or an intentional inclusion for some unstated reason.
    - Recommendation: Drop both from the "new apps to add" list during planning — reduces D-02's addition count from 15 to 13 (12 if Escape From Tarkov is also dropped per Question 2's option a). Document this correction explicitly in the plan so it's traceable back to this research, not silently different from CONTEXT.md's literal text.
+   - **RESOLVED:** Dropped — 04-03-PLAN.md's objective and must_haves explicitly document the 13-new-app corrected scope, and Task 4's regression tests assert catalog uniqueness (no duplicate `Name`/`WingetId` rows for Epic Games Launcher or GOG Galaxy).
 
 4. **Nvidia App's Microsoft Store-only listing — install via winget's msstore source, or skip entirely?**
    - What we know: No plain `winget`-source package exists; only `XP8CLZL93F5Z4P` via the `msstore` source, which may have different `--silent`/agreement-acceptance semantics than the rest of the catalog's EXE/MSI-based winget installs.
    - What's unclear: Whether msstore-sourced silent install actually works headlessly in this app's elevated, unpackaged context (untested this session — no VM available to actually run `winget install --source msstore` and observe behavior).
    - Recommendation: Include it, but gate behind a `checkpoint:human-verify` task in the plan (per the Package Legitimacy Audit) so the executor confirms msstore silent-install actually completes without a stuck consent prompt before considering the catalog entry done.
+   - **RESOLVED:** Included with the recommended gate — 04-03-PLAN.md Task 3 is a blocking `checkpoint:human-verify` task requiring a live confirmation that the msstore-sourced silent install completes before the entry is considered production-ready.
 
 5. **D-08's SHA256 manifest — who/what authors the ~130-entry hash list, and when?**
    - What we know: No upstream manifest exists to fetch (confirmed via live GitHub API call). The manifest must be authored by downloading all ~130 files and hashing them.
    - What's unclear: Whether this authoring step happens as part of this phase's plan execution (an executor task that runs a one-time script against the live GitHub repo and commits the resulting manifest), or is treated as a separate manual/ops task outside the GSD phase workflow.
    - Recommendation: Include it as an explicit plan task — a small one-off C#/PowerShell utility (not shipped in the app) that downloads each `AllFiles` entry, computes SHA256, and emits a JSON manifest embedded as a resource. Budget real time for this — it is a ~30MB download over ~130 files, not instant.
+   - **RESOLVED:** Included as recommended — 04-02-PLAN.md Task 1 authors `PostInstallManifest.json` (147 real entries) via a one-off local hashing script and embeds it as a resource, wired into `PostInstallService.DownloadFileAsync` as a verify-or-reject gate.
 
 ## Environment Availability
 
