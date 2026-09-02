@@ -126,3 +126,10 @@ None - plan executed exactly as written. The manifest was authored by actually d
 ---
 *Phase: 04-downloads-misc*
 *Completed: 2026-09-02*
+
+## Self-Check: PASSED
+- FOUND: src/AkariToolbox.App/Resources/PostInstallManifest.json
+- FOUND: .planning/phases/04-downloads-misc/04-02-SUMMARY.md
+- FOUND: 6f5ca0b (Task 1 commit)
+- FOUND: 80ef4e9 (Task 2 commit)
+- FOUND: 831494b (SUMMARY commit)
