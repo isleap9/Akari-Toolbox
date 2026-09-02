@@ -180,6 +180,7 @@ public partial class App : Application
         builder.Services.AddTransient<AkariOSTweaksViewModel>();
         builder.Services.AddTransient<GamingTweaksViewModel>();
         builder.Services.AddTransient<DebloatViewModel>();
+        builder.Services.AddTransient<DownloadsViewModel>();
 
         // Navigation: pages are created through the DI container.
         builder.Services.AddSingleton<INavigationService>(sp =>

@@ -78,7 +78,7 @@ public sealed partial class MainWindow : Window
         new("Akari OS Tweaks", "\uE713", typeof(AkariOSTweaksPage)),
         new("Gaming Tweaks", "\uE7FC", typeof(GamingTweaksPage)),
         new("Debloat", "\uE74D", typeof(DebloatPage)),
-        new("Downloads", "\uE896", typeof(HomePage), IsEnabled: false),
+        new("Downloads", "\uE896", typeof(DownloadsPage)),
         new("Misc", "\uE712", typeof(HomePage), IsEnabled: false),
     ];
 
