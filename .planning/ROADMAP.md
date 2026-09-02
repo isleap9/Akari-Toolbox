@@ -158,12 +158,12 @@ Plans:
 
 **Note:** MISC-02 (extra misc tools) is deferred per 04-CONTEXT.md D-12 — no existing implementation exists anywhere (predecessor or the "Ultimate" collection) to port from; tracked for a future milestone once concrete tool candidates exist. DOWNLOADS-02's original "playbooks, drivers, and recommended utility links" wording is corrected above per 04-CONTEXT.md D-01 — see REQUIREMENTS.md for both the wording correction and the deferral record.
 
-**Plans**: 4 plans
+**Plans**: 2/4 plans executed
 Plans:
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — Downloads page tracer: Model/Service/ViewModel/View/DI/Nav, existing 29-app winget catalog, D-06 PostInstall auto-trigger
-- [ ] 04-02-PLAN.md — PostInstall SHA256 manifest authoring + D-07 integrity gate
+- [x] 04-01-PLAN.md — Downloads page tracer: Model/Service/ViewModel/View/DI/Nav, existing 29-app winget catalog, D-06 PostInstall auto-trigger
+- [x] 04-02-PLAN.md — PostInstall SHA256 manifest authoring + D-07 integrity gate
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -182,4 +182,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Foundation & Akari OS Tweaks | 7/7 | Complete    | 2026-09-01 |
 | 2. Gaming Tweaks | 7/7 | Complete    | 2026-09-01 |
 | 3. Debloat | 8/8 | Complete    | 2026-09-02 |
-| 4. Downloads & Misc | 0/4 | Not started | - |
+| 4. Downloads & Misc | 2/4 | In Progress|  |
