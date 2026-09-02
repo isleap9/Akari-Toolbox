@@ -160,8 +160,13 @@ Plans:
 
 **Plans**: 4 plans
 Plans:
+**Wave 1**
+
 - [ ] 04-01-PLAN.md — Downloads page tracer: Model/Service/ViewModel/View/DI/Nav, existing 29-app winget catalog, D-06 PostInstall auto-trigger
 - [ ] 04-02-PLAN.md — PostInstall SHA256 manifest authoring + D-07 integrity gate
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 04-03-PLAN.md — Downloads catalog expansion: 13 new apps (D-02/D-03/D-04/D-05)
 - [ ] 04-04-PLAN.md — Misc page: 12 context-menu entries + 13th classic-menu-restore toggle (D-09/D-10/D-11)
 
