@@ -3,6 +3,10 @@ $policyPath = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\CloudContent"
 If (Test-Path $policyPath) {
     Remove-ItemProperty -Path $policyPath -Name "DisableWindowsConsumerFeatures" -Force -ErrorAction SilentlyContinue
 }
+# Supplementary step (intentional, not a 1:1 reversal of consumerfeatures.ps1's single
+# policy-key write): also restores the out-of-box "suggested apps / content delivery /
+# tips" defaults, since these are the same feature area a user expects "Consumer
+# Features" to control even though Run itself never touched them.
 $regKeys = @(
     @{Path="HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"; Name="ShowSyncProviderNotifications"; Value=1; Type="DWord"},
     @{Path="HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager"; Name="ContentDeliveryAllowed"; Value=1; Type="DWord"},
