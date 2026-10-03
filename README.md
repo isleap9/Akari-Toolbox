@@ -1,96 +1,107 @@
-# AppTemplate — WinUI 3 MVVM starter
+# Akari Toolbox
 
-A minimal, polished starting point for new WinUI 3 desktop apps: a Home page and a Settings page
-(with theme + language switching), a Mica backdrop for the Windows 11 look, and a reusable
-framework class library with an xUnit test suite. No demo pages, no sample data.
+A WinUI 3 desktop app for applying the FR33THY Ultimate tweak set: Windows appearance,
+debloat/privacy, drivers, GPU settings, services, scheduling, and more. All tweaks run as
+native registry / service / driver / WMI operations — no scripts or bundled binaries are
+ever executed.
+
+Requires **Windows 10/11 x64** and **administrator** privileges (every tweak writes
+HKLM / services / drivers). The app is unpackaged and self-contained, so no Windows App
+Runtime install is needed.
+
+## Pages
+
+Navigation order (Settings is pinned to the pane footer):
+
+Home, Akari OS Tweaks, Gaming Tweaks, 1 - Check, 2 - Refresh, 3 - Setup, 4 - Installers,
+5 - Graphics, 6 - Windows, 7 - Hardware, 8 - Advanced, Individual Tweaks (169 Control
+Panel rows in 4 collapsible groups), Settings.
+
+Home shows a Safety card (restore point + desktop shortcut), a This PC card (OS / CPU /
+GPU / uptime / privileges / .NET, plus memory and system-drive usage bars), and tiles
+linking to all 11 destinations.
 
 ## Solution layout
 
 ```
 AppTemplate.slnx
 ├── src/
-│   ├── AppTemplate.Framework   Reusable class library (no app-specific code)
-│   ├── AppTemplate.App         App shell (Home + Settings), wiring via DI
+│   ├── AppTemplate.App         The app (display name "Akari Toolbox",
+│   │   │                       assembly AkariToolbox.App, namespace AkariToolbox.*)
+│   │   ├── Views/              13 pages + Shared/
+│   │   ├── ViewModels/         13 page view models
+│   │   ├── Tweaks/             Native action ports (registry/services/drivers/WMI)
+│   │   │   └── Data/           Embedded data files (e.g. GPU profiles)
+│   │   ├── Services/           LocalizedStrings
+│   │   ├── Helpers/            NativeOps, SystemInfo, dialogs, misc
+│   │   └── Assets/             AkariLogo.ico/.png
+│   ├── AppTemplate.Framework   Shared MVVM shell (navigation, settings, logging,
+│   │                           converters, InfoBar/dialog/status services)
 │   └── AppTemplate.Tests       xUnit tests for the framework
-├── Directory.Packages.props    Central package management (versions in one place)
+├── Directory.Packages.props    Central package management
 ├── Directory.Build.props
-├── global.json                 .NET SDK pin
-└── nuget.config
+├── global.json                 .NET SDK pin (10.0.400)
+├── build-and-run.ps1           Kill, build, launch helper
+├── check-parity.ps1            Diffs Text=/Content= strings vs. the WPF original
+└── verify-pages.ps1            Clicks all 13 nav items via UIA and reports content
 ```
 
 ## Tech stack
 
 - .NET 10 (`net10.0-windows10.0.26100.0`), Windows App SDK 2.3.1, WinUI 3
-- CommunityToolkit.Mvvm 8.4.2 (source generators: `[ObservableProperty]`, `[RelayCommand]`)
-- Microsoft.Extensions: DependencyInjection, Hosting, Logging
-- Microsoft.Xaml.Behaviors.WinUI.Managed 3.0.1
+- CommunityToolkit.Mvvm 8.4.2 (`[ObservableProperty]`, `[RelayCommand]`)
+- Microsoft.Extensions: Hosting, DependencyInjection, Logging
+- System.Management (WMI reads in `SystemInfo`)
 - Tests: xUnit 2.9.3, Moq 4.20.72, Microsoft.NET.Test.Sdk 17.14.1
 
-The app is **unpackaged** (`WindowsPackageType=None`) and **self-contained**
-(`WindowsAppSDKSelfContained=true`), so no Windows App Runtime is required on the machine.
+Unpackaged (`WindowsPackageType=None`), self-contained
+(`WindowsAppSDKSelfContained=true`), x64 only, `requireAdministrator` manifest.
 
 ## Build & run
 
 ```powershell
-# Build the whole solution (all 3 projects)
-dotnet build AppTemplate.slnx -c Debug
-
-# Run the tests (90 tests)
-dotnet test src/AppTemplate.Tests/AppTemplate.Tests.csproj -c Debug
-
-# Run the app
-dotnet run --project src/AppTemplate.App -c Debug   # or launch the built exe
+& './build-and-run.ps1'            # kill running copy, build, launch (Debug)
+& './build-and-run.ps1' -NoLaunch  # build only
+& './build-and-run.ps1' -Release   # Release build + launch
 ```
 
-The app pins `<PlatformTarget>x64</PlatformTarget>` and `<RuntimeIdentifier>win-x64</RuntimeIdentifier>`
-so the self-contained WinAppSDK targets resolve a native platform regardless of solution platform.
-
-## Starting a new app
-
-1. Copy the repository and rename `AppTemplate` everywhere (folders, `.csproj`, `.slnx`,
-   namespaces, assembly names, `App.AppName`, the settings-folder name in `App.xaml.cs`).
-2. Add pages under `src/AppTemplate.App/Views` with matching view models, register them in
-   `App.xaml.cs`, and add entries to `NavItems` in `MainWindow.xaml.cs`.
-3. Keep app-independent code in the framework library and add tests in `AppTemplate.Tests`.
+Build must report `Errors: 0  Warnings: 0`. Kill `AkariToolbox.App` before rebuilding
+(the script does this) or the apphost file lock fails the build. Output:
+`src/AppTemplate.App/bin/x64/Debug/net10.0-windows10.0.26100.0/win-x64/AkariToolbox.App.exe`.
 
 ## Shell
 
-`MainWindow` wires the custom title bar (drag region + back button), a `NavigationView` with a
-pinned pane toggle (the pancake at the top of the sidebar collapses/expands the pane), a shared
-`InfoBar`, and a **Mica** backdrop (`SystemBackdrop = new MicaBackdrop()`) that follows the theme.
-Launching always opens the **Home** tab.
-
-## Framework features (`src/AppTemplate.Framework`)
-
-| Folder / file | Contents |
-| --- | --- |
-| `ViewModels/` | `ViewModelBase`, `ValidatableViewModelBase` (ObservableValidator wrapper with `GetError`, `CanSubmit`) |
-| `Navigation/` | `FrameNavigationService`, `INavigationService`, `INavigationAware`, `NavigationEntry` |
-| `Services/` | `SettingsService` + `FileSettingsStorage`; `ThemeService`, `CultureService`; `IDialogService`, `IFilePickerService`, `IInfoBarService`, `IWindowService` |
-| `Messaging/` | Thin wrappers over `WeakReferenceMessenger` (`IMessage`, message classes) |
-| `Collections/` | `RangeObservableCollection`, `ObservableGroupCollection`, `IncrementalLoadingCollection` |
-| `Converters/` | Reusable value converters for WinUI bindings (incl. `EnumToStringConverter` for friendly enum labels) |
-| `Behaviors/` | Reusable XAML behaviors |
-| `Logging/` | `FileLoggerProvider` — rolling file logger (daily files, size cap, retention) |
-| `Threading/` | Dispatcher helpers |
-| `ObjectExtensions.cs` | `ChangeType`-style object extension used by settings |
-| `ServiceCollectionExtensions.cs` | `AddMvvmFramework()` DI registration |
+`MainWindow` wires a custom title bar, a `NavigationView`, a shared `InfoBar`, a Mica
+backdrop that follows the theme, and a persistent status footer (`IStatusService`:
+"Ready" when idle, operation name + progress bar while a tweak runs). Launching always
+opens **Home**. Native WinUI 3 styling only — no custom theme dictionaries or hardcoded
+colors.
 
 ## App notes
 
-- Settings live in `%LOCALAPPDATA%\AppTemplate\settings.json`; the theme (System / Light / Dark)
-  and language are picked with ComboBoxes and apply immediately.
-- `ILogger` output is written to `%LOCALAPPDATA%\AppTemplate\logs\` (daily rolling files,
-  ~1 MB cap, newest 10 kept); unhandled exceptions are logged there and shown in a friendly
-  dialog.
-- The app is wired through `Microsoft.Extensions.Hosting` in `App.xaml.cs`; pages are created
-  through the DI container by `FrameNavigationService`, and dialogs are abstracted behind
-  `IDialogService` so the framework and its tests never depend on a concrete window.
+- Settings live in `%LOCALAPPDATA%\AkariToolbox\settings.json`; theme (System / Light /
+  Dark) and language apply immediately.
+- `ILogger` output goes to `%LOCALAPPDATA%\AkariToolbox\logs\` (daily rolling files,
+  ~1 MB cap, newest 10 kept); unhandled exceptions are logged there and shown in a
+  friendly dialog.
+- Single-instance key: `AkariToolbox`.
+- Safe-boot re-entry flows (`--ddu-auto`, `--defender-optimize`, `--services-off`, …)
+  run headless before single-instance registration, then exit.
+- Pages are created through DI by `FrameNavigationService`; dialogs are abstracted
+  behind `IDialogService`. Because the manifest requires elevation, file pickers use
+  `Microsoft.Win32.OpenFileDialog` (WinUI 3 pickers don't work elevated).
 
 ## Notes
 
 - **UI types can't be instantiated in testhost.** `new Page()` / `new Frame()` throw
-  `COMException` in `dotnet test` even when the WinAppSDK runtime is bootstrapped. Tests cover
-  only framework logic that doesn't require a XAML object; UI behavior is exercised by the app.
-- `dotnet build` errors like `WMC9999` can hide the real issue; prefer building the solution
-  and reading the full XamlCompiler diagnostics rather than stopping at the first error line.
+  `COMException` in `dotnet test` even when the WinAppSDK runtime is bootstrapped.
+  Tests cover only framework logic that doesn't require a XAML object.
+- Page-level `x:Bind` can't resolve its root type (WMC9999); pages use `{Binding}`,
+  with `x:Bind` only inside `DataTemplate` (`x:DataType`).
+- `dotnet build` errors like `WMC9999` can hide the real issue; prefer building the
+  solution and reading the full XamlCompiler diagnostics rather than stopping at the
+  first error line.
+
+## License
+
+MIT — see `LICENSE`.
