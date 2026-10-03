@@ -1,0 +1,73 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>AkariToolbox.App</AssemblyName>
+    <RootNamespace>AkariToolbox</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\AkariLogo.ico</ApplicationIcon>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <Version>1.0.0</Version>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <!-- MVVMTK0045 only applies to AOT-published WinRT apps; this app is self-contained, not AOT. -->
+    <NoWarn>$(NoWarn);MVVMTK0045</NoWarn>
+  <!--
+      MarkupCompilePass2 resolves x:DataType / page-level x:Bind roots against the project's
+      own assembly. It infers that from @(XamlIntermediateAssembly) guarded by Exists(), which
+      is false on a clean build, so pass 2 gets no LocalAssembly and every page-level x:Bind
+      against a local type dies with an opaque WMC9999. Pointing the compiler straight at the
+      intermediate assembly — after the SDK has computed TargetName/TargetExt — restores type
+      resolution.
+    -->
+  </PropertyGroup>
+
+  <Target Name="SetAkariXamlLocalAssembly" BeforeTargets="MarkupCompilePass2">
+    <PropertyGroup>
+      <XamlLocalAssembly>$(IntermediateOutputPath)intermediatexaml\$(TargetName)$(TargetExt)</XamlLocalAssembly>
+    </PropertyGroup>
+  </Target>
+
+  <ItemGroup>
+    <Content Include="Assets\AkariLogo.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\AkariLogo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AppTemplate.Framework\AppTemplate.Framework.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+    <PackageReference Include="System.Management" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="App.xaml.cs" />
+    <Compile Include="NavigationItem.cs" />
+    <Compile Include="MainWindow.xaml.cs" />
+    <Compile Include="Helpers\*.cs" />
+    <Compile Include="Services\*.cs" />
+    <Compile Include="ViewModels\*.cs" />
+    <Compile Include="Views\*.xaml.cs" />
+    <Compile Include="Tweaks\*.cs" />
+    <EmbeddedResource Include="Tweaks\Data\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Include="MainWindow.xaml" />
+    <Page Include="Views\*.xaml" />
+    <Page Include="Views\Shared\*.xaml" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,172 @@
+<Page
+  x:Class="AkariToolbox.Views.CheckPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:models="using:AkariToolbox.ViewModels">
+
+  <!--
+  1  Check: the BIOS / PC / component-check / stress-test cards.
+
+  WPF-UI substitutions: ui:Card  AkariCard Border, ui:Button  AkariTileButton,
+  <Separator>  a 1px Rectangle filled with the card stroke brush. Labels, captions
+  and button text are verbatim from WPF.
+  -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <StackPanel Padding="32" Spacing="16" MaxWidth="1000" HorizontalAlignment="Left">
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="BIOS" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="BIOS Update &amp; Settings" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Enable password sign-in, search your motherboard, review BIOS tips, then restart to BIOS." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding RunBiosCheckCommand, Mode=OneWay}"
+  Content="Run"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="PC" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="PC Check (OCCT)" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Install OCCT and run CPU, RAM and GPU stability tests, with drive, RAM and GPU checklist guidance." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding RunPcCheckCommand, Mode=OneWay}"
+  Content="Run"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Component Checks" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Storage Check" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Review free space on every drive and open This PC." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding RunStorageCheckCommand, Mode=OneWay}"
+  Content="Run"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="RAM Check (CPU-Z)" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Open CPU-Z with the RAM profile, slot and channel checklist." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding RunRamCheckCommand, Mode=OneWay}"
+  Content="Run"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="GPU Check (GPU-Z)" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Open GPU-Z with the bus, ReBAR and slot checklist." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding RunGpuCheckCommand, Mode=OneWay}"
+  Content="Run"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Stress Tests" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Storage, RAM &amp; CPU Test (OCCT)" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Run a storage, RAM and CPU stress test and watch temps and errors." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding RunCpuBenchCommand, Mode=OneWay}"
+  Content="Run"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="GPU Test (FurMark)" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Run a GPU stress test and watch temps, framerate and artifacts." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding RunGpuBenchCommand, Mode=OneWay}"
+  Content="Run"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  </StackPanel>
+  </ScrollViewer>
+</Page>

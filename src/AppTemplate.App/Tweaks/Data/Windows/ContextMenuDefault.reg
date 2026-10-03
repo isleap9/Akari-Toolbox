@@ -1,0 +1,23 @@
+Windows Registry Editor Version 5.00
+
+; pin to quick access
+[HKEY_CLASSES_ROOT\Folder\shell\pintohome]
+"AppliesTo"="System.ParsingName:<>\"::{f874310e-b6b7-47dc-bc84-b9e6b38f5903}\" AND System.ParsingName:<>\"::{679f85cb-0220-4080-b29b-5540cc05aab6}\" AND System.IsFolder:=System.StructuredQueryType.Boolean#True"
+"CommandStateHandler"="{b455f46e-e4af-4035-b0a4-cf18d2f6f28e}"
+"CommandStateSync"=""
+"MUIVerb"="@shell32.dll,-51601"
+"SkipCloudDownload"=dword:00000000
+
+[HKEY_CLASSES_ROOT\Folder\shell\pintohome\command]
+"DelegateExecute"="{b455f46e-e4af-4035-b0a4-cf18d2f6f28e}"
+
+; add to favorites
+[HKEY_CLASSES_ROOT\*\shell\pintohomefile]
+"CommandStateHandler"="{b455f46e-e4af-4035-b0a4-cf18d2f6f28e}"
+"CommandStateSync"=""
+"MUIVerb"="@shell32.dll,-51608"
+"NeverDefault"=""
+"SkipCloudDownload"=dword:00000000
+
+[HKEY_CLASSES_ROOT\*\shell\pintohomefile\command]
+"DelegateExecute"="{b455f46e-e4af-4035-b0a4-cf18d2f6f28e}"

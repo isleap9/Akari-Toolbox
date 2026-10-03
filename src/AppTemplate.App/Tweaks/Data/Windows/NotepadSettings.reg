@@ -1,0 +1,6 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\Settings\LocalState]
+"OpenFile"=hex(5f5e104):01,00,00,00,d1,55,24,57,d1,84,db,01
+"GhostFile"=hex(5f5e10b):00,42,60,f1,5a,d1,84,db,01
+"RewriteEnabled"=hex(5f5e10b):00,12,4a,7f,5f,d1,84,db,01

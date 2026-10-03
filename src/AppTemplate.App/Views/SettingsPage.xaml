@@ -1,0 +1,38 @@
+<Page
+  x:Class="AkariToolbox.Views.SettingsPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:models="using:AkariToolbox.ViewModels">
+
+  <!--
+  Settings: the two theme radio buttons and the version line. WPF used a
+  WPF-UI EnumToBooleanConverter against ApplicationTheme; WinUI has no such enum in the
+  page, so the view model exposes IsLight / IsDark directly and the radios bind straight
+  to them (GroupName + TwoWay reproduces WPF-UI's radio-group behaviour).
+  -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <StackPanel Padding="32" Spacing="16" MaxWidth="1000" HorizontalAlignment="Left">
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Appearance" />
+
+  <RadioButton
+  Command="{Binding ChangeThemeLightCommand, Mode=OneWay}"
+  Content="Light"
+  GroupName="themeSelect"
+  IsChecked="{Binding IsLight, Mode=TwoWay}" />
+
+  <RadioButton
+  Margin="0,8,0,0"
+  Command="{Binding ChangeThemeDarkCommand, Mode=OneWay}"
+  Content="Dark"
+  GroupName="themeSelect"
+  IsChecked="{Binding IsDark, Mode=TwoWay}" />
+
+  <TextBlock
+  Margin="0,24,0,0"
+  Style="{StaticResource AkariCaption}"
+  Text="{Binding AppVersion, Mode=OneWay}" />
+
+  </StackPanel>
+  </ScrollViewer>
+</Page>

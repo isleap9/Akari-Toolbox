@@ -1,0 +1,156 @@
+<Page
+  x:Class="AkariToolbox.Views.TweaksPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:models="using:AkariToolbox.ViewModels">
+
+  <!--
+  Individual Tweaks: the two scheduling comboboxes plus the 169 granular Control Panel
+  rows in four collapsible groups (Debloat / Appearance / Tweaks / System), starting
+  collapsed like Akari-Tool. Revertible rows are live-state toggles; one-way rows are
+  Apply buttons.
+
+  Binding note: the page's own controls use classic {Binding}; the collapsible groups,
+  their sections and the rows use x:Bind inside DataTemplates. Page-level x:Bind needs
+  MarkupCompilePass2 to resolve the root type against the local assembly, which this
+  project's item layout does not give it (WMC9999); x:Bind inside a DataTemplate
+  resolves from x:DataType and works, so the split keeps the fast path where it is usable.
+  -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <StackPanel Padding="32" Spacing="16" MaxWidth="1000" HorizontalAlignment="Left">
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Scheduling" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="SvcHost Split Threshold" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Higher values group services into fewer svchost processes (less overhead). Restart to apply." />
+  </StackPanel>
+  <ComboBox
+  Grid.Column="1"
+  Width="200"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  ItemsSource="{Binding SvcHostOptions, Mode=OneWay}"
+  SelectedIndex="{Binding SvcHostIndex, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Win32 Priority Separation" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Controls foreground/background CPU quantum. 26 (Hex) is recommended. Restart to apply." />
+  </StackPanel>
+  <ComboBox
+  Grid.Column="1"
+  Width="200"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  ItemsSource="{Binding Win32PriorityOptions, Mode=OneWay}"
+  SelectedIndex="{Binding Win32PriorityIndex, Mode=TwoWay}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  <ItemsControl ItemsSource="{Binding TabGroups, Mode=OneWay}">
+  <ItemsControl.ItemsPanel>
+  <ItemsPanelTemplate>
+  <StackPanel Spacing="12" />
+  </ItemsPanelTemplate>
+  </ItemsControl.ItemsPanel>
+  <ItemsControl.ItemTemplate>
+  <DataTemplate x:DataType="models:CpTabGroup">
+  <StackPanel>
+  <Button
+  HorizontalAlignment="Stretch"
+  HorizontalContentAlignment="Stretch"
+  Command="{x:Bind ToggleCommand, Mode=OneTime}"
+  Content="{x:Bind Header, Mode=OneWay}" />
+
+  <ItemsControl
+  ItemsSource="{x:Bind Sections, Mode=OneWay}"
+  Visibility="{x:Bind IsExpanded, Mode=OneWay, Converter={StaticResource BoolToVisibility}}">
+  <ItemsControl.ItemsPanel>
+  <ItemsPanelTemplate>
+  <StackPanel Spacing="12" />
+  </ItemsPanelTemplate>
+  </ItemsControl.ItemsPanel>
+  <ItemsControl.ItemTemplate>
+  <DataTemplate x:DataType="models:CpSectionGroup">
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <TextBlock
+  Margin="0,0,0,4"
+  Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+  Style="{StaticResource AkariCardTitle}"
+  Text="{x:Bind Title, Mode=OneTime}" />
+
+  <ItemsControl ItemsSource="{x:Bind Rows, Mode=OneWay}">
+  <ItemsControl.ItemsPanel>
+  <ItemsPanelTemplate>
+  <StackPanel Spacing="12" />
+  </ItemsPanelTemplate>
+  </ItemsControl.ItemsPanel>
+  <ItemsControl.ItemTemplate>
+  <DataTemplate x:DataType="models:CpRowItem">
+  <StackPanel Spacing="8">
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+
+  <TextBlock
+  Grid.Column="0"
+  VerticalAlignment="Center"
+  FontWeight="SemiBold"
+  Text="{x:Bind Row.Title, Mode=OneWay}"
+  TextWrapping="Wrap" />
+
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{x:Bind IsEnabled, Mode=OneWay}"
+  IsOn="{x:Bind IsOn, Mode=TwoWay}"
+  Visibility="{x:Bind IsRevertible, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{x:Bind ApplyCommand, Mode=OneTime}"
+  Content="Apply"
+  IsEnabled="{x:Bind IsEnabled, Mode=OneWay}"
+  Visibility="{x:Bind IsOneWay, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+  </Grid>
+  </StackPanel>
+  </DataTemplate>
+  </ItemsControl.ItemTemplate>
+  </ItemsControl>
+  </StackPanel>
+  </Border>
+  </DataTemplate>
+  </ItemsControl.ItemTemplate>
+  </ItemsControl>
+  </StackPanel>
+  </DataTemplate>
+  </ItemsControl.ItemTemplate>
+  </ItemsControl>
+
+  </StackPanel>
+  </ScrollViewer>
+</Page>

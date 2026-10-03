@@ -1,0 +1,904 @@
+<Page
+  x:Class="AkariToolbox.Views.WindowsPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:models="using:AkariToolbox.ViewModels">
+
+  <!--
+  6  Windows: Appearance, Debloat & Privacy, Bloatware, Bloatware Checks,
+  Settings & Sound, Performance, Quick Settings and Security & Maintenance.
+
+  WPF-UI substitutions: ui:Card -> AkariCard Border, ui:Button -> AkariTileButton,
+  ui:ToggleSwitch -> ToggleSwitch (IsChecked -> IsOn), <Separator> -> a 1px Rectangle
+  filled with the card stroke brush, and the DynamicResource brushes -> the matching
+  Akari ThemeResource brushes. Every row title, description and button caption is copied
+  verbatim from the WPF page; the page's own controls use classic {Binding} because
+  page-level x:Bind cannot resolve its root type in this project (WMC9999).
+  -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <StackPanel Padding="32" Spacing="16" MaxWidth="1000" HorizontalAlignment="Left">
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Appearance" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Start Menu &amp; Taskbar Clean" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Left-aligned taskbar, no search or widgets buttons, minimal Start layout, list view." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding StartMenuClean, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Start Menu Layout" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Switch between the new and old Start menu layout." />
+  </StackPanel>
+  <ComboBox
+  Grid.Column="1"
+  Width="200"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}"
+  ItemsSource="{Binding StartMenuLayoutOptions}"
+  SelectedIndex="{Binding StartMenuLayoutIndex, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Start Menu Shortcuts" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Create handy Start Menu and Startup folder shortcuts." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding OpenShortcutsCommand}"
+  Content="Create"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Context Menu Clean" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Classic right-click menu, stripped of clutter entries." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding ContextMenuClean, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Theme Black" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Pure-black dark theme, transparency off, black background." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding ThemeBlack, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Lock Screen Wallpaper Black" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Black lock screen and wallpaper, no sign-in blur." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding SignoutWallpaperBlack, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Account Pictures Black" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Replace the default account pictures with black ones (backed up first)." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding AccountPicturesBlack, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Debloat &amp; Privacy" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Widgets Off" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Disable News and Interests and Widgets." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding WidgetsOff, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Copilot Off" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Uninstall Copilot and turn it off by policy." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding CopilotOff, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Game Bar Off" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Remove Game Bar and Xbox apps, disable capture and popups." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding GameBarOff, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Edge Removed" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Fully uninstall Edge and WebView. Flipping back reinstalls them." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding EdgeUninstalled, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Bloatware" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid>
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  <ColumnDefinition Width="8" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Remove All Bloatware" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="UWP apps, capabilities, legacy features, OneDrive and extras. Takes a while." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding RemoveBloatwareCommand}"
+  Content="Remove"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  <Button
+  Grid.Column="3"
+  VerticalAlignment="Center"
+  Command="{Binding CheckBloatwareCommand}"
+  Content="Check"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Install Store" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Re-register the Microsoft Store." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding InstallStoreCommand}"
+  Content="Install"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Install All UWP Apps" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Re-register every installed UWP package." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding InstallAllUwpCommand}"
+  Content="Install"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid>
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  <ColumnDefinition Width="8" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Windows Features" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Open the UWP or legacy feature lists." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding OpenUwpFeaturesCommand}"
+  Content="UWP"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  <Button
+  Grid.Column="3"
+  VerticalAlignment="Center"
+  Command="{Binding OpenLegacyFeaturesCommand}"
+  Content="Legacy"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Install OneDrive" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Run the inbox OneDrive setup." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding InstallOneDriveCommand}"
+  Content="Install"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Install Remote Desktop" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Download and run the Remote Desktop client." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding InstallRdcCommand}"
+  Content="Install"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Install Snipping Tool" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Download the classic Snipping Tool and re-register Screen Sketch." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding InstallSnippingCommand}"
+  Content="Install"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Install winget" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Open the App Installer Store page, or install winget directly when the Store is gone." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding InstallWingetCommand}"
+  Content="Install"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Bloatware Checks" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Legacy Apps" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Review installed desktop programs." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding CheckLegacyAppsCommand}"
+  Content="Open"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Legacy Features" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Review optional Windows features." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding CheckLegacyFeaturesCommand}"
+  Content="Open"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="UWP Apps" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Review installed UWP apps." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding CheckUwpAppsCommand}"
+  Content="Open"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="UWP Features" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Review Windows capabilities." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding CheckUwpFeaturesCommand}"
+  Content="Open"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Task Manager" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Review processes and startup apps." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding CheckTaskManagerCommand}"
+  Content="Open"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Settings &amp; Sound" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Notepad Optimized" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="No reopened files, no ghost sessions." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding NotepadOn, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Control Panel Optimized" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="The full Control Panel sweep. Same engine as the Services combobox." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding ControlPanelOptimized, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Sound" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Open the classic Sound control panel." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding OpenSoundCommand}"
+  Content="Open"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Loudness Equalization" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Unhide the Enhancements tab on every playback device." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding RunLoudnessEqCommand}"
+  Content="Unhide"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Performance" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Device Power Savings Off" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="No selective suspend or wake on ACPI, HID, PCI and USB devices." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding DevicePowerOff, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Adapter Power Savings Off" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="No green ethernet or wake-on-LAN on any network adapter." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding NetworkPowerOff, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="IPv4 Only" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Disable every adapter binding except IPv4." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding Ipv4Only, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Write Cache Flushing Off" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Turn off write-cache buffer flushing. Only with reliable power." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding WriteCacheOff, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Ultimate Power Plan" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Max-performance plan: no sleep, unparked cores, 100 percent CPU." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding PowerPlanOn, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Timer Resolution Service" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Run the system at maximum timer resolution via a service." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding TimerResolutionOn, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Quick Settings" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Game Mode" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Open the Game Mode settings page." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding OpenGameModeCommand}"
+  Content="Open"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Pointer Precision" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Open mouse pointer options." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding OpenPointerCommand}"
+  Content="Open"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Scaling" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Open advanced display and scaling settings." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding OpenScalingCommand}"
+  Content="Open"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Security &amp; Maintenance" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="UAC Off" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Disable User Account Control. Lowers security." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding UacOff, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Defender Optimize" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Reduce Defender overhead via a safe-boot pass. Reboots twice." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsOn="{Binding DefenderOptimized, Mode=TwoWay}"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Autoruns Check" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Clean third-party startup items, then launch Autoruns." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding RunAutorunsCommand}"
+  Content="Run"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Cleanup" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Clear temp folders, leftovers and the update cache." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding RunCleanupCommand}"
+  Content="Clean"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Restore Point" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Create a restore point and open System Protection." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding RunRestorePointCommand}"
+  Content="Create"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Core Isolation" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Open system info and memory integrity settings." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding OpenCoreIsolationCommand}"
+  Content="Open"
+  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+  </StackPanel>
+  </ScrollViewer>
+</Page>

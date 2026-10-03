@@ -1,0 +1,172 @@
+<Page
+  x:Class="AkariToolbox.Views.RefreshPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:models="using:AkariToolbox.ViewModels">
+
+  <!--
+  2  Refresh: reset & reinstall actions plus the account & drivers card.
+
+  WPF-UI substitutions: ui:Card  AkariCard Border, ui:Button  AkariTileButton,
+  ui:ToggleSwitch  ToggleSwitch (IsChecked  IsOn), <Separator>  a 1px Rectangle
+  filled with the card stroke brush. Labels and captions are verbatim from WPF.
+  -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <StackPanel Padding="32" Spacing="16" MaxWidth="1000" HorizontalAlignment="Left">
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Reset &amp; Reinstall" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Factory Reset" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Open the native recovery settings to reset this PC." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding OpenRecoveryCommand, Mode=OneWay}"
+  Content="Open"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid>
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  <ColumnDefinition Width="8" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Reinstall Windows" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Install the media creation tool and reinstall your edition." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding ReinstallW10Command, Mode=OneWay}"
+  Content="W10"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  <Button
+  Grid.Column="3"
+  VerticalAlignment="Center"
+  Command="{Binding ReinstallW11Command, Mode=OneWay}"
+  Content="W11"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Autounattend" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Build an unattended answer file for automated installs." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding OpenAutounattendCommand, Mode=OneWay}"
+  Content="Open"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Account &amp; Drivers" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Local Account" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Manage local user accounts the classic way." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding OpenLocalAccountCommand, Mode=OneWay}"
+  Content="Open"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Block Driver Updates" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Stop Windows Update from replacing your drivers." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding DriverUpdatesBlocked, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Network Driver" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Search your motherboard's network driver." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding OpenNetworkDriverCommand, Mode=OneWay}"
+  Content="Search"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Restart to BIOS" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Reboot straight into firmware settings." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding RestartToBiosCommand, Mode=OneWay}"
+  Content="Restart"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  </StackPanel>
+  </ScrollViewer>
+</Page>

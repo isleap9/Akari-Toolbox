@@ -1,0 +1,11 @@
+﻿Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\Settings\LocalState]
+; disable video autoplay
+"VideoAutoplay"=hex(5f5e10b):00,96,9d,69,8d,cd,93,dc,01
+; disable notifications for app installations
+"EnableAppInstallNotifications"=hex(5f5e10b):00,36,d0,88,8e,cd,93,dc,01
+
+[HKEY_LOCAL_MACHINE\Settings\LocalState\PersistentSettings]
+; disable personalized experiences
+"PersonalizationEnabled"=hex(5f5e10b):00,0d,56,a1,8a,cd,93,dc,01

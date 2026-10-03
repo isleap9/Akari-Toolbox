@@ -1,0 +1,71 @@
+<Page
+  x:Class="AkariToolbox.Views.InstallersPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:models="using:AkariToolbox.ViewModels">
+
+  <!--
+  4  Installers: two card grids of tile buttons  the game launchers / browsers group
+  and the GPU tools group. Each tile downloads its installer from the FR33THY Ultimate
+  release and runs it with the script's silent arguments off-thread, locking the page
+  for the duration.
+
+  Binding note: the page's own controls use classic {Binding} and the tiles use x:Bind.
+  Page-level x:Bind needs MarkupCompilePass2 to resolve the root type against the local
+  assembly, which this project's item layout does not give it; x:Bind inside a DataTemplate
+  resolves from x:DataType and works, so the split keeps the fast path where it is usable.
+  -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <StackPanel Padding="32" Spacing="16" MaxWidth="1000" HorizontalAlignment="Left">
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Game Launchers &amp; Browsers" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <ItemsControl Margin="0,4" ItemsSource="{Binding LauncherButtons, Mode=OneWay}">
+  <ItemsControl.ItemsPanel>
+  <ItemsPanelTemplate>
+  <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="4" ItemWidth="190" />
+  </ItemsPanelTemplate>
+  </ItemsControl.ItemsPanel>
+  <ItemsControl.ItemTemplate>
+  <DataTemplate x:DataType="models:InstallerButton">
+  <Button
+  Margin="4"
+  HorizontalAlignment="Stretch"
+  Command="{x:Bind RunInstallerCommand, Mode=OneTime}"
+  Content="{x:Bind Label, Mode=OneWay}"
+  IsEnabled="{x:Bind IsEnabled, Mode=OneWay}" />
+  </DataTemplate>
+  </ItemsControl.ItemTemplate>
+  </ItemsControl>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="GPU Tools" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <ItemsControl Margin="0,4" ItemsSource="{Binding ToolButtons, Mode=OneWay}">
+  <ItemsControl.ItemsPanel>
+  <ItemsPanelTemplate>
+  <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="4" ItemWidth="200" />
+  </ItemsPanelTemplate>
+  </ItemsControl.ItemsPanel>
+  <ItemsControl.ItemTemplate>
+  <DataTemplate x:DataType="models:InstallerButton">
+  <Button
+  Margin="4"
+  HorizontalAlignment="Stretch"
+  Command="{x:Bind RunInstallerCommand, Mode=OneTime}"
+  Content="{x:Bind Label, Mode=OneWay}"
+  IsEnabled="{x:Bind IsEnabled, Mode=OneWay}" />
+  </DataTemplate>
+  </ItemsControl.ItemTemplate>
+  </ItemsControl>
+  </Border>
+
+  <TextBlock
+  Style="{StaticResource AkariCaption}"
+  Text="Installers download from the FR33THY Ultimate release and run with silent arguments." />
+
+  </StackPanel>
+  </ScrollViewer>
+</Page>

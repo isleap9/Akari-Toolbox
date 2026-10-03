@@ -1,0 +1,11 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Folder Name="/src/">
+    <Project Path="src/AppTemplate.App/AppTemplate.App.csproj" />
+    <Project Path="src/AppTemplate.Framework/AppTemplate.Framework.csproj" />
+    <Project Path="src/AppTemplate.Tests/AppTemplate.Tests.csproj" />
+  </Folder>
+</Solution>

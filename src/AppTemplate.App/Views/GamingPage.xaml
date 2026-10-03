@@ -1,0 +1,226 @@
+<Page
+  x:Class="AkariToolbox.Views.GamingPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:models="using:AkariToolbox.ViewModels">
+
+  <!--
+  Gaming Tweaks: the two recommended toggles, the four NVIDIA toggles, the AMD
+  toggle, the Control Panel preset combobox and the Tools tile grid.
+
+  WPF-UI substitutions: ui:Card  AkariCard Border, ui:Button  AkariTileButton,
+  ui:ToggleSwitch  ToggleSwitch (IsChecked  IsOn), <Separator>  a 1px Rectangle,
+  UniformGrid  ItemsWrapGrid (WinUI has no UniformGrid). The Tools DataTemplate
+  binds its command to the tile instead of the page's RunButtonCommand, which the
+  WPF page reached through RelativeSource AncestorType=Page  WinUI has no
+  equivalent, so the command moved onto GamingButton.
+
+  The last three tiles (DirectX, Resolution Refresh Rate, HAGS Windowed) are the
+  Ultimate "5 Graphics" ports  Ultimate scripts 11, 13 and 14.
+  -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <StackPanel Padding="32" Spacing="16" MaxWidth="1000" HorizontalAlignment="Left">
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Gaming Tweaks" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Disable Preemption (NVIDIA)" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Lower latency at the cost of stability on NVIDIA GPUs." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding DisablePreemption, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Network Optimization" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="NIC offloads, TCP global tuning and QoS-friendly settings." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding NetworkOptimization, Mode=TwoWay}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="NVIDIA" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="NVIDIA Settings" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Ultimate profile: developer settings, PhysX on GPU, no tray icon, legacy sharpen off  imports the optimized NIP profile and opens the Control Panel." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding NvidiaSettings, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Disable HDCP" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Turns off HDCP handshake on every display adapter (recommended by Ultimate)." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding DisableHdcp, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="P0 State" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Keeps the GPU in its highest performance power state  always max boost clock." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding P0State, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="MSI Mode" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Message Signaled Interrupts on every display adapter  recommended over line-based interrupts." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding MsiMode, Mode=TwoWay}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="AMD" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="AMD Settings" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Ultimate profile: manual updates, no overlay/tray/ads, custom graphics profile, anti-lag, tuned tessellation and filtering." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding AmdSettings, Mode=TwoWay}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Services" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Control Panel Settings" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Ultimate Control Panel profile: applet settings, backup service, defrag task, sign-in and notification behavior." />
+  </StackPanel>
+  <ComboBox
+  Grid.Column="1"
+  Width="200"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  ItemsSource="{Binding ControlPanelOptions, Mode=OneWay}"
+  SelectedIndex="{Binding ControlPanelIndex, Mode=TwoWay}" />
+  </Grid>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Useful Tools" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <ItemsControl Margin="0,4" ItemsSource="{Binding ToolButtons, Mode=OneWay}">
+  <ItemsControl.ItemsPanel>
+  <ItemsPanelTemplate>
+  <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="3" ItemWidth="200" />
+  </ItemsPanelTemplate>
+  </ItemsControl.ItemsPanel>
+  <ItemsControl.ItemTemplate>
+  <DataTemplate x:DataType="models:GamingButton">
+  <Button
+  Margin="4"
+  Command="{x:Bind RunToolCommand, Mode=OneTime}"
+  Content="{x:Bind Label, Mode=OneTime}"
+  IsEnabled="{x:Bind IsEnabled, Mode=OneWay}" />
+  </DataTemplate>
+  </ItemsControl.ItemTemplate>
+  </ItemsControl>
+  </Border>
+
+  <TextBlock
+  Style="{StaticResource AkariCaption}"
+  Text="Tools resolve under C:\PostInstall  drop your own copies of any missing exe there." />
+
+  </StackPanel>
+  </ScrollViewer>
+</Page>

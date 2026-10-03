@@ -1,0 +1,404 @@
+<Page
+  x:Class="AkariToolbox.Views.AdvancedPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:models="using:AkariToolbox.ViewModels">
+
+  <!--
+  8  Advanced: Security (use with care), Services & Memory, and Rendering & CPU.
+
+  WPF-UI substitutions: ui:Card  AkariCard Border, ui:Button  AkariTileButton,
+  ui:ToggleSwitch  ToggleSwitch (IsChecked  IsOn), <Separator>  a 1px Rectangle,
+  UniformGrid  ItemsWrapGrid (WinUI has no UniformGrid). The Priority Launcher tiles
+  bind LaunchCommand on the tile instead of the page's LaunchPriorityCommand, which WPF
+  reached through RelativeSource AncestorType=Page  WinUI has no equivalent.
+  -->
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <StackPanel Padding="32" Spacing="16" MaxWidth="1000" HorizontalAlignment="Left">
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Security  Use With Care" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Defender Disabled" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Fully disable Defender via a safe-boot pass. Reboots twice." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding DefenderDisabled, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Firewall Disabled" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Turn off the Windows Firewall profiles." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding FirewallDisabled, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Spectre / Meltdown Disabled" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Disable CPU mitigations for a small performance gain." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding SpectreDisabled, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="DEP Disabled" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Turn Data Execution Prevention off. Needs Secure Boot off." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding DepDisabled, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Download Warning Disabled" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Skip the security prompt for downloaded files." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding DownloadWarningDisabled, Mode=TwoWay}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Services &amp; Memory" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="MMAgent Features Off" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Disable prefetch, prelaunch, compression and page combining." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding MmAgentOff, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Services Off" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Lean service set via a safe-boot pass. Reboots twice." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding ServicesOff, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Search &amp; Shell Off" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Disable Search, shell hosts and mobsync. Parts of the shell stop until reverted." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding ShellSearchOff, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="NVMe Faster Driver" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Newer NVMe driver path. Breaks DirectStorage." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding NvmeFaster, Mode=TwoWay}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Rendering &amp; CPU" />
+
+  <Border Style="{StaticResource AkariCard}">
+  <StackPanel Spacing="16">
+  <Grid>
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  <ColumnDefinition Width="8" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="ReBar Force" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Resizable BAR via the NVIDIA driver profile." />
+  </StackPanel>
+  <ComboBox
+  Grid.Column="1"
+  Width="200"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  ItemsSource="{Binding ReBarOptions, Mode=OneWay}"
+  SelectedIndex="{Binding ReBarIndex, Mode=TwoWay}" />
+  <Button
+  Grid.Column="3"
+  VerticalAlignment="Center"
+  Command="{Binding RestartToBiosCommand, Mode=OneWay}"
+  Content="To BIOS"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <Grid>
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  <ColumnDefinition Width="8" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="CPU Affinity Launchers" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Pick an app to launch with cores masked off for testing." />
+  </StackPanel>
+  <Button
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  Command="{Binding LaunchSmtHtOffCommand, Mode=OneWay}"
+  Content="SMT/HT Off"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  <Button
+  Grid.Column="3"
+  VerticalAlignment="Center"
+  Command="{Binding LaunchCore1Thread1OffCommand, Mode=OneWay}"
+  Content="Core 1 T1 Off"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
+  </Grid>
+
+  <StackPanel>
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Priority Launcher" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Pick an app to launch at a chosen CPU priority." />
+  <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding PriorityButtons, Mode=OneWay}">
+  <ItemsControl.ItemsPanel>
+  <ItemsPanelTemplate>
+  <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="3" ItemWidth="140" />
+  </ItemsPanelTemplate>
+  </ItemsControl.ItemsPanel>
+  <ItemsControl.ItemTemplate>
+  <DataTemplate x:DataType="models:PriorityButton">
+  <Button
+  Margin="4"
+  Command="{x:Bind LaunchCommand, Mode=OneTime}"
+  Content="{x:Bind Label, Mode=OneTime}"
+  IsEnabled="{x:Bind IsEnabled, Mode=OneWay}" />
+  </DataTemplate>
+  </ItemsControl.ItemTemplate>
+  </ItemsControl>
+  </StackPanel>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="MPO Off" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Disable multiplane overlays. Fixes some flicker and stutter." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding MpoOff, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Fullscreen Mode" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Fullscreen Optimizations or Fullscreen Exclusive." />
+  </StackPanel>
+  <ComboBox
+  Grid.Column="1"
+  Width="200"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  ItemsSource="{Binding FlipOptions, Mode=OneWay}"
+  SelectedIndex="{Binding FlipIndex, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Hardware Flip Mode" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Force hardware composed independent flip or stay default." />
+  </StackPanel>
+  <ComboBox
+  Grid.Column="1"
+  Width="200"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  ItemsSource="{Binding ComposedFlipOptions, Mode=OneWay}"
+  SelectedIndex="{Binding ComposedFlipIndex, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="AMD ULPS Off" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Disable Ultra Low Power State on AMD adapters." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding UlpsOff, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="WHQL Bypass On" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Allow unsigned drivers with Secure Boot on." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding WhqlBypass, Mode=TwoWay}" />
+  </Grid>
+
+  <Grid ColumnSpacing="16">
+  <Grid.ColumnDefinitions>
+  <ColumnDefinition Width="*" />
+  <ColumnDefinition Width="Auto" />
+  </Grid.ColumnDefinitions>
+  <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="Keyboard Shortcuts Off" />
+  <TextBlock
+  Style="{StaticResource AkariCardDescription}"
+  Text="Disable hotkeys and the Windows key while gaming." />
+  </StackPanel>
+  <ToggleSwitch
+  MinWidth="0"
+  Grid.Column="1"
+  VerticalAlignment="Center"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
+  IsOn="{Binding KeyboardOff, Mode=TwoWay}" />
+  </Grid>
+  </StackPanel>
+  </Border>
+
+  </StackPanel>
+  </ScrollViewer>
+</Page>
