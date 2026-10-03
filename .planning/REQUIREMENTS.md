@@ -92,18 +92,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BRW-01 | TBD | Pending |
-| BRW-02 | TBD | Pending |
-| SYS-01 | TBD | Pending |
-| BKG-01 | TBD | Pending |
-| NET-01 | TBD | Pending |
-| GPU-01 | TBD | Pending |
-| SFT-01 | TBD | Pending |
+| BRW-01 | Phase 1 | Pending |
+| BRW-02 | Phase 1 | Pending |
+| SYS-01 | Phase 2 | Pending |
+| BKG-01 | Phase 2 | Pending |
+| NET-01 | Phase 3 | Pending |
+| GPU-01 | Phase 4 | Pending |
+| SFT-01 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 7 total
-- Mapped to phases: 0
-- Unmapped: 7
+- Mapped to phases: 7
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-10-03*
