@@ -420,19 +420,22 @@ public ObservableCollection<CatalogSectionGroup> Sections { get; } = [];
 | A6 | Game Mode + DVR seed registry paths mirror the existing `fso` toggle keys (`HKCU\System\GameConfigStore`, `HKCU\Software\Microsoft\GameBar`, `HKLM\SOFTWARE\Policies\Microsoft\Windows\GameDVR`) | Pitfalls | Low — verify against FR33THY source during planning |
 | A7 | .NET SDK 10.0.401 satisfies the 10.0.400 pin via `rollForward: latestMinor` | Environment | Very low — build confirms |
 
-## Open Questions
+## Open Questions (RESOLVED — dispositions recorded 2026-10-04; plan content answers all three)
 
-1. **Journal vs direct revert per seed row?**
+1. **Journal vs direct revert per seed row? (RESOLVED)**
+   - **Disposition: RESOLVED — row-scoped first-capture-wins journal chosen.** Plan 01 creates `RowRevertJournal` keyed by descriptor Key with first-capture-wins semantics; plan 02 audits each seed row so Default-lossless rows revert via Default bodies and the rest revert via the journal, defaulting to journal unless proven lossless.
    - What we know: D-08 allows a row-scoped journal; first-capture-wins logic is proven. Rows backed by shared `ControlPanelRows` Optimize/Default bodies can revert via `ApplyRow(row, optimize: false)` — but only if the Default body truly restores stock for that machine.
    - What's unclear: Whether every seed row's Default body is lossless (multi-value NIC/GPU rows may have machine-specific stock values).
    - Recommendation: Planner audits each of the 8–12 seed rows: Default-lossless → direct revert; otherwise → row-scoped journal entry. Default to journal unless proven lossless.
 
-2. **Page-level "apply recommended to all"?**
+2. **Page-level "apply recommended to all"? (RESOLVED)**
+   - **Disposition: RESOLVED — explicitly excluded from this phase.** Per the agent's Discretion, no page-level apply-to-all action is added; plan 02 ships per-row only and states the exclusion in its objective. A page-level action may be proposed as a follow-up, never as silent scope.
    - What we know: Explicitly undecided in discretion; D-01 kills silent bulk scope.
    - What's unclear: Whether users need it for the "one-pass safe tune" core value.
    - Recommendation: Ship per-row only; propose the page-level action as a follow-up plan item, never silent scope.
 
-3. **Badge-polling cost for NIC-heavy rows?**
+3. **Badge-polling cost for NIC-heavy rows? (RESOLVED)**
+   - **Disposition: RESOLVED — off-thread hydration specified.** Plans hydrate under `Task.Run` during `OnNavigatedTo` with the `_loading` guard (established pattern); live read-back is cached within a single navigation only, never across navigations, and re-probed on every navigation per D-07.
    - What we know: Live read-back on every navigation is mandatory (D-07); NIC enumeration touches many subkeys.
    - What's unclear: Whether re-probing all rows on each navigation causes visible lag.
    - Recommendation: Hydrate under `Task.Run` during `OnNavigatedTo` (established: "reads are slow — refresh off-thread"); measure; cache within a single navigation only, never across navigations.
