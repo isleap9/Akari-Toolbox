@@ -84,6 +84,7 @@ public sealed partial class MainWindow : Window
         new("Home", "\uE80F", typeof(HomePage)),
         new("Akari OS Tweaks", "\uE713", typeof(AkariTweaksPage)),
         new("Gaming Tweaks", "\uE7FC", typeof(GamingPage)),
+        new("Gaming Catalog", "\uE7FC", typeof(GamingCatalogPage)),
         new("1 - Check", "\uE73E", typeof(CheckPage)),
         new("2 - Refresh", "\uE895", typeof(RefreshPage)),
         new("3 - Setup", "\uE90F", typeof(SetupPage)),

@@ -153,6 +153,7 @@ public partial class App : Application
         builder.Services.AddTransient<RefreshViewModel>();
         builder.Services.AddTransient<CheckViewModel>();
         builder.Services.AddTransient<GamingViewModel>();
+        builder.Services.AddTransient<GamingCatalogViewModel>();
         builder.Services.AddTransient<HomeViewModel>();
         builder.Services.AddTransient<SetupViewModel>();
         builder.Services.AddTransient<GraphicsViewModel>();
@@ -163,6 +164,7 @@ public partial class App : Application
         builder.Services.AddTransient<HomePage>();
         builder.Services.AddTransient<AkariTweaksPage>();
         builder.Services.AddTransient<GamingPage>();
+        builder.Services.AddTransient<GamingCatalogPage>();
         builder.Services.AddTransient<CheckPage>();
         builder.Services.AddTransient<RefreshPage>();
         builder.Services.AddTransient<SetupPage>();
