@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AppTemplate.Framework\AppTemplate.Framework.csproj" />
+    <ProjectReference Include="..\AppTemplate.App\AppTemplate.App.csproj" />
   </ItemGroup>
 
   <ItemGroup>
