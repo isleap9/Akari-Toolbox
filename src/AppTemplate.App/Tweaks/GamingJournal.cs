@@ -108,7 +108,8 @@ public sealed class GamingJournalStore
     /// <summary>
     /// Marks <paramref name="catalogId"/> applied: moves its pending capture into
     /// the persisted journal. Only completed rows are journaled (D-14 prefix).
-    /// Re-capturing an ID replaces its snapshot (idempotent re-runs).
+    /// First-capture-wins: a persisted entry for the id is kept and later
+    /// captures are dropped, so sticky-tick re-runs never clobber the revert baseline.
     /// </summary>
     public void MarkApplied(string catalogId)
     {
@@ -119,6 +120,9 @@ public sealed class GamingJournalStore
                 return;
 
             GamingJournalDoc current = LoadLocked();
+            if (current.Entries.Any(e => e.CatalogId == catalogId))
+                return;
+
             List<JournalEntry> entries = current.Entries
                 .Where(e => e.CatalogId != catalogId).ToList();
             entries.Add(captured);

@@ -173,6 +173,45 @@ public class GamingCatalogTests
     }
 
     [Fact]
+    public void Journal_rerun_keeps_first_capture_so_revert_restores_original()
+    {
+        string subKey = NewScratchSubKey();
+        string path = "HKCU\\Software\\AkariToolboxTests\\GamingCatalog\\" + subKey;
+        try
+        {
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(
+                "Software\\AkariToolboxTests\\GamingCatalog\\" + subKey, writable: true))
+                key.SetValue("Sentinel", unchecked((int)0xDEADBEEF), RegistryValueKind.DWord);
+
+            var store = NewScratchStore();
+            GamingCatalogEntry entry = ScratchEntry("rerun-sentinel", path, "Sentinel");
+
+            store.Capture(entry);
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(
+                "Software\\AkariToolboxTests\\GamingCatalog\\" + subKey, writable: true))
+                key.SetValue("Sentinel", 1, RegistryValueKind.DWord);
+            store.MarkApplied(entry.Id);
+
+            store.Capture(entry);
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(
+                "Software\\AkariToolboxTests\\GamingCatalog\\" + subKey, writable: true))
+                key.SetValue("Sentinel", 2, RegistryValueKind.DWord);
+            store.MarkApplied(entry.Id);
+
+            IReadOnlyList<RevertResult> results = store.RevertAll();
+
+            Assert.Single(results);
+            Assert.True(results[0].Ok);
+            using RegistryKey? verify = OpenScratch(subKey);
+            Assert.Equal(unchecked((int)0xDEADBEEF), verify?.GetValue("Sentinel"));
+        }
+        finally
+        {
+            DropScratch(subKey);
+        }
+    }
+
+    [Fact]
     public void Journal_absent_value_reverts_by_deleting_not_zero_filling()
     {
         string subKey = NewScratchSubKey();
