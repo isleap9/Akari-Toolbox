@@ -34,7 +34,21 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Every tweak offers per-row Recommended/Default quick-set with one click
   4. User can revert any applied tweak and see prior values restored
 
-**Plans**: TBD (re-discuss + re-plan; attempt 1 archived at `.planning/phases/archive/01-trusted-catalog-foundation-attempt1/`)
+**Plans**: 2 plans
+
+Plans:
+Wave 1 *(blocking — Wave 2 builds on the proven tracer slice)*:
+- [ ] 01-01-PLAN.md — Tracer slice: descriptor + 3-row catalog + journal + VM + grouped page + DI/nav + tests
+Wave 2 *(blocked on Wave 1 completion)*:
+- [ ] 01-02-PLAN.md — Expansion: full 8-12-row catalog + quick-set/pills/expander/restore offer + SFT-01 rewrite
+
+Cross-cutting constraints (must_haves.truths shared by both plans):
+- Pills reflect live read-back on every navigation/apply, never cached optimism (D-07)
+- Native-ops-only: reject any row needing a new network fetch or binary launch
+- Page-level `{Binding}` + `x:Bind` only in DataTemplate; per-row `IsBusy`, never page-wide lock
+- Build bar `Errors: 0 Warnings: 0`; WMI reads off UI thread with disposal
+
+Attempt 1 archived at `.planning/phases/archive/01-trusted-catalog-foundation-attempt1/` (history, not guidance).
 
 **UI hint**: yes
 
