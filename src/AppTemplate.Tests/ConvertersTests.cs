@@ -156,32 +156,10 @@ public class ConvertersTests
 
         // The unchecked / invalid cases return DependencyProperty.UnsetValue so a
         // two-way binding does not write back (returning null would be coerced to
-        // the enum's default value). UnsetValue is a WinRT static: in the bare
-        // unit-test host it cannot be resolved, so reaching it throws
-        // COMException; once the app assembly is loaded (the GamingCatalog
-        // tests reference it) the static resolves and the converter returns
-        // UnsetValue as designed. Both outcomes prove the invalid case never
-        // writes a value back.
-        AssertUnsetOrComException(() => converter.ConvertBack(false, typeof(TestEnum), "Second", "en-US"));
-        AssertUnsetOrComException(() => converter.ConvertBack(true, typeof(TestEnum), "Nope", "en-US"));
-    }
-
-    private static void AssertUnsetOrComException(Func<object?> convertBack)
-    {
-        try
-        {
-            object? result = convertBack();
-            // In an activated host the WinRT UnsetValue static resolves, but
-            // each access returns a fresh projection wrapper, so identity
-            // comparison is meaningless. What matters: invalid input never
-            // yields a bindable enum value that two-way binding would write.
-            Assert.NotNull(result);
-            Assert.IsNotType<TestEnum>(result);
-        }
-        catch (COMException)
-        {
-            // Bare testhost without WinUI activation — the documented fallback.
-        }
+        // the enum's default value). UnsetValue is a WinRT static that cannot be
+        // resolved in the unit-test host, so reaching it throws COMException here.
+        Assert.Throws<COMException>(() => converter.ConvertBack(false, typeof(TestEnum), "Second", "en-US"));
+        Assert.Throws<COMException>(() => converter.ConvertBack(true, typeof(TestEnum), "Nope", "en-US"));
     }
 
     [Fact]

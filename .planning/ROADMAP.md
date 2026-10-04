@@ -20,32 +20,21 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 ## Phase Details
 
-### Phase 1: Trusted Catalog Foundation
+### Phase 1: Trusted Catalog Foundation (REDESIGN — Winhance fidelity)
 
-**Goal**: Users can find any gaming tweak by search, understand it before toggling, and bulk-apply/revert safely
+**Goal**: Users get FR33THY Ultimate tweaks presented like Winhance — scannable toggle rows with one-line descriptions, per-row Recommended/Default quick-set, and technical details on demand
 **Mode:** mvp
 **Depends on**: Nothing (first phase)
 **Requirements**: BRW-01, BRW-02, SFT-01
+**Design bar**: `.planning/research/winhance-patterns.md` (extracted from Winhance source — binding constraints §6)
 **Success Criteria** (what must be TRUE):
 
   1. User can find any gaming tweak by typing in search within a categorized catalog
-  2. User can read a per-tweak explanation (what it does, why it helps gaming, risk, how it reverts) before toggling
-  3. User can bulk-apply selected gaming tweaks with visible progress
-  4. User can revert all applied tweaks with one click and see prior values restored
+  2. Each row shows title + one-line description + live control; full detail (registry footprint, current/recommended/default) sits behind a collapsed Technical-details expander
+  3. Every tweak offers per-row Recommended/Default quick-set with one click
+  4. User can revert any applied tweak and see prior values restored
 
-**Plans**: 3 plans
-Plans:
-**Wave 1**
-
-- [x] 01-01-PLAN.md — Tracer slice: descriptor, journal, catalog page/VM, DI/nav, Game Mode/DVR natives, tests
-
-**Wave 2** *(blocked on Wave 1 completion)*
-
-- [x] 01-02-PLAN.md — Search polish, copy conformance, 8 states, release gates and UAT
-
-**Wave 3** *(gap closure, blocked on Wave 1)*
-
-- [x] 01-03-PLAN.md — CR-01: first-capture-wins journal guard plus apply-apply-revert regression test
+**Plans**: TBD (re-discuss + re-plan; attempt 1 archived at `.planning/phases/archive/01-trusted-catalog-foundation-attempt1/`)
 
 **UI hint**: yes
 
@@ -98,7 +87,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Trusted Catalog Foundation | 3/3 | Gap closure done, ready for re-verification | - |
+| 1. Trusted Catalog Foundation | 0/TBD | Redesign — Winhance fidelity, re-plan pending | - |
 | 2. System & Background Tune | 0/TBD | Not started | - |
 | 3. Gaming Network Path | 0/TBD | Not started | - |
 | 4. GPU Scheduling Toggle | 0/TBD | Not started | - |
