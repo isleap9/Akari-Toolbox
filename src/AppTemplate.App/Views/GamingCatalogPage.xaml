@@ -28,6 +28,7 @@
   Width="320"
   VerticalAlignment="Center"
   PlaceholderText="Search gaming tweaks"
+  MaxSuggestionListHeight="320"
   ItemsSource="{Binding Suggestions, Mode=OneWay}"
   TextChanged="OnSearchTextChanged"
   SuggestionChosen="OnSuggestionChosen"
@@ -72,7 +73,7 @@
   </Grid.ColumnDefinitions>
 
   <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
-  <TextBlock Style="{StaticResource AkariCardTitle}" Text="{x:Bind Entry.Title, Mode=OneWay}" />
+  <TextBlock Style="{StaticResource AkariCardTitle}" Text="{x:Bind Entry.Title, Mode=OneWay}" TextTrimming="CharacterEllipsis" />
   <TextBlock Style="{StaticResource AkariCardDescription}" Text="{x:Bind WhatLine, Mode=OneWay}" TextWrapping="Wrap" />
   <TextBlock Style="{StaticResource AkariCardDescription}" Text="{x:Bind WhyLine, Mode=OneWay}" TextWrapping="Wrap" />
   <TextBlock Style="{StaticResource AkariCardDescription}" Text="{x:Bind RiskLine, Mode=OneWay}" TextWrapping="Wrap" />
@@ -81,6 +82,11 @@
   Style="{StaticResource AkariCaption}"
   Text="Requires restart"
   Visibility="{x:Bind Entry.RequiresReboot, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+  <TextBlock
+  Style="{StaticResource AkariCaption}"
+  Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+  Text="Apply failed on this row — fix or untick it, then re-run."
+  Visibility="{x:Bind HasFailed, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
   </StackPanel>
 
   <CheckBox

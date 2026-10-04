@@ -150,6 +150,13 @@ public partial class GamingCatalogViewModel : ViewModelBase, INavigationAware
         OnPropertyChanged(nameof(CanApply));
     }
 
+    /// <summary>Clears every row's failure marker (fresh run or fresh revert).</summary>
+    private void ClearFailedFlags()
+    {
+        foreach (GamingCatalogRowItem row in _allRows.Values.SelectMany(rows => rows))
+            row.HasFailed = false;
+    }
+
     /// <summary>
     /// Bulk apply over ticked rows: restore-point offer (never blocking), then the
     /// sequential capture-plus-apply loop with footer progress. Stops at the first
@@ -185,11 +192,11 @@ public partial class GamingCatalogViewModel : ViewModelBase, INavigationAware
                 try
                 {
                     await Task.Run(() => RestorePointActions.CreateRestorePoint("Akari Toolbox"));
-                    _infoBar.Show("Restore point  created", "You can roll back from System Protection.");
+                    _infoBar.Show("Restore point created", "You can roll back from System Protection.");
                 }
                 catch (Exception ex)
                 {
-                    _infoBar.Show("Restore point  skipped", ex.Message);
+                    _infoBar.Show("Restore point skipped", ex.Message);
                 }
             }
         }
@@ -198,6 +205,9 @@ public partial class GamingCatalogViewModel : ViewModelBase, INavigationAware
             // No dialog host (or any dialog failure) never blocks apply.
         }
 
+        // A fresh run starts with no failure markers; a failure below re-sets
+        // the flag on the failed row only.
+        ClearFailedFlags();
         IsBusy = true;
         _status.Start("Applying gaming tweaks…");
         try
@@ -213,10 +223,17 @@ public partial class GamingCatalogViewModel : ViewModelBase, INavigationAware
             if (result.FailedEntry is null)
                 _infoBar.Show($"{result.Done} tweaks applied", "Ticks stay selected for re-run.");
             else
+            {
+                // Destructive-state flag on the failed row only (D-14): later rows
+                // stay unapplied with sticky ticks, and the marker persists for
+                // inspection until the next run clears it.
+                foreach (GamingCatalogRowItem row in _allRows.Values.SelectMany(rows => rows))
+                    row.HasFailed = row.Entry.Id == result.FailedEntry.Id;
                 _infoBar.Show(
                     $"\"{result.FailedEntry.Title}\" failed — the run stopped before applying the rest. " +
                     "Fix or untick it, then re-run.",
                     $"Details: {result.FailedMessage}");
+            }
         }
         finally
         {
@@ -233,6 +250,8 @@ public partial class GamingCatalogViewModel : ViewModelBase, INavigationAware
         if (IsBusy)
             return;
 
+        // Revert restores journaled priors, so any stale failure marker is cleared.
+        ClearFailedFlags();
         IsBusy = true;
         _status.Start("Reverting gaming tweaks…");
         try
@@ -258,7 +277,7 @@ public partial class GamingCatalogViewModel : ViewModelBase, INavigationAware
         }
         catch (Exception ex)
         {
-            _infoBar.Show("Revert  failed", ex.Message);
+            _infoBar.Show("Revert failed", ex.Message);
         }
         finally
         {
@@ -309,6 +328,14 @@ public sealed partial class GamingCatalogRowItem : ObservableObject
     /// <summary>Live applied state, refreshed on navigation and after runs.</summary>
     [ObservableProperty]
     private bool _isApplied;
+
+    /// <summary>
+    /// Set when this row stopped a bulk run (D-14 error state). Renders the
+    /// destructive failed caption; cleared at the start of the next run or
+    /// revert. Never mutated by filtering — the marker survives search.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasFailed;
 
     public GamingCatalogRowItem(
         GamingCatalogEntry entry, Func<bool> isLoading, Action onSelectionChanged)

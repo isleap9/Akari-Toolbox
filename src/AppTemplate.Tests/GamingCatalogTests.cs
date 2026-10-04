@@ -1,4 +1,5 @@
 using AkariToolbox.Tweaks;
+using AkariToolbox.ViewModels;
 using Microsoft.Win32;
 using Xunit;
 
@@ -348,6 +349,18 @@ public class GamingCatalogTests
     }
 
     // ---- Helpers (private sealed doubles and scratch isolation live here) ----
+
+    [Fact]
+    public void RowItem_failed_flag_defaults_to_unset_and_is_settable()
+    {
+        var row = new GamingCatalogRowItem(GamingCatalogEntry.All[0], () => false, () => { });
+
+        Assert.False(row.HasFailed);
+        row.HasFailed = true;
+        Assert.True(row.HasFailed);
+        row.HasFailed = false;
+        Assert.False(row.HasFailed);
+    }
 
     private static GamingCatalogEntry FakeEntry(string id, List<string> applied) =>
         GamingCatalogEntry.FromNative(
