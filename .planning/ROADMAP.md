@@ -33,15 +33,19 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can bulk-apply selected gaming tweaks with visible progress
   4. User can revert all applied tweaks with one click and see prior values restored
 
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Tracer slice: descriptor, journal, catalog page/VM, DI/nav, Game Mode/DVR natives, tests
+- [x] 01-01-PLAN.md — Tracer slice: descriptor, journal, catalog page/VM, DI/nav, Game Mode/DVR natives, tests
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02-PLAN.md — Search polish, copy conformance, 8 states, release gates and UAT
+- [x] 01-02-PLAN.md — Search polish, copy conformance, 8 states, release gates and UAT
+
+**Wave 3** *(gap closure, blocked on Wave 1)*
+
+- [x] 01-03-PLAN.md — CR-01: first-capture-wins journal guard plus apply-apply-revert regression test
 
 **UI hint**: yes
 
@@ -94,7 +98,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Trusted Catalog Foundation | 0/TBD | Not started | - |
+| 1. Trusted Catalog Foundation | 3/3 | Gap closure done, ready for re-verification | - |
 | 2. System & Background Tune | 0/TBD | Not started | - |
 | 3. Gaming Network Path | 0/TBD | Not started | - |
 | 4. GPU Scheduling Toggle | 0/TBD | Not started | - |
