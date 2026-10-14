@@ -23,7 +23,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Gaming Tweaks" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -67,7 +70,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="NVIDIA" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -149,7 +155,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="AMD" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -174,7 +183,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Services" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
   <ColumnDefinition Width="*" />
@@ -198,7 +210,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Useful Tools" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <ItemsControl Margin="0,4" ItemsSource="{Binding ToolButtons, Mode=OneWay}">
   <ItemsControl.ItemsPanel>
   <ItemsPanelTemplate>

@@ -20,7 +20,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Appearance" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -38,7 +41,7 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding StartMenuClean, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -56,7 +59,7 @@
   Grid.Column="1"
   Width="200"
   VerticalAlignment="Center"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}"
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}"
   ItemsSource="{Binding StartMenuLayoutOptions}"
   SelectedIndex="{Binding StartMenuLayoutIndex, Mode=TwoWay}" />
   </Grid>
@@ -77,7 +80,7 @@
   VerticalAlignment="Center"
   Command="{Binding OpenShortcutsCommand}"
   Content="Create"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -96,7 +99,7 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding ContextMenuClean, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -115,7 +118,7 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding ThemeBlack, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -134,7 +137,7 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding SignoutWallpaperBlack, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -153,14 +156,17 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding AccountPicturesBlack, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
   </StackPanel>
   </Border>
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Debloat &amp; Privacy" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -178,7 +184,7 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding WidgetsOff, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -197,7 +203,7 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding CopilotOff, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -216,7 +222,7 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding GameBarOff, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -235,14 +241,17 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding EdgeUninstalled, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
   </StackPanel>
   </Border>
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Bloatware" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid>
   <Grid.ColumnDefinitions>
@@ -262,13 +271,13 @@
   VerticalAlignment="Center"
   Command="{Binding RemoveBloatwareCommand}"
   Content="Remove"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   <Button
   Grid.Column="3"
   VerticalAlignment="Center"
   Command="{Binding CheckBloatwareCommand}"
   Content="Check"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -287,7 +296,7 @@
   VerticalAlignment="Center"
   Command="{Binding InstallStoreCommand}"
   Content="Install"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -306,7 +315,7 @@
   VerticalAlignment="Center"
   Command="{Binding InstallAllUwpCommand}"
   Content="Install"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid>
@@ -327,13 +336,13 @@
   VerticalAlignment="Center"
   Command="{Binding OpenUwpFeaturesCommand}"
   Content="UWP"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   <Button
   Grid.Column="3"
   VerticalAlignment="Center"
   Command="{Binding OpenLegacyFeaturesCommand}"
   Content="Legacy"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -352,7 +361,7 @@
   VerticalAlignment="Center"
   Command="{Binding InstallOneDriveCommand}"
   Content="Install"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -371,7 +380,7 @@
   VerticalAlignment="Center"
   Command="{Binding InstallRdcCommand}"
   Content="Install"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -390,7 +399,7 @@
   VerticalAlignment="Center"
   Command="{Binding InstallSnippingCommand}"
   Content="Install"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -409,14 +418,17 @@
   VerticalAlignment="Center"
   Command="{Binding InstallWingetCommand}"
   Content="Install"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
   </StackPanel>
   </Border>
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Bloatware Checks" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -434,7 +446,7 @@
   VerticalAlignment="Center"
   Command="{Binding CheckLegacyAppsCommand}"
   Content="Open"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -453,7 +465,7 @@
   VerticalAlignment="Center"
   Command="{Binding CheckLegacyFeaturesCommand}"
   Content="Open"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -472,7 +484,7 @@
   VerticalAlignment="Center"
   Command="{Binding CheckUwpAppsCommand}"
   Content="Open"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -491,7 +503,7 @@
   VerticalAlignment="Center"
   Command="{Binding CheckUwpFeaturesCommand}"
   Content="Open"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -510,14 +522,17 @@
   VerticalAlignment="Center"
   Command="{Binding CheckTaskManagerCommand}"
   Content="Open"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
   </StackPanel>
   </Border>
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Settings &amp; Sound" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -535,7 +550,7 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding NotepadOn, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -554,7 +569,7 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding ControlPanelOptimized, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -573,7 +588,7 @@
   VerticalAlignment="Center"
   Command="{Binding OpenSoundCommand}"
   Content="Open"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -592,14 +607,17 @@
   VerticalAlignment="Center"
   Command="{Binding RunLoudnessEqCommand}"
   Content="Unhide"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
   </StackPanel>
   </Border>
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Performance" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -617,7 +635,7 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding DevicePowerOff, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -636,7 +654,7 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding NetworkPowerOff, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -655,7 +673,7 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding Ipv4Only, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -674,7 +692,7 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding WriteCacheOff, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -693,7 +711,7 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding PowerPlanOn, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -712,14 +730,17 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding TimerResolutionOn, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
   </StackPanel>
   </Border>
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Quick Settings" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -737,7 +758,7 @@
   VerticalAlignment="Center"
   Command="{Binding OpenGameModeCommand}"
   Content="Open"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -756,7 +777,7 @@
   VerticalAlignment="Center"
   Command="{Binding OpenPointerCommand}"
   Content="Open"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -775,14 +796,17 @@
   VerticalAlignment="Center"
   Command="{Binding OpenScalingCommand}"
   Content="Open"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
   </StackPanel>
   </Border>
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Security &amp; Maintenance" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -800,7 +824,7 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding UacOff, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -819,7 +843,7 @@
   Grid.Column="1"
   VerticalAlignment="Center"
   IsOn="{Binding DefenderOptimized, Mode=TwoWay}"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -838,7 +862,7 @@
   VerticalAlignment="Center"
   Command="{Binding RunAutorunsCommand}"
   Content="Run"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -857,7 +881,7 @@
   VerticalAlignment="Center"
   Command="{Binding RunCleanupCommand}"
   Content="Clean"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -876,7 +900,7 @@
   VerticalAlignment="Center"
   Command="{Binding RunRestorePointCommand}"
   Content="Create"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
 
   <Grid ColumnSpacing="16">
@@ -895,7 +919,7 @@
   VerticalAlignment="Center"
   Command="{Binding OpenCoreIsolationCommand}"
   Content="Open"
-  IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBool}}" />
+  IsEnabled="{Binding IsBusy, Mode=OneWay, Converter={StaticResource InvertedBool}}" />
   </Grid>
   </StackPanel>
   </Border>

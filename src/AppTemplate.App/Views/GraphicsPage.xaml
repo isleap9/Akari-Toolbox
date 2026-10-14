@@ -17,7 +17,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Driver Management" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid>
   <Grid.ColumnDefinitions>
@@ -139,7 +142,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="GPU Settings" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -202,7 +208,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Advanced GPU Tweaks" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>

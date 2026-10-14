@@ -18,7 +18,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Display" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -63,7 +66,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Mouse &amp; Controller" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -134,7 +140,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Network &amp; Guides" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <Grid>
   <Grid.ColumnDefinitions>
   <ColumnDefinition Width="*" />

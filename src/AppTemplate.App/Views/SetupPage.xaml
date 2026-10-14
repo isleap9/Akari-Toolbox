@@ -16,7 +16,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="System" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -80,7 +83,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Activation &amp; Licensing" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -143,7 +149,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Apps &amp; Updates" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>

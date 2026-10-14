@@ -20,11 +20,14 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Game Launchers &amp; Browsers" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <ItemsControl Margin="0,4" ItemsSource="{Binding LauncherButtons, Mode=OneWay}">
   <ItemsControl.ItemsPanel>
   <ItemsPanelTemplate>
-  <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="4" ItemWidth="190" />
+  <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="4" ItemWidth="200" />
   </ItemsPanelTemplate>
   </ItemsControl.ItemsPanel>
   <ItemsControl.ItemTemplate>
@@ -42,7 +45,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="GPU Tools" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <ItemsControl Margin="0,4" ItemsSource="{Binding ToolButtons, Mode=OneWay}">
   <ItemsControl.ItemsPanel>
   <ItemsPanelTemplate>

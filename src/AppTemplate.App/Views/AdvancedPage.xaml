@@ -18,7 +18,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Security  Use With Care" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -119,7 +122,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Services &amp; Memory" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -201,7 +207,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Rendering &amp; CPU" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid>
   <Grid.ColumnDefinitions>

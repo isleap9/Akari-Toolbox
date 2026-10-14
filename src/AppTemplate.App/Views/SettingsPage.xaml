@@ -15,18 +15,18 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Appearance" />
 
+  <StackPanel Spacing="8">
   <RadioButton
   Command="{Binding ChangeThemeLightCommand, Mode=OneWay}"
   Content="Light"
   GroupName="themeSelect"
   IsChecked="{Binding IsLight, Mode=TwoWay}" />
-
   <RadioButton
-  Margin="0,8,0,0"
   Command="{Binding ChangeThemeDarkCommand, Mode=OneWay}"
   Content="Dark"
   GroupName="themeSelect"
   IsChecked="{Binding IsDark, Mode=TwoWay}" />
+  </StackPanel>
 
   <TextBlock
   Margin="0,24,0,0"

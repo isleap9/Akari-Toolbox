@@ -142,10 +142,16 @@
   </Border>
 
   <TextBlock Text="Tools" Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,8,0,0" />
-  <GridView ItemsSource="{Binding Tools, Mode=OneWay}" SelectionMode="None" IsItemClickEnabled="False" Padding="0,0,0,24">
-  <GridView.ItemTemplate>
+  <ItemsControl ItemsSource="{Binding Tools, Mode=OneWay}">
+  <ItemsControl.ItemsPanel>
+  <ItemsPanelTemplate>
+  <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="3" ItemWidth="230" />
+  </ItemsPanelTemplate>
+  </ItemsControl.ItemsPanel>
+  <ItemsControl.ItemTemplate>
   <DataTemplate x:DataType="models:HomeCard">
   <Button
+  Margin="0,0,16,16"
   Command="{x:Bind OpenCardCommand, Mode=OneTime}"
   Width="230"
   Height="96"
@@ -162,8 +168,8 @@
   </StackPanel>
   </Button>
   </DataTemplate>
-  </GridView.ItemTemplate>
-  </GridView>
+  </ItemsControl.ItemTemplate>
+  </ItemsControl>
 
   </StackPanel>
   </ScrollViewer>

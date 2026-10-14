@@ -16,7 +16,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="BIOS" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
   <ColumnDefinition Width="*" />
@@ -39,7 +42,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="PC" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
   <ColumnDefinition Width="*" />
@@ -62,7 +68,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Component Checks" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
@@ -125,7 +134,10 @@
 
   <TextBlock Style="{StaticResource AkariSectionHeader}" Text="Stress Tests" />
 
-  <Border Style="{StaticResource AkariCard}">
+  <Border
+  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+  CornerRadius="8"
+  Padding="16">
   <StackPanel Spacing="16">
   <Grid ColumnSpacing="16">
   <Grid.ColumnDefinitions>
